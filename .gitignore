@@ -11,6 +11,10 @@ pr_msg*.txt
 /.pnp
 .pnp.js
 
+.venv
+/.vite/
+.vite-cache
+
 # testing
 /coverage
 
