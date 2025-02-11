@@ -60,4 +60,6 @@ credentials.json
 # vscode
 .vscode/
 
-.cursorignore
+# Token tracking logs
+token_logs/
+test_token_logs/

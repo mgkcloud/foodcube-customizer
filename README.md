@@ -1,6 +1,6 @@
 # Transform your $20 Cursor into a Devin-like AI Assistant
 
-This repository gives you everything needed to supercharge your Cursor/Windsurf IDE or GitHub Copilot with **advanced** agentic AI capabilities—similar to the $500/month Devin—but at a fraction of the cost. In under a minute, you'll gain:
+This repository gives you everything needed to supercharge your Cursor or Windsurf IDE with **advanced** agentic AI capabilities — similar to the $500/month Devin—but at a fraction of the cost. In under a minute, you'll gain:
 
 * Automated planning and self-evolution, so your AI "thinks before it acts" and learns from mistakes
 * Extended tool usage, including web browsing, search engine queries, and LLM-driven text/image analysis
@@ -14,19 +14,7 @@ Devin impressed many by acting like an intern who writes its own plan, updates t
 
 1.	Easy Setup
    
-   Two ways to get started:
-
-   **Option 1: Using Cookiecutter (Recommended)**
-   ```bash
-   # Install cookiecutter if you haven't
-   pip install cookiecutter
-
-   # Create a new project
-   cookiecutter gh:grapeot/devin.cursorrules --checkout template
-   ```
-
-   **Option 2: Manual Setup**
-   Copy the `tools` folder and the following config files into your project root folder: Windsurf users need both `.windsurfrules` and `scratchpad.md` files. Cursor users only need the `.cursorrules` file. Github Copilot users need the `.github/copilot-instructions.md` file.
+   Copy the provided config files into your project folder. Cursor users only need the .cursorrules file. It takes about a minute, and you'll see the difference immediately.
 
 2.	Planner-Executor Multi-Agent (Experimental)
 
@@ -42,27 +30,128 @@ Devin impressed many by acting like an intern who writes its own plan, updates t
 
    The AI automatically decides how and when to use them (just like Devin).
 
-   Note: For screenshot verification features, Playwright browsers will be installed automatically when you first use the feature.
-
 4.	Self-Evolution
 
    Whenever you correct the AI, it can update its "lessons learned" in .cursorrules. Over time, it accumulates project-specific knowledge and gets smarter with each iteration. It makes AI a coachable and coach-worthy partner.
 	
 ## Usage
 
-For a detailed walkthrough of setting up and using devin.cursorrules with Cursor, check out our [step-by-step tutorial](step_by_step_tutorial.md). This guide covers everything from initial Cursor setup to configuring devin.cursorrules and using the enhanced capabilities.
+1. Copy all files from this repository to your project folder
+2. For Cursor users: The `.cursorrules` file will be automatically loaded
+3. For Windsurf users: Use both `.windsurfrules` and `scratchpad.md` for similar functionality
 
-1. Choose your setup method:
-   - **Cookiecutter (Recommended)**: Follow the prompts after running the cookiecutter command
-   - **Manual**: Copy the files you need from this repository
+## Update: Multi-Agent Support (Experimental)
 
-2. Configure your environment:
-   - Set up your API keys (optional)
+This project includes experimental support for a multi-agent system that enhances Cursor's capabilities through a two-agent architecture:
 
-3. Start exploring advanced tasks—such as data gathering, building quick prototypes, or cross-referencing external resources—in a fully agentic manner.
+### Architecture
 
-## Want the Details?
+- **Planner** (powered by OpenAI's o1 model): Handles high-level analysis, task breakdown, and strategic planning
+- **Executor** (powered by Claude): Implements specific tasks, runs tests, and handles implementation details
 
-Check out our [blog post](https://yage.ai/cursor-to-devin-en.html) on how we turned $20 into $500-level AI capabilities in just one hour. It explains the philosophy behind process planning, self-evolution, and fully automated workflows. You'll also find side-by-side comparisons of Devin, Cursor, and Windsurf, plus a step-by-step tutorial on setting this all up from scratch.
+[Actual .cursorrules file](https://github.com/grapeot/devin.cursorrules/blob/multi-agent/.cursorrules#L3)
 
-License: MIT
+### Key Benefits
+
+1. **Enhanced Task Quality**
+   - Separation of strategic planning from execution details
+   - Better cross-checking and validation of solutions
+   - Iterative refinement through Planner-Executor communication
+
+2. **Improved Problem Solving**
+   - Planner can design comprehensive test strategies
+   - Executor provides detailed feedback and implementation insights
+   - Continuous communication loop for optimization
+
+### Real-World Example
+
+A real case study of the multi-agent system debugging the DuckDuckGo search functionality:
+
+1. **Initial Analysis**
+   - Planner designed a series of experiments to investigate intermittent search failures
+   - Executor implemented tests and collected detailed logs
+
+2. **Iterative Investigation**
+   - Planner analyzed results and guided investigation to the library's GitHub issues
+   - Identified a bug in version 6.4 that was fixed in 7.2
+
+3. **Solution Implementation**
+   - Planner directed version upgrade and designed comprehensive test cases
+   - Executor implemented changes and validated with diverse search scenarios
+   - Final documentation included learnings and cross-checking measures
+
+### Usage
+
+To use the multi-agent system:
+
+1. Switch to the `multi-agent` branch
+2. The system will automatically coordinate between Planner and Executor roles
+3. Planner uses `tools/plan_exec_llm.py` for high-level analysis
+4. Executor implements tasks and provides feedback through the scratchpad
+
+This experimental feature transforms the development experience from working with a single assistant to having both a strategic planner and a skilled implementer, significantly improving the depth and quality of task completion.
+
+## Setup
+
+1. Create Python virtual environment:
+```bash
+# Create a virtual environment in ./venv
+python3 -m venv venv
+
+# Activate the virtual environment
+# On Unix/macOS:
+source venv/bin/activate
+# On Windows:
+.\venv\Scripts\activate
+```
+
+2. Configure environment variables:
+```bash
+# Copy the example environment file
+cp .env.example .env
+
+# Edit .env with your API keys and configurations
+```
+
+3. Install dependencies:
+```bash
+# Install required packages
+pip install -r requirements.txt
+
+# Install Playwright's Chromium browser (required for web scraping)
+python -m playwright install chromium
+```
+
+## Tools Included
+
+- Web scraping with JavaScript support (using Playwright)
+- Search engine integration (DuckDuckGo)
+- LLM-powered text analysis
+- Process planning and self-reflection capabilities
+
+## Testing
+
+The project includes comprehensive unit tests for all tools. To run the tests:
+
+```bash
+# Make sure you're in the virtual environment
+source venv/bin/activate  # On Windows: .\venv\Scripts\activate
+
+# Run all tests
+PYTHONPATH=. pytest -v tests/
+```
+
+Note: Use `-v` flag to see detailed test output including why tests were skipped (e.g. missing API keys)
+
+The test suite includes:
+- Search engine tests (DuckDuckGo integration)
+- Web scraper tests (Playwright-based scraping)
+- LLM API tests (OpenAI integration)
+
+## Background
+
+For detailed information about the motivation and technical details behind this project, check out the blog post: [Turning $20 into $500 - Transforming Cursor into Devin in One Hour](https://yage.ai/cursor-to-devin-en.html)
+
+## License
+
+MIT License

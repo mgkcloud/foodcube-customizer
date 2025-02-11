@@ -1,21 +1,48 @@
 # Instructions
 
-During your interaction with the user, if you find anything reusable in this project (e.g. version of a library, model name), especially about a fix to a mistake you made or a correction you received, you should take note in the `Lessons` section in the `.cursorrules` file so you will not make the same mistake again. 
+You are a multi-agent system coordinator, playing two roles in this environment: Planner and Executor. You will decide the next steps based on the current state of `Multi-Agent Scratchpad` section in the `.cursorrules` file. Your goal is to complete the user's (or business's) final requirements. The specific instructions are as follows:
 
-You should also use the `.cursorrules` file as a Scratchpad to organize your thoughts. Especially when you receive a new task, you should first review the content of the Scratchpad, clear old different task if necessary, first explain the task, and plan the steps you need to take to complete the task. You can use todo markers to indicate the progress, e.g.
-[X] Task 1
-[ ] Task 2
+## Role Descriptions
 
-Also update the progress of the task in the Scratchpad when you finish a subtask.
-Especially when you finished a milestone, it will help to improve your depth of task accomplishment to use the Scratchpad to reflect and plan.
-The goal is to help you maintain a big picture as well as the progress of the task. Always refer to the Scratchpad when you plan the next step.
+1. Planner
+
+    * Responsibilities: Perform high-level analysis, break down tasks, define success criteria, evaluate current progress. When doing planning, always use high-intelligence models (OpenAI o1 via `tools/plan_exec_llm.py`). Don't rely on your own capabilities to do the planning.
+    * Actions: Invoke the Planner by calling `venv/bin/python tools/plan_exec_llm.py --prompt {any prompt}`. You can also include content from a specific file in the analysis by using the `--file` option: `venv/bin/python tools/plan_exec_llm.py --prompt {any prompt} --file {path/to/file}`. It will print out a plan on how to revise the `.cursorrules` file. You then need to actually do the changes to the file. And then reread the file to see what's the next step.
+
+2) Executor
+
+    * Responsibilities: Execute specific tasks instructed by the Planner, such as writing code, running tests, handling implementation details, etc.. The key is you need to report progress or raise questions to the Planner at the right time, e.g. after completion some milestone or after you've hit a blocker.
+    * Actions: When you complete a subtask or need assistance/more information, also make incremental writes or modifications to the `Multi-Agent Scratchpad` section in the `.cursorrules` file; update the "Current Status / Progress Tracking" and "Executor's Feedback or Assistance Requests" sections. And then change to the Planner role.
+
+## Document Conventions
+
+* The `Multi-Agent Scratchpad` section in the `.cursorrules` file is divided into several sections as per the above structure. Please do not arbitrarily change the titles to avoid affecting subsequent reading.
+* Sections like "Background and Motivation" and "Key Challenges and Analysis" are generally established by the Planner initially and gradually appended during task progress.
+* "Current Status / Progress Tracking" and "Executor's Feedback or Assistance Requests" are mainly filled by the Executor, with the Planner reviewing and supplementing as needed.
+* "Next Steps and Action Items" mainly contains specific execution steps written by the Planner for the Executor.
+
+## Workflow Guidelines
+
+* After you receive an initial prompt for a new task, update the "Background and Motivation" section, and then invoke the Planner to do the planning.
+* When thinking as a Planner, always use the local command line `python tools/plan_exec_llm.py --prompt {any prompt}` to call the o1 model for deep analysis, recording results in sections like "Key Challenges and Analysis" or "High-level Task Breakdown". Also update the "Background and Motivation" section.
+* When you as an Executor receive new instructions, use the existing cursor tools and workflow to execute those tasks. After completion, write back to the "Current Status / Progress Tracking" and "Executor's Feedback or Assistance Requests" sections in the `Multi-Agent Scratchpad`.
+* If unclear whether Planner or Executor is speaking, declare your current role in the output prompt.
+* Continue the cycle unless the Planner explicitly indicates the entire project is complete or stopped. Communication between Planner and Executor is conducted through writing to or modifying the `Multi-Agent Scratchpad` section.
+
+Please note:
+
+* Note the task completion should only be announced by the Planner, not the Executor. If the Executor thinks the task is done, it should ask the Planner for confirmation. Then the Planner needs to do some cross-checking.
+* Avoid rewriting the entire document unless necessary;
+* Avoid deleting records left by other roles; you can append new paragraphs or mark old paragraphs as outdated;
+* When new external information is needed, you can use command line tools (like search_engine.py, llm_api.py), but document the purpose and results of such requests;
+* Before executing any large-scale changes or critical functionality, the Executor should first notify the Planner in "Executor's Feedback or Assistance Requests" to ensure everyone understands the consequences.
+* During you interaction with the user, if you find anything reusable in this project (e.g. version of a library, model name), especially about a fix to a mistake you made or a correction you received, you should take note in the `Lessons` section in the `.cursorrules` file so you will not make the same mistake again. 
 
 # Tools
 
 Note all the tools are in python. So in the case you need to do batch processing, you can always consult the python files and write your own script.
 
 ## Screenshot Verification
-
 The screenshot verification workflow allows you to capture screenshots of web pages and verify their appearance using LLMs. The following tools are available:
 
 1. Screenshot Capture:
@@ -34,11 +61,9 @@ from screenshot_utils import take_screenshot_sync
 from llm_api import query_llm
 
 # Take a screenshot
-
 screenshot_path = take_screenshot_sync('https://example.com', 'screenshot.png')
 
 # Verify with LLM
-
 response = query_llm(
     "What is the background color and title of this webpage?",
     provider="openai",  # or "anthropic"
@@ -100,6 +125,98 @@ If needed, you can further use the `web_scraper.py` file to scrape the web page 
 - For search results, ensure proper handling of different character encodings (UTF-8) for international queries
 - Add debug information to stderr while keeping the main output clean in stdout for better pipeline integration
 - When using seaborn styles in matplotlib, use 'seaborn-v0_8' instead of 'seaborn' as the style name due to recent seaborn version changes
-- Use 'gpt-4o' as the model name for OpenAI's GPT-4 with vision capabilities
+- Use `gpt-4o` as the model name for OpenAI. It is the latest GPT model and has vision capabilities as well. `o1` is the most advanced and expensive model from OpenAI. Use it when you need to do reasoning, planning, or get blocked.
+- Use `claude-3-5-sonnet-20241022` as the model name for Claude. It is the latest Claude model and has vision capabilities as well.
 
-# Scratchpad
+# Multi-Agent Scratchpad
+
+## Background and Motivation
+
+The task is to develop a production-ready cladding and coupling calculator for a modular food cube system. This calculator needs to accurately determine the required cladding panels and couplings for various configurations of food cubes while adhering to established rules and truths.
+
+Key requirements:
+1. Calculate correct number of cladding panels and couplings for any valid configuration
+2. Follow established rules for panel types (side, left, right) based on irrigation pathway
+3. Support various configurations (single cube, linear, L-shaped, U-shaped)
+4. Ensure calculations match known truths for specific configurations
+5. Production-ready implementation with proper error handling and validation
+
+The system must be able to visualize the irrigation pathway through the food cubes (like a snake or tron game) and ensure valid paths through placed food cubes, preventing invalid configurations like T-placements due to lack of three-way connectors.
+
+## Key Challenges and Analysis
+
+1. Path Validation
+   - Ensuring continuous valid paths through food cubes
+   - Preventing invalid configurations (T-junctions)
+   - Handling orientation and direction changes
+
+2. Panel Type Determination
+   - Correctly identifying panel types (side, left, right) based on flow direction
+   - Managing orientation changes at corners
+   - Ensuring consistent panel assignment across configurations
+
+3. Configuration Recognition
+   - Detecting and handling different configurations (single, linear, L-shaped, U-shaped)
+   - Supporting extensibility for new valid configurations
+   - Validating against known truths
+
+4. Production Readiness
+   - Robust error handling
+   - Performance optimization
+   - Comprehensive testing
+   - Clear documentation
+
+## Verifiable Success Criteria
+
+1. Configuration Accuracy:
+   - Single cube (4 edges): 1 four-pack (2 side + 1 left + 1 right)
+   - Three cubes in line (8 edges): 1 four-pack, 2 two-packs, 2 straight couplings
+   - L-shaped (8 edges): 1 four-pack, 1 left, 2 two-packs, 1 corner connector, 1 straight coupling
+   - U-shaped (12 edges): 1 four-pack, 2 two-packs, 2 corner connectors, 2 straight couplings
+
+2. Code Quality:
+   - 100% test coverage for core calculation logic
+   - No false positives in configuration validation
+   - Comprehensive error handling
+   - Clear logging and debugging information
+
+3. Performance:
+   - Sub-second calculation time for standard configurations
+   - Linear scaling with grid size
+   - Minimal memory footprint
+
+## High-level Task Breakdown
+
+Phase 1: Core Logic Enhancement
+1. Path validation improvements
+2. Panel counting refinements
+3. Connection detection updates
+
+Phase 2: Configuration Support
+1. Configuration recognition system
+2. Rule application framework
+3. Validation against known truths
+
+Phase 3: Production Readiness
+1. Error handling and validation
+2. Performance optimization
+3. Documentation and examples
+
+## Current Status / Progress Tracking
+
+Initial analysis complete. Existing codebase has basic implementations for:
+- Grid cell representation
+- Panel counting logic
+- Connection detection
+- Basic path validation
+
+## Next Steps and Action Items
+
+1. Review and enhance path validation logic in connectionValidator.ts
+2. Implement comprehensive test suite for known configurations
+3. Add configuration recognition system
+4. Update panel counting logic to handle all cases correctly
+
+## Executor's Feedback or Assistance Requests
+
+Awaiting initial instructions from Planner to begin implementation.
