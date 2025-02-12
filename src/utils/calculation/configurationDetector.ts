@@ -45,36 +45,69 @@ export const isStraightFlow = (entry: CompassDirection | null, exit: CompassDire
  * Checks if a configuration is U-shaped
  */
 export const isUShapedConfiguration = (path: { cubes: PathCube[] }): boolean => {
-  if (path.cubes.length !== 5) return false;
+  // U-shape must have at least 5 cubes
+  if (path.cubes.length < 5) return false;
 
-  // Count corner turns
+  // Count corner turns and validate flow direction
   let cornerCount = 0;
+  let straightCount = 0;
+  const opposites = { N: 'S', S: 'N', E: 'W', W: 'E' } as const;
+
   for (let i = 1; i < path.cubes.length; i++) {
-    if (isCorner(path.cubes[i-1].exit, path.cubes[i].entry)) {
+    const prev = path.cubes[i-1];
+    const curr = path.cubes[i];
+
+    if (!prev.exit || !curr.entry) return false;
+
+    if (curr.entry === opposites[prev.exit as keyof typeof opposites]) {
+      straightCount++;
+    } else {
       cornerCount++;
     }
   }
 
   // U-shape must have exactly 2 corners
-  return cornerCount === 2;
+  if (cornerCount !== 2) return false;
+
+  // Validate U-shape geometry
+  const startCube = path.cubes[0];
+  const endCube = path.cubes[path.cubes.length - 1];
+
+  // Start and end cubes should be parallel (same row or column)
+  return (startCube.row === endCube.row && Math.abs(startCube.col - endCube.col) >= 2) ||
+         (startCube.col === endCube.col && Math.abs(startCube.row - endCube.row) >= 2);
 };
 
 /**
  * Checks if a configuration is L-shaped
  */
 export const isLShapedConfiguration = (path: { cubes: PathCube[] }): boolean => {
-  if (path.cubes.length !== 3) return false;
+  if (path.cubes.length < 3) return false;
 
-  // Count corner turns
+  // Count corner turns and validate flow direction
   let cornerCount = 0;
+  const opposites = { N: 'S', S: 'N', E: 'W', W: 'E' } as const;
+
   for (let i = 1; i < path.cubes.length; i++) {
-    if (isCorner(path.cubes[i-1].exit, path.cubes[i].entry)) {
+    const prev = path.cubes[i-1];
+    const curr = path.cubes[i];
+
+    if (!prev.exit || !curr.entry) return false;
+
+    if (curr.entry !== opposites[prev.exit as keyof typeof opposites]) {
       cornerCount++;
     }
   }
 
   // L-shape must have exactly 1 corner
-  return cornerCount === 1;
+  if (cornerCount !== 1) return false;
+
+  // Validate L-shape geometry
+  const startCube = path.cubes[0];
+  const endCube = path.cubes[path.cubes.length - 1];
+
+  // Start and end cubes should be perpendicular
+  return (startCube.row !== endCube.row && startCube.col !== endCube.col);
 };
 
 /**

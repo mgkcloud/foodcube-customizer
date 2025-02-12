@@ -81,7 +81,7 @@ describe('FoodcubeConfigurator Preset Configurations', () => {
     render(<FoodcubeConfigurator variants={mockVariants} onUpdate={mockOnUpdate} />);
     
     // Apply straight line preset
-    fireEvent.click(screen.getByText('Straight Line'));
+    fireEvent.click(screen.getByText('Straight (3x1)'));
 
     // Verify against ground truth:
     // 1 four-pack (2 side + 1 left + 1 right)

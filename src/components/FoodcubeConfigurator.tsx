@@ -58,7 +58,7 @@ export const FoodcubeConfigurator: React.FC<FoodcubeConfiguratorProps> = ({ vari
         </div>
       </div>
       
-      <div className="gap-6 max-w-lg flex justify-center m-auto">
+      {/* <div className="gap-6 max-w-lg flex justify-center m-auto">
         <div className="w-2/3">
           <Grid 
             grid={grid} 
@@ -70,7 +70,7 @@ export const FoodcubeConfigurator: React.FC<FoodcubeConfiguratorProps> = ({ vari
         <div className="w-1/3">
           <Summary requirements={requirements} variants={variants} />
         </div>
-      </div>
+      </div> */}
     </div>
   );
 };

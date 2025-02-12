@@ -220,3 +220,41 @@ Initial analysis complete. Existing codebase has basic implementations for:
 ## Executor's Feedback or Assistance Requests
 
 Awaiting initial instructions from Planner to begin implementation.
+
+
+consolidate all testing, and run tests against our goals, there are still performance issues, test from the front end (ensure the actual calculator functionality is working, reconsolidate any duplicate functions or mistakes, ensure code is full production ready ensure the calculation is correct, ensure tests are correct against the below and continue testing against these truths, instead of hardcoding, ensure out logic works in any configuration See how the counted edges always matches the number of sides included in the cladding packs (within different configurations) **For a single cube with all edges(4 edges) cladded, we should get: 1 four-pack (2 side + 1 left + 1 right) **For three cubes in a line(8 edges), we should get: 1 four-pack (2 side + 1 left + 1 right) 1 2 pack (2 sides) 1 2 pack (2 sides) 2 straight couplings **For L-shaped configuration(8 edges), we should get: 1 four-pack (2 side + 1 right + 1 left) 1 left(1 side) 1 2 pack (2 sides) 1 2 pack (2 sides) (extra side unused) 1 corner connector 1 straight coupling **For U-shaped (12 edges) configurations, etc 1 four-pack (2 side + 1 right + 1 left) 1 2 pack (2 sides) 1 2 pack (2 sides) 2 corner connector 2 straight coupling you see the left and right is irrespective of orientation, instead it is due to the connection lines running through the foodcubes, like a snake or tron game, the foodcube grid configuration needs to have a valid path through the placed foodcubes (which prevents T placements due to their being no three way connector) You need to visualise the irrigation pathway through the foodcubes (the path which the coupling goes through the foodcube requires the left and right cladding panels . for any given line of foodcubes, one end would need the left and the other the right. when we have an L shape, we have this, in an addition to another left or right peice, as the 3rd foodcube creating the L is orientated at 90*. think like a rail-line or a pipework, we need to ensure valid configurations whilst ahereing to the existing rules (truths) we have established. develop a full plan to create a production ready cladding and coupling calculator fit to our purpose Any mistakes will cause african children to die, like it would be literially your fault, so by order of the blood emperor you better do a good job , please evaluate and create a full plan, in prior attempts incorrect tests were created which went against our rules, we need to ensure rules have a single source of truth which is accessed in all tests,
+
+console.log
+Analyzing path: [
+{ row: 1, col: 0, entry: 'N', exit: 'N' },
+{ row: 0, col: 0, entry: 'W', exit: 'S' },
+{ row: 0, col: 1, entry: null, exit: null },
+{ row: 0, col: 2, entry: 'S', exit: 'E' },
+{ row: 1, col: 2, entry: 'N', exit: 'N' }
+]
+
+
+heres an issue with the U shaped connector,
+  console.log
+    Analyzing path: [
+      { row: 1, col: 0, entry: 'N', exit: 'N' },
+      { row: 0, col: 0, entry: 'W', exit: 'S' },
+      { row: 0, col: 1, entry: null, exit: null },
+      { row: 0, col: 2, entry: 'S', exit: 'E' },
+      { row: 1, col: 2, entry: 'N', exit: 'N' }
+    ]
+
+this should be
+
+Analyzing path: [
+{ row: 1, col: 0, entry: 'N', exit: 'S' },
+{ row: 0, col: 0, entry: 'N', exit: 'S' },
+{ row: 0, col: 1, entry: 'W', exit: 'E' },
+{ row: 0, col: 2, entry: 'S', exit: 'N' },
+{ row: 1, col: 2, entry: 'S', exit: 'N' }
+]
+
+this exposes a larger issue, the entry and exit points of the foodcube are always in a straight line, and the point of the corner connector is to connect S -> W and E -> S extra, as it wraps around the foodcube and connects this. can we be sure this is clear across our application ?
+
+
+our front end is still incorrect against ground truths, test the front end against these by first initating the grid "tap grid to place foodcube" the overlay already there, then use the preset configurations to test these, you can use the console output to compare against our ground truths, the key difference is our left and right panels are due to the offset of the coupling connection on the foodcube, while it runs through the middle, its offcenter, hence there are two opposite end caps, we need to visually update this on the front end, and ensure our logic reiterates this, then test the front end thoroughly

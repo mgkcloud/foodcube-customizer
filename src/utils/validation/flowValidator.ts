@@ -59,7 +59,7 @@ const setCubeConnections = (grid: GridCell[][], row: number, col: number, visite
 
   // Set entry and exit based on flow direction
   if (connections.length === 1) {
-    // Endpoint - set based on position relative to the rest of the path
+    // Endpoint - set entry and exit based on position
     const key = `${row},${col}`;
     if (!visited.has(key)) {
       // First endpoint - this is where flow enters
@@ -75,7 +75,6 @@ const setCubeConnections = (grid: GridCell[][], row: number, col: number, visite
       };
     }
   } else if (connections.length === 2) {
-    // For middle cubes, we need to determine flow direction based on neighbors
     const [dir1, dir2] = connections;
     const key = `${row},${col}`;
     
@@ -96,19 +95,20 @@ const setCubeConnections = (grid: GridCell[][], row: number, col: number, visite
       case 'W': pos2Col--; break;
     }
 
-    // Check which neighbor is already visited to determine flow direction
     const pos1Key = `${pos1Row},${pos1Col}`;
     const pos2Key = `${pos2Row},${pos2Col}`;
 
-    // Helper to check if two directions form a corner
-    const isCornerTurn = (d1: CompassDirection, d2: CompassDirection) => {
-      const opposites = { N: 'S', S: 'N', E: 'W', W: 'E' };
-      return d1 !== opposites[d2];
-    };
+    // For U-shape, we need to ensure consistent flow direction
+    const opposites = { N: 'S', S: 'N', E: 'W', W: 'E' } as const;
+    const isOpposite = (d1: CompassDirection, d2: CompassDirection) => 
+      opposites[d1] === d2;
 
-    // Helper to determine if a direction pair forms an L-shape
-    const isLShape = (d1: CompassDirection, d2: CompassDirection) => {
-      return (d1 === 'W' && d2 === 'S') || (d1 === 'N' && d2 === 'E');
+    // Helper to determine if a direction pair forms a U-shape turn
+    const isUShapeTurn = (d1: CompassDirection, d2: CompassDirection) => {
+      return (d1 === 'W' && d2 === 'S') || 
+             (d1 === 'S' && d2 === 'E') ||
+             (d1 === 'E' && d2 === 'N') ||
+             (d1 === 'N' && d2 === 'W');
     };
 
     if (visited.has(pos1Key)) {
@@ -125,30 +125,25 @@ const setCubeConnections = (grid: GridCell[][], row: number, col: number, visite
       };
     } else {
       // Neither neighbor visited yet, determine flow based on configuration
-      if (isLShape(dir1, dir2)) {
-        // For L-shape, maintain the correct flow direction
+      if (isOpposite(dir1, dir2)) {
+        // Straight section - maintain consistent flow direction
         grid[row][col].connections = {
           entry: dir1,
           exit: dir2
         };
-      } else if (isCornerTurn(dir1, dir2)) {
-        // For other corners, maintain clockwise flow
+      } else if (isUShapeTurn(dir1, dir2)) {
+        // U-shape turn - ensure correct flow direction
+        grid[row][col].connections = {
+          entry: dir1,
+          exit: dir2
+        };
+      } else {
+        // Other corner - maintain clockwise flow
         const clockwise = (dir1 === 'N' && dir2 === 'E') ||
                          (dir1 === 'E' && dir2 === 'S') ||
                          (dir1 === 'S' && dir2 === 'W') ||
                          (dir1 === 'W' && dir2 === 'N');
         grid[row][col].connections = clockwise ? {
-          entry: dir1,
-          exit: dir2
-        } : {
-          entry: dir2,
-          exit: dir1
-        };
-      } else {
-        // For straight sections, maintain consistent flow direction
-        const straightFlow = (dir1 === 'W' && dir2 === 'E') ||
-                            (dir1 === 'N' && dir2 === 'S');
-        grid[row][col].connections = straightFlow ? {
           entry: dir1,
           exit: dir2
         } : {
