@@ -9,6 +9,8 @@ export interface GridCell {
   hasCube: boolean;
   claddingEdges: Set<CompassDirection>;
   connections: CubeConnection;
+  rotation: 0 | 90 | 180 | 270;
+  subgrid?: { subgridRow: number; subgridCol: number }[];
 }
 
 export interface Requirements {

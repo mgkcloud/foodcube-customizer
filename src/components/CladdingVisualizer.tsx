@@ -16,19 +16,56 @@ type CladdingVisualizerProps = {
 };
 
 export const CladdingVisualizer = ({ cell, row, col, grid, onToggle, isEdgeExposed }: CladdingVisualizerProps) => {
-  // Only show cladding options for cells that have cubes
+  // Log cell state when component renders
+  console.group(`CladdingVisualizer [${row},${col}]`);
+  console.log('Cell State:', JSON.stringify({
+    hasCube: cell?.hasCube,
+    connections: cell?.connections,
+    claddingEdges: Array.from(cell?.claddingEdges || []),
+    exposedEdges: isEdgeExposed
+  }, null, 2));
+
+  // Render subgrid highlighting for irrigation flow
+  const renderSubgridHighlight = () => {
+    return (
+      <div className="absolute inset-0 grid grid-cols-2 grid-rows-2">
+        <div className="bg-blue-200 opacity-50" />
+        <div className="bg-transparent" />
+        <div className="bg-blue-200 opacity-50" />
+        <div className="bg-transparent" />
+      </div>
+    );
+  };
+
   if (!cell?.hasCube) {
+    console.log('No cube present, skipping visualization');
+    console.groupEnd();
     return null;
   }
 
   // Get entry/exit from cell's connections
   const { entry, exit } = cell.connections;
   
+  // Log flow configuration
+  console.log('Flow Configuration:', JSON.stringify({
+    entry,
+    exit,
+    rotation: cell.rotation
+  }, null, 2));
+  
   const getEdgeStyle = (edge: EdgeType): React.CSSProperties => {
     const isSelected = cell.claddingEdges.has(edge);
     // Use the flow-based panel type determination
     const panelType = getPanelType(edge as CompassDirection, entry, exit);
     const baseColor = PANEL_COLORS[panelType];
+    
+    // Log panel details
+    console.log(`Panel [${edge}]:`, JSON.stringify({
+      type: panelType,
+      isSelected,
+      color: baseColor,
+      isExposed: isEdgeExposed[edge]
+    }, null, 2));
     
     return {
       backgroundColor: isSelected 
@@ -38,6 +75,16 @@ export const CladdingVisualizer = ({ cell, row, col, grid, onToggle, isEdgeExpos
       // Hover handled by CSS classes
     };
   };
+
+  // Log all edges' panel types
+  console.log('Panel Configuration:', JSON.stringify({
+    north: getPanelType('N', entry, exit),
+    east: getPanelType('E', entry, exit),
+    south: getPanelType('S', entry, exit),
+    west: getPanelType('W', entry, exit)
+  }, null, 2));
+
+  console.groupEnd();
 
   return (
     <div className="absolute inset-0 pointer-events-none">
@@ -61,6 +108,11 @@ export const CladdingVisualizer = ({ cell, row, col, grid, onToggle, isEdgeExpos
             )}
             onClick={(e) => {
               e.stopPropagation();
+              // Log panel toggle
+              console.log(`Toggling panel [${row},${col}] ${edge}:`, JSON.stringify({
+                wasSelected: cell.claddingEdges.has(edge),
+                type: getPanelType(edge as CompassDirection, entry, exit)
+              }, null, 2));
               onToggle(edge);
             }}
           />

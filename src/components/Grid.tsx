@@ -28,6 +28,28 @@ export const Grid: React.FC<GridProps> = ({ grid, onToggleCell, onToggleCladding
     onToggleCladding(row, col, edge);
   };
 
+  // Render subgrid within each cell
+  const renderSubgrid = (rowIndex: number, colIndex: number) => {
+    const subgrid = [
+      { subgridRow: rowIndex * 2, subgridCol: colIndex * 2 },
+      { subgridRow: rowIndex * 2, subgridCol: colIndex * 2 + 1 },
+      { subgridRow: rowIndex * 2 + 1, subgridCol: colIndex * 2 },
+      { subgridRow: rowIndex * 2 + 1, subgridCol: colIndex * 2 + 1 }
+    ];
+
+    return (
+      <div className="grid grid-cols-2 gap-0.5 absolute inset-0">
+        {subgrid.map(({ subgridRow, subgridCol }) => (
+          <div
+            key={`${subgridRow}-${subgridCol}`}
+            className="bg-gray-200 hover:bg-gray-300 cursor-pointer"
+            onClick={() => console.log(`Subgrid selected: ${subgridRow}, ${subgridCol}`)}
+          />
+        ))}
+      </div>
+    );
+  };
+
   return (
     <div className="relative grid grid-cols-3 gap-1 bg-gray-100 p-4 rounded-lg">
       {!hasInteracted && (
@@ -62,6 +84,7 @@ export const Grid: React.FC<GridProps> = ({ grid, onToggleCell, onToggleCladding
           >
             {cell.hasCube && (
               <>
+                {renderSubgrid(rowIndex, colIndex)}
                 <CladdingVisualizer
                   cell={cell}
                   row={rowIndex}

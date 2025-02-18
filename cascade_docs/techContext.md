@@ -13,7 +13,7 @@
 
 3. State Management
    - React hooks for local state
-   - Custom hooks for grid management
+   - Custom hooks for grid and subgrid management
    - Immutable updates for reliability
 
 ## Core Implementation
@@ -23,7 +23,22 @@
 // types.ts
 export interface GridCell {
   hasCube: boolean;
-  claddingEdges: Set<'top' | 'right' | 'bottom' | 'left'>;
+  claddingEdges: Set<'N' | 'E' | 'S' | 'W'>;
+  connections: {
+    entry: CompassDirection | null;
+    exit: CompassDirection | null;
+  };
+}
+
+// flowAnalyzer.ts
+export interface PathCube {
+  row: number;
+  col: number;
+  subgrid: { subgridRow: number; subgridCol: number }[];
+  entry: CompassDirection | null;
+  exit: CompassDirection | null;
+  isCorner?: boolean;
+  flowDirection?: 'horizontal' | 'vertical';
 }
 
 // Preset System

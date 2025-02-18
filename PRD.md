@@ -1,16 +1,16 @@
 # Cladding Cube Customizer - Product Requirements Document
 
 ## Overview
-The Cladding Cube Customizer is a tool for calculating and visualizing the required panels and couplings for food cube configurations. It analyzes irrigation flow paths to determine the correct panel types and quantities needed for valid cube arrangements.
+The Cladding Cube Customizer is a tool for calculating and visualizing the required panels and couplings for food cube configurations. It analyzes irrigation flow paths to determine the correct panel types and quantities needed for valid cube arrangements. The tool now includes a subgrid implementation where each foodcube occupies a 2x2 area within the main grid, enhancing the precision of flow analysis and visualization.
 
 ## Core Components
 
 ### 1. Flow Analysis System
 - **Purpose**: Determines how irrigation flows through connected food cubes
 - **Components**:
-  - `flowValidator`: Validates irrigation paths through cubes
+  - `flowValidator`: Validates irrigation paths through cubes and subgrids
   - `connectionDetector`: Identifies connections between cubes
-  - `irrigationRules`: Defines valid flow patterns
+  - `irrigationRules`: Defines valid flow patterns, including subgrid flow
 
 ### 2. Panel Calculation System
 - **Purpose**: Calculates required panels based on flow analysis
@@ -20,10 +20,10 @@ The Cladding Cube Customizer is a tool for calculating and visualizing the requi
   - `rules`: Defines panel type determination rules
 
 ### 3. Visualization System
-- **Purpose**: Provides visual feedback of configurations
+- **Purpose**: Provides visual feedback of configurations, including subgrid details
 - **Components**:
   - `CladdingVisualizer`: Shows panel placements
-  - `PipelineVisualizer`: Shows irrigation flow
+  - `PipelineVisualizer`: Shows irrigation flow, highlighting flow within subgrids
 
 ## Data Flow
 
@@ -35,11 +35,11 @@ The Cladding Cube Customizer is a tool for calculating and visualizing the requi
 2. **Flow Analysis**
    - `flowValidator` analyzes cube connections
    - Valid paths are identified
-   - Flow direction through each cube is determined
+   - Flow direction through each cube and subgrid is determined
 
 3. **Panel Calculation**
    - `panelCounter` determines raw panel needs:
-     - Analyzes each cube's position in flow
+     - Analyzes each cube's position and subgrid flow
      - Determines panel types (side/left/right)
      - Counts required couplings
    - `panelPacker` optimizes panel distribution:
@@ -48,16 +48,26 @@ The Cladding Cube Customizer is a tool for calculating and visualizing the requi
      - Validates final configuration
 
 4. **Visualization**
-   - Updates visual representation
+   - Updates visual representation to include subgrid
    - Shows panel placements
-   - Indicates flow direction
+   - Indicates flow direction within subgrids
 
 ## Configuration Rules
 
 ### Panel Types
-- **Side Panels**: Used where flow enters/exits cube
-- **Left/Right Panels**: Determined by position relative to flow
+- **Side Panels (Blue)**: Used in two cases:
+  1. When a cube has no red flow blocks (0 red blocks)
+  2. When a cube has two red flow blocks (2 red blocks)
+- **Left/Right Panels**: Used when a cube has one red flow block:
+  - **Left Panel (Green)**: Applied when the red block is on the left side
+  - **Right Panel (Purple)**: Applied when the red block is on the right side
 - **Extra Panels**: Required for turns (L-shape)
+
+### Flow and Rotation Rules
+- Red lines must form a continuous path through the cubes
+- Cubes rotate to ensure proper flow connection:
+  - Cube at position (2,1) rotates 180° to connect with the end block
+  - Rotation ensures proper cladding placement (e.g., right cladding on S side when red block goes through right block)
 
 ### Standard Configurations
 1. **Single Cube (4 edges)**
@@ -77,7 +87,7 @@ The Cladding Cube Customizer is a tool for calculating and visualizing the requi
    - 1 straight coupling
 
 4. **U-Shape (12 edges)**
-   - 1 four-pack
+   - 2 four-pack
    - 2 two-packs
    - 2 corner connectors
    - 2 straight couplings

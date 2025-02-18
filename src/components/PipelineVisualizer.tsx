@@ -20,12 +20,82 @@ export const PipelineVisualizer: React.FC<PipelineVisualizerProps> = ({
   col,
   grid,
 }) => {
-  // Get irrigation path for visualization
+  // Helper functions to determine flow type
+  const isHorizontalDirection = (dir: CompassDirection | null) => dir === 'W' || dir === 'E';
+  const isVerticalDirection = (dir: CompassDirection | null) => dir === 'N' || dir === 'S';
+
+  const isHorizontalFlow = (entry: CompassDirection | null, exit: CompassDirection | null) => {
+    // If entry is horizontal, treat it as horizontal flow regardless of exit
+    // This ensures W→S is treated as horizontal since the corner connector handles the turn
+    if (entry && isHorizontalDirection(entry)) {
+      return true;
+    }
+    
+    // If entry is null but exit is horizontal, treat as horizontal flow
+    if (!entry && exit && isHorizontalDirection(exit)) {
+      return true;
+    }
+    
+    // If both directions are the same and horizontal
+    if (entry === exit && isHorizontalDirection(entry)) {
+      return true;
+    }
+    
+    return false;
+  };
+
+  const isVerticalFlow = (entry: CompassDirection | null, exit: CompassDirection | null) => {
+    // If entry is vertical, treat it as vertical flow regardless of exit
+    if (entry && isVerticalDirection(entry)) {
+      return true;
+    }
+    
+    // If entry is null but exit is vertical, treat as vertical flow
+    if (!entry && exit && isVerticalDirection(exit)) {
+      return true;
+    }
+    
+    // If both directions are the same and vertical
+    if (entry === exit && isVerticalDirection(entry)) {
+      return true;
+    }
+    
+    return false;
+  };
+
+  // Get connected cubes and validate path
   const connectedCubes = findConnectedCubes(grid, row, col);
   const isValidPath = validateIrrigationPath(grid);
   
   // Check if this cube is part of the path
   const isCubeInPath = connectedCubes.some(([r, c]) => r === row && c === col);
+
+  // Enhanced logging for cube status
+  console.group(`PipelineVisualizer [${row},${col}]`);
+  console.log('Cube Status:', JSON.stringify({
+    isInPath: isCubeInPath,
+    pathPosition: connectedCubes.findIndex(([r, c]) => r === row && c === col),
+    totalConnectedCubes: connectedCubes.length,
+    isValidPath,
+    connectedCubes: connectedCubes.map(([r, c]) => `[${r},${c}]`)
+  }, null, 2));
+  
+  if (isCubeInPath) {
+    const pathPosition = connectedCubes.findIndex(([r, c]) => r === row && c === col);
+    const prevCube = pathPosition > 0 ? connectedCubes[pathPosition - 1] : null;
+    const nextCube = pathPosition < connectedCubes.length - 1 ? connectedCubes[pathPosition + 1] : null;
+    
+    console.log('Path Details:', JSON.stringify({
+      position: pathPosition,
+      totalCubes: connectedCubes.length,
+      previousCube: prevCube ? `[${prevCube[0]},${prevCube[1]}]` : 'none',
+      nextCube: nextCube ? `[${nextCube[0]},${nextCube[1]}]` : 'none',
+      isFirstCube: pathPosition === 0,
+      isLastCube: pathPosition === connectedCubes.length - 1,
+      fullPath: connectedCubes.map(([r, c]) => `[${r},${c}]`).join(' → ')
+    }, null, 2));
+  }
+  console.groupEnd();
   
   if (!isCubeInPath) {
     return null;
@@ -48,9 +118,102 @@ export const PipelineVisualizer: React.FC<PipelineVisualizerProps> = ({
     return 'E';
   };
 
-  // Set entry/exit based on path position
-  const actualEntry = prevCube ? getConnectionDirection(row, col, prevCube[0], prevCube[1]) : null;
-  const actualExit = nextCube ? getConnectionDirection(row, col, nextCube[0], nextCube[1]) : null;
+  // Set entry/exit based on cell's own connections first, then fall back to path connections
+  const actualEntry = cell.connections.entry || (prevCube ? getConnectionDirection(row, col, prevCube[0], prevCube[1]) : null);
+  const actualExit = cell.connections.exit || (nextCube ? getConnectionDirection(row, col, nextCube[0], nextCube[1]) : null);
+
+  // Highlight the irrigation flow on the left side of each foodcube based on rotation
+  const renderIrrigationFlow = () => {
+    // Get flow pattern based on entry/exit points
+    const getFlowPattern = () => {
+      const flowSquareStyle = "bg-red-500 opacity-50";
+      const emptySquareStyle = "bg-transparent";
+
+      // For horizontal flow (W→E or E→E)
+      if (isHorizontalFlow(actualEntry, actualExit)) {
+        console.log(`[${row},${col}] Horizontal flow`);
+        return {
+          pattern: [flowSquareStyle, flowSquareStyle, emptySquareStyle, emptySquareStyle],
+          rotation: 90  // Rotate 90 degrees for horizontal flow
+        };
+      }
+
+      // For vertical flow (N→S or N→N)
+      if (isVerticalFlow(actualEntry, actualExit)) {
+        console.log(`[${row},${col}] Vertical flow`);
+        return {
+          pattern: [flowSquareStyle, emptySquareStyle, flowSquareStyle, emptySquareStyle],
+          rotation: 0  // No rotation for vertical flow
+        };
+      }
+
+      // Default to no flow pattern if no valid flow
+      console.log(`[${row},${col}] No valid flow pattern`);
+      return {
+        pattern: [emptySquareStyle, emptySquareStyle, emptySquareStyle, emptySquareStyle],
+        rotation: 0
+      };
+    };
+
+    const { pattern, rotation } = getFlowPattern();
+
+    // Log flow visualization details
+    console.group(`Flow Visualization [${row},${col}]`);
+    console.log('Pattern:', JSON.stringify(pattern.map((style, i) => ({
+      square: i,
+      type: style === "bg-red-500 opacity-50" ? "Flow" : "Empty",
+      style
+    })), null, 2));
+    console.log('Flow Type:', isHorizontalFlow(actualEntry, actualExit) ? 'Horizontal' : isVerticalFlow(actualEntry, actualExit) ? 'Vertical' : 'None');
+    console.log('Cell Details:', JSON.stringify({
+      entry: actualEntry,
+      exit: actualExit,
+      cellRotation: cell.rotation,
+      connections: cell.connections,
+      flowRotation: rotation,
+      pattern: pattern.map((style, i) => ({
+        square: i,
+        type: style === "bg-red-500 opacity-50" ? "Flow" : "Empty"
+      }))
+    }, null, 2));
+    console.groupEnd();
+
+    // Adjust pattern array based on rotation
+    const rotatedPattern = rotation === 90 ? [
+      pattern[2], pattern[0],  // Rotate left squares to top
+      pattern[3], pattern[1]   // Rotate right squares to bottom
+    ] : pattern;
+
+    return (
+      <div 
+        className="absolute inset-0 grid grid-cols-2 grid-rows-2"
+        style={{
+          transform: `rotate(${rotation}deg)`,
+          transformOrigin: 'center'
+        }}
+      >
+        {rotatedPattern.map((style, index) => (
+          <div key={index} className={style} />
+        ))}
+      </div>
+    );
+  };
+
+  // Log connection details
+  console.group(`Connection Details [${row},${col}]`);
+  console.log('Connections:', JSON.stringify({
+    entry: actualEntry,
+    exit: actualExit,
+    hasValidEntry: actualEntry && hasAdjacentCube(grid, row, col, actualEntry),
+    hasValidExit: actualExit && hasAdjacentCube(grid, row, col, actualExit),
+    adjacentCubes: {
+      north: hasAdjacentCube(grid, row, col, 'N'),
+      east: hasAdjacentCube(grid, row, col, 'E'),
+      south: hasAdjacentCube(grid, row, col, 'S'),
+      west: hasAdjacentCube(grid, row, col, 'W')
+    }
+  }, null, 2));
+  console.groupEnd();
 
   // Determine if connections are valid
   const hasValidEntry = actualEntry && hasAdjacentCube(grid, row, col, actualEntry);
@@ -78,19 +241,10 @@ export const PipelineVisualizer: React.FC<PipelineVisualizerProps> = ({
     };
   };
 
-  // Helper function to get the angle between two directions
-  const getAngleBetweenDirections = (dir1: CompassDirection, dir2: CompassDirection) => {
-    const dirToAngle = { N: 0, E: 90, S: 180, W: 270 };
-    const angle1 = dirToAngle[dir1];
-    const angle2 = dirToAngle[dir2];
-    return ((angle2 - angle1 + 360) % 360);
-  };
-
   // Get the pipe elements
   const getPipeElements = () => {
     const elements: JSX.Element[] = [];
     const PIPE_WIDTH = 5;
-    const CORNER_SIZE = 24;
 
     // Helper to create a straight pipe
     const createStraightPipe = (direction: CompassDirection, isHalf: boolean = false) => {
@@ -125,85 +279,10 @@ export const PipelineVisualizer: React.FC<PipelineVisualizerProps> = ({
       return style;
     };
 
-    // Helper to create a corner piece
-    const createCornerPiece = (entry: CompassDirection, exit: CompassDirection) => {
-      const angle = getAngleBetweenDirections(entry, exit);
-      const entryColor = getPanelColor(entry);
-      const exitColor = getPanelColor(exit);
-
-      // Create two quarter-circle elements for the corner
-      const baseStyle: React.CSSProperties = {
-        position: 'absolute',
-        width: `${CORNER_SIZE}px`,
-        height: `${CORNER_SIZE}px`,
-        borderRadius: '50%',
-      };
-
-      // Position the corner piece
-      if (entry === 'N' || exit === 'N') {
-        baseStyle.top = '0';
-      } else {
-        baseStyle.bottom = '0';
-      }
-      if (entry === 'W' || exit === 'W') {
-        baseStyle.left = '0';
-      } else {
-        baseStyle.right = '0';
-      }
-
-      // Create styles for entry and exit parts
-      const entryStyle: React.CSSProperties = {
-        ...baseStyle,
-        border: `${PIPE_WIDTH}px solid ${entryColor}`,
-        clipPath: angle === 90
-          ? 'polygon(0 0, 100% 0, 100% 50%, 50% 50%, 50% 100%, 0 100%)'
-          : 'polygon(0 0, 50% 0, 50% 50%, 100% 50%, 100% 100%, 0 100%)',
-      };
-
-      const exitStyle: React.CSSProperties = {
-        ...baseStyle,
-        ...getPanelStyle(exit),
-        borderWidth: `${PIPE_WIDTH}px`,
-        borderStyle: 'solid',
-        clipPath: angle === 90
-          ? 'polygon(100% 0, 100% 100%, 0 100%, 0 50%, 50% 50%, 50% 0)'
-          : 'polygon(50% 0, 100% 0, 100% 100%, 0 100%, 0 50%, 50% 50%)',
-      };
-
-      // Remove appropriate borders
-      if (angle === 90) {
-        entryStyle.borderTop = 'none';
-        entryStyle.borderRight = 'none';
-        exitStyle.borderBottom = 'none';
-        exitStyle.borderLeft = 'none';
-      } else if (angle === -90) {
-        entryStyle.borderTop = 'none';
-        entryStyle.borderLeft = 'none';
-        exitStyle.borderBottom = 'none';
-        exitStyle.borderRight = 'none';
-      } else if (angle === 180) {
-        entryStyle.borderLeft = 'none';
-        entryStyle.borderRight = 'none';
-        exitStyle.borderLeft = 'none';
-        exitStyle.borderRight = 'none';
-      }
-
-      return [entryStyle, exitStyle];
-    };
-
-    // Add pipes based on entry/exit configuration
+    // Only handle straight pipes
     if (actualEntry && actualExit) {
-      if (Math.abs(getAngleBetweenDirections(actualEntry, actualExit)) === 90) {
-        // Corner configuration
-        const [entryStyle, exitStyle] = createCornerPiece(actualEntry, actualExit);
-        elements.push(
-          <>
-            <div key="corner-entry" style={entryStyle} />
-            <div key="corner-exit" style={exitStyle} />
-          </>
-        );
-      } else {
-        // Straight through configuration
+      // Only create pipe if it's a straight flow
+      if (isHorizontalFlow(actualEntry, actualExit) || isVerticalFlow(actualEntry, actualExit)) {
         elements.push(
           <div key="straight" style={createStraightPipe(actualEntry)} />
         );
@@ -227,7 +306,8 @@ export const PipelineVisualizer: React.FC<PipelineVisualizerProps> = ({
 
   return (
     <div className="absolute inset-0">
-      {getPipeElements()}
+      {renderIrrigationFlow()}
+      {getPipeElements()} 
     </div>
   );
 };

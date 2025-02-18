@@ -3,16 +3,19 @@
 ## Key Components
 1. Core Components
    - FoodcubeConfigurator: Main application container
-   - Grid: Interactive cube placement interface
+   - Grid: Interactive cube placement interface with subgrid support
    - CladdingVisualizer: Edge interaction management
+   - PipelineVisualizer: Irrigation flow visualization
    - Summary: Requirements display
 
 2. State Management
-   - useGridState: Custom hook for grid state
-   - GridCell interface: Core data structure
+   - useGridState: Custom hook for grid and subgrid state
+   - GridCell interface: Core data structure, extended with subgrid information
 
 3. Utility Modules
-   - calculationUtils: Requirements calculation
+   - calculation/: Contains modules for flow analysis, panel counting, and packing
+   - validation/: Includes validators for flow and configuration
+   - core/: Defines fundamental rules and types
    - types: Shared type definitions
 
 ## Component Architecture
@@ -29,37 +32,49 @@
   ```
 
 ### Grid (TSX)
-- Renders interactive 3x3 cube grid
-- Manages cube placement and cladding interaction
-- Integrates CladdingVisualizer for edge management
+- Renders interactive 3x3 cube grid with 2x2 subgrids for each cell
+- Manages cube placement and subgrid interaction
+- Integrates `CladdingVisualizer` and `PipelineVisualizer` for enhanced visualization
 - Props:
   ```tsx
   interface GridProps {
     grid: GridCell[][];
     onToggleCell: (row: number, col: number) => void;
-    onToggleCladding: (row: number, col: number, edge: EdgeType) => void;
+    onToggleCladding: (row: number, col: number, edge: 'N' | 'E' | 'S' | 'W') => void;
   }
   ```
 
 ### CladdingVisualizer (TSX)
 - Handles edge visualization and interaction
-- Smart edge exposure detection
+- Highlights subgrid for irrigation flow
 - Props:
   ```tsx
   interface CladdingVisualizerProps {
     cell: GridCell;
+    row: number;
+    col: number;
+    grid: GridCell[][];
     onToggle: (edge: EdgeType) => void;
     isEdgeExposed: Record<EdgeType, boolean>;
   }
   ```
 
-### CalculationUtils (TS)
-- Calculates required components based on configuration
-- Handles edge exposure and connection analysis
-- Core functions:
-  - calculateRequirements: Main calculation entry point
-  - calculateExposedSides: Edge analysis
-  - hasAdjacentCube: Adjacency detection
+### PipelineVisualizer (TSX)
+- Visualizes irrigation flow within the subgrid
+- Shows connections and flow direction
+- Props:
+    ```tsx
+    interface PipelineVisualizerProps {
+      cell: GridCell;
+      row: number;
+      col: number;
+      grid: GridCell[][];
+    }
+    ```
+
+### Calculation Layer
+- `flowAnalyzer.ts`: Analyzes flow, including subgrid logic and rotation
+- `requirementsCalculator.ts`: Calculates panel requirements based on analyzed flow
 
 ## Data Flow
 1. User Interaction Flow

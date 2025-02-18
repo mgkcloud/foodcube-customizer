@@ -6,7 +6,6 @@ import { packPanels } from '@/utils/calculation/panelPacker';
 import { createEmptyCell } from '@/utils/core/gridCell';
 import { validateIrrigationPath } from '@/utils/validation/flowValidator';
 
-
 const GRID_SIZE = 3;
 
 const initializeGrid = (): GridCell[][] => {
@@ -32,29 +31,62 @@ const useGridState = () => {
 
   // Debug logging helper
   const logGridState = (grid: GridCell[][], requirements: Requirements) => {
-    const gridState = grid.map(row => 
-      row.map(cell => ({
+    const gridState = grid.map((row, rowIndex) => 
+      row.map((cell, colIndex) => ({
+        position: `[${rowIndex},${colIndex}]`,
         hasCube: cell.hasCube,
         connections: cell.connections,
-        claddingEdges: Array.from(cell.claddingEdges)
+        claddingEdges: Array.from(cell.claddingEdges),
+        rotation: cell.rotation,
+        adjacentCubes: {
+          north: hasAdjacentCube(grid, rowIndex, colIndex, 'N'),
+          east: hasAdjacentCube(grid, rowIndex, colIndex, 'E'),
+          south: hasAdjacentCube(grid, rowIndex, colIndex, 'S'),
+          west: hasAdjacentCube(grid, rowIndex, colIndex, 'W')
+        }
       }))
     );
 
     console.group('Grid State Update');
-    console.log('Current Grid Layout:', gridState);
-    console.log('Panel Requirements:', {
+    console.log('Current Grid Layout:', JSON.stringify(gridState, null, 2));
+    console.log('Panel Requirements:', JSON.stringify({
       ...requirements,
       totalPanels: requirements.sidePanels + requirements.leftPanels + requirements.rightPanels,
-      totalConnectors: requirements.cornerConnectors + requirements.straightCouplings
-    });
+      totalConnectors: requirements.cornerConnectors + requirements.straightCouplings,
+      breakdown: {
+        panels: {
+          side: `${requirements.sidePanels} panels (blue)`,
+          left: `${requirements.leftPanels} panels (green)`,
+          right: `${requirements.rightPanels} panels (purple)`
+        },
+        connectors: {
+          corner: `${requirements.cornerConnectors} connectors`,
+          straight: `${requirements.straightCouplings} couplings`
+        },
+        packs: {
+          fourPack: {
+            regular: requirements.fourPackRegular,
+            extraTall: requirements.fourPackExtraTall
+          },
+          twoPack: {
+            regular: requirements.twoPackRegular,
+            extraTall: requirements.twoPackExtraTall
+          }
+        }
+      }
+    }, null, 2));
     
     // Log panel distribution
     const panelDistribution = {
       sides: requirements.sidePanels > 0 ? `${requirements.sidePanels} panels (blue)` : 'None',
       left: requirements.leftPanels > 0 ? `${requirements.leftPanels} panels (green)` : 'None',
-      right: requirements.rightPanels > 0 ? `${requirements.rightPanels} panels (purple)` : 'None'
+      right: requirements.rightPanels > 0 ? `${requirements.rightPanels} panels (purple)` : 'None',
+      connectors: {
+        corner: requirements.cornerConnectors > 0 ? `${requirements.cornerConnectors} connectors` : 'None',
+        straight: requirements.straightCouplings > 0 ? `${requirements.straightCouplings} couplings` : 'None'
+      }
     };
-    console.log('Panel Distribution:', panelDistribution);
+    console.log('Panel Distribution:', JSON.stringify(panelDistribution, null, 2));
     console.groupEnd();
   };
 
@@ -91,34 +123,56 @@ const useGridState = () => {
           }
         });
         
+        // Get adjacent cubes for determining rotation
+        const adjacentCubes = [
+          { r: row-1, c: col, direction: 'S' as const, opposite: 'N' as const },
+          { r: row+1, c: col, direction: 'N' as const, opposite: 'S' as const },
+          { r: row, c: col-1, direction: 'E' as const, opposite: 'W' as const },
+          { r: row, c: col+1, direction: 'W' as const, opposite: 'E' as const }
+        ].filter(({ r, c }) => 
+          r >= 0 && r < GRID_SIZE && c >= 0 && c < GRID_SIZE && prev[r][c].hasCube
+        );
+
+        // Initialize the new cell
         newGrid[row][col] = {
           hasCube: true,
           claddingEdges: exposedEdges,
           connections: {
             entry: null,
             exit: null
-          }
+          },
+          rotation: 0 // Default rotation
         };
 
-        // Update connections for adjacent cubes
-        const adjacentPositions = [
-          { r: row-1, c: col, direction: 'S' as const },
-          { r: row+1, c: col, direction: 'N' as const },
-          { r: row, c: col-1, direction: 'E' as const },
-          { r: row, c: col+1, direction: 'W' as const }
-        ];
+        // If we have exactly one adjacent cube, align with it
+        if (adjacentCubes.length === 1) {
+          const [adjacent] = adjacentCubes;
+          const existingCube = prev[adjacent.r][adjacent.c];
+          
+          // If the existing cube has a connection, align with it
+          if (existingCube.connections.exit === adjacent.opposite) {
+            newGrid[row][col].connections.entry = adjacent.direction;
+            newGrid[row][col].rotation = existingCube.rotation;
+          }
+        }
 
-        let connectedCubes = adjacentPositions.filter(({ r, c }) => 
-          r >= 0 && r < GRID_SIZE && c >= 0 && c < GRID_SIZE && newGrid[r][c].hasCube
-        );
-
-        // If exactly two adjacent cubes, set up connections
-        if (connectedCubes.length === 2) {
-          const [first, second] = connectedCubes;
+        // If we have exactly two adjacent cubes, set up connections and rotation
+        if (adjacentCubes.length === 2) {
+          const [first, second] = adjacentCubes;
           newGrid[row][col].connections = {
             entry: first.direction,
             exit: second.direction
           };
+          
+          // Set rotation based on entry direction
+          const ROTATION_MAP = {
+            N: 0,   // Flow from North to South
+            E: 90,  // Flow from East to West
+            S: 180, // Flow from South to North
+            W: 270  // Flow from West to East
+          } as const;
+          
+          newGrid[row][col].rotation = ROTATION_MAP[first.direction];
         }
       } else {
         // If removing a cube, update adjacent cubes' cladding and connections
@@ -128,7 +182,8 @@ const useGridState = () => {
           connections: {
             entry: null,
             exit: null
-          }
+          },
+          rotation: 0
         };
 
         // Update adjacent cubes to add cladding on the newly exposed sides
@@ -189,6 +244,13 @@ const useGridState = () => {
     }
 
     // Create a deep copy of the preset grid
+    const ROTATION_MAP = {
+      N: 0,   // Flow from North to South
+      E: 90,  // Flow from East to West
+      S: 180, // Flow from South to North
+      W: 270  // Flow from West to East
+    } as const;
+
     const newGrid: GridCell[][] = preset.map(row => 
       row.map(cell => ({
         hasCube: cell.hasCube,
@@ -196,7 +258,8 @@ const useGridState = () => {
         connections: {
           entry: cell.connections?.entry || null,
           exit: cell.connections?.exit || null
-        }
+        },
+        rotation: cell.connections?.entry ? ROTATION_MAP[cell.connections.entry] : 0
       }))
     );
 

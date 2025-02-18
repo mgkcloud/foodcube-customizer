@@ -1,46 +1,48 @@
 # Active Context
 
+# Active Context
+
 ## Current Focus
-Verifying and improving coupling calculations:
-- Testing coupling calculation accuracy
-- Validating connection detection logic
-- Ensuring consistent behavior across configurations
-- Maintaining test coverage
+Implementing and testing subgrid functionality:
+- Ensuring correct rotation logic for foodcubes
+- Visualizing irrigation flow within the subgrid
+- Updating documentation to reflect changes
 
 ## Recent Changes
-1. Coupling Calculation Updates
-   - Fixed coupling calculation in connectionDetector.ts
-   - Implemented tracking of processed connections
-   - Added prevention of duplicate counting
-   - Enhanced corner connection detection
+1. Flow and Cladding Rules Verification
+   - Verified continuous red line path through cubes
+   - Confirmed proper cube rotation at position (2,1)
+   - Validated cladding rules:
+     * Side panels (blue) for 0 or 2 red blocks
+     * Left panel (green) when red block is on left
+     * Right panel (purple) when red block is on right
+   - Documented rules in PRD.md
 
-2. Test Suite Improvements
-   - Added comprehensive coupling test cases
-   - Implemented various grid configurations
-   - Verified corner connector counting
-   - Added edge case scenarios
+2. Subgrid Implementation
+   - Added subgrid structure to `PathCube` interface
+   - Updated `flowAnalyzer.ts` to handle subgrid logic
+   - Modified `Grid.tsx` to render subgrid
+   - Updated `CladdingVisualizer.tsx` to highlight subgrid
 
-3. State Management Updates
-   - Fixed toggleCell behavior in useGridState
-   - Improved cladding state management
-   - Enhanced adjacent cube handling
-   - Updated state propagation logic
+2. Rotation Logic
+   - Implemented rotation logic in `flowAnalyzer.ts`
+   - Ensured foodcube at (1,1) rotates to connect with neighbors
+   - Created tests for rotation logic in `flowAnalyzer.test.ts`
+
+3. Visualization Updates
+   - Updated `PipelineVisualizer.tsx` to highlight irrigation flow
+   - Ensured visual representation aligns with rotation logic
 
 ## Next Steps
-1. Testing Expansion
-   - Add more complex grid configurations
-   - Test larger cube arrangements
-   - Verify edge case handling
+1. Documentation Updates
+   - Update `PRD.md` and `cascade_docs/` with new improvements
+   - Document subgrid implementation details
+   - Update progress in `progress.md`
+
+2. Further Testing
+   - Expand test coverage for various configurations
    - Add performance tests for large grids
 
-2. Documentation Updates
-   - Document coupling calculation logic
-   - Add coupling visualization guidelines
-   - Update test coverage documentation
-   - Create coupling behavior reference
-
 3. Future Enhancements
-   - Consider visual coupling indicators
-   - Add coupling validation feedback
-   - Optimize connection detection
-   - Enhance error reporting
+   - Consider additional visual indicators for connections
+   - Optimize flow analysis and visualization

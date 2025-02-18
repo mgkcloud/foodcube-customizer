@@ -26,9 +26,9 @@ export const createLShapeCubes = (): GridCell[][] => {
     [[1, 1],
      [0, 1]],
     {
-      '0,0': { entry: 'W', exit: 'E' },   // Start of flow
-      '0,1': { entry: 'W', exit: 'S' },   // Corner turn
-      '1,1': { entry: 'N', exit: 'S' }    // End of flow
+      '0,0': { entry: 'W', exit: 'E' },   // Start of flow, horizontal W→E
+      '0,1': { entry: 'W', exit: 'S' },   // Corner turn, W→S (corner-left)
+      '1,1': { entry: 'N', exit: 'S' }    // End block, vertical N→S
     }
   );
 };
