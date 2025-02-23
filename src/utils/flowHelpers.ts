@@ -118,12 +118,44 @@ function determineVerticalLinePosition(
   let position: 'west' | 'east' = 'west';
 
   // For U-shapes, place vertical lines on the inner side
-  const isUShape = row > 0 && row < grid.length - 1 &&
-    grid[row - 1][col].hasCube && grid[row + 1][col].hasCube;
-  
-  if (isUShape) {
-    const isLeftSide = col < Math.floor(grid[0].length / 2);
-    position = isLeftSide ? 'east' : 'west';
+  const isUShape = () => {
+    // Find all connected cubes
+    const connectedCubes: [number, number][] = [];
+    const visited = new Set<string>();
+    const queue: [number, number][] = [[row, col]];
+
+    while (queue.length > 0) {
+      const [r, c] = queue.shift()!;
+      const key = `${r},${c}`;
+      if (visited.has(key)) continue;
+      visited.add(key);
+
+      if (grid[r][c].hasCube) {
+        connectedCubes.push([r, c]);
+        // Check neighbors
+        if (r > 0 && grid[r - 1][c].hasCube) queue.push([r - 1, c]);
+        if (r < grid.length - 1 && grid[r + 1][c].hasCube) queue.push([r + 1, c]);
+        if (c > 0 && grid[r][c - 1].hasCube) queue.push([r, c - 1]);
+        if (c < grid[0].length - 1 && grid[r][c + 1].hasCube) queue.push([r, c + 1]);
+      }
+    }
+
+    // Check if any cube is more than 1 step away (indicating a U-shape)
+    return connectedCubes.length >= 3 && 
+      connectedCubes.some(([r, c]) => Math.abs(r - row) > 1 || Math.abs(c - col) > 1);
+  };
+
+  if (isUShape()) {
+    // For vertical pieces in U-shape
+    if (entry === 'N' || entry === 'S' || exit === 'N' || exit === 'S') {
+      const isLeftSide = col <= Math.floor(grid[0].length / 2);
+      position = isLeftSide ? 'east' : 'west';
+    }
+    // For horizontal pieces (bottom of U)
+    else {
+      const isLeftHalf = col < Math.floor(grid[0].length / 2);
+      position = isLeftHalf ? 'east' : 'west';
+    }
   }
   // For corners connecting to east, keep line on east side
   else if (entry === 'E' || exit === 'E') {
@@ -133,11 +165,20 @@ function determineVerticalLinePosition(
   else if (entry === 'W' || exit === 'W') {
     position = 'west';
   }
-  // Check adjacent cubes for their connections
-  else if (col > 0 && grid[row][col - 1].hasCube) {
-    const westCube = grid[row][col - 1];
-    if (westCube.connections?.exit === 'E' || westCube.connections?.entry === 'E') {
-      position = 'east';
+  // For vertical straight sections
+  else if ((entry === 'N' && exit === 'S') || (entry === 'S' && exit === 'N')) {
+    // Check adjacent cubes for their connections
+    if (col > 0 && grid[row][col - 1].hasCube) {
+      const westCube = grid[row][col - 1];
+      if (westCube.connections?.exit === 'E' || westCube.connections?.entry === 'E') {
+        position = 'east';
+      }
+    }
+    if (col < grid[0].length - 1 && grid[row][col + 1].hasCube) {
+      const eastCube = grid[row][col + 1];
+      if (eastCube.connections?.exit === 'W' || eastCube.connections?.entry === 'W') {
+        position = 'west';
+      }
     }
   }
 

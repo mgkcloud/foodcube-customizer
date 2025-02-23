@@ -29,134 +29,55 @@ const hasValidConnectionCount = (grid: GridCell[][], row: number, col: number): 
 }
 
 /**
- * Finds all cubes connected to the starting cube
+ * Checks if a configuration forms a U-shape by analyzing grid distances
  */
-/**
- * Sets the entry and exit connections for a cube based on its position in the flow
- */
-const setCubeConnections = (grid: GridCell[][], row: number, col: number, visited: Set<string>) => {
-  const directions: CompassDirection[] = ['N', 'S', 'E', 'W'];
-  const connections: CompassDirection[] = [];
+const isUShape = (grid: GridCell[][], startRow: number, startCol: number): boolean => {
+  const visited = new Set<string>();
+  const connectedCubes: [number, number][] = [];
+  const queue: [number, number][] = [[startRow, startCol]];
 
-  // Find all connected directions
-  directions.forEach(dir => {
-    let nextRow = row;
-    let nextCol = col;
-    
-    switch (dir) {
-      case 'N': nextRow--; break;
-      case 'S': nextRow++; break;
-      case 'E': nextCol++; break;
-      case 'W': nextCol--; break;
-    }
-    
-    if (nextRow >= 0 && nextRow < grid.length &&
-        nextCol >= 0 && nextCol < grid[0].length &&
-        grid[nextRow][nextCol].hasCube) {
-      connections.push(dir);
-    }
-  });
-
-  // Set entry and exit based on flow direction
-  if (connections.length === 1) {
-    // Endpoint - set entry and exit based on position
-    const key = `${row},${col}`;
-    if (!visited.has(key)) {
-      // First endpoint - this is where flow enters
-      grid[row][col].connections = {
-        entry: connections[0],
-        exit: connections[0]
-      };
-    } else {
-      // Last endpoint - this is where flow exits
-      grid[row][col].connections = {
-        entry: connections[0],
-        exit: connections[0]
-      };
-    }
-  } else if (connections.length === 2) {
-    const [dir1, dir2] = connections;
+  // Simple BFS to find connected cubes
+  while (queue.length > 0) {
+    const [row, col] = queue.shift()!;
     const key = `${row},${col}`;
     
-    // Get positions of connected cubes
-    let pos1Row = row, pos1Col = col;
-    let pos2Row = row, pos2Col = col;
+    if (visited.has(key)) continue;
+    visited.add(key);
     
-    switch (dir1) {
-      case 'N': pos1Row--; break;
-      case 'S': pos1Row++; break;
-      case 'E': pos1Col++; break;
-      case 'W': pos1Col--; break;
-    }
-    switch (dir2) {
-      case 'N': pos2Row--; break;
-      case 'S': pos2Row++; break;
-      case 'E': pos2Col++; break;
-      case 'W': pos2Col--; break;
-    }
-
-    const pos1Key = `${pos1Row},${pos1Col}`;
-    const pos2Key = `${pos2Row},${pos2Col}`;
-
-    // For U-shape, we need to ensure consistent flow direction
-    const opposites = { N: 'S', S: 'N', E: 'W', W: 'E' } as const;
-    const isOpposite = (d1: CompassDirection, d2: CompassDirection) => 
-      opposites[d1] === d2;
-
-    // Helper to determine if a direction pair forms a U-shape turn
-    const isUShapeTurn = (d1: CompassDirection, d2: CompassDirection) => {
-      return (d1 === 'W' && d2 === 'S') || 
-             (d1 === 'S' && d2 === 'E') ||
-             (d1 === 'E' && d2 === 'N') ||
-             (d1 === 'N' && d2 === 'W');
-    };
-
-    if (visited.has(pos1Key)) {
-      // Flow is from pos1 to pos2
-      grid[row][col].connections = {
-        entry: dir1,
-        exit: dir2
-      };
-    } else if (visited.has(pos2Key)) {
-      // Flow is from pos2 to pos1
-      grid[row][col].connections = {
-        entry: dir2,
-        exit: dir1
-      };
-    } else {
-      // Neither neighbor visited yet, determine flow based on configuration
-      if (isOpposite(dir1, dir2)) {
-        // Straight section - maintain consistent flow direction
-        grid[row][col].connections = {
-          entry: dir1,
-          exit: dir2
-        };
-      } else if (isUShapeTurn(dir1, dir2)) {
-        // U-shape turn - ensure correct flow direction
-        grid[row][col].connections = {
-          entry: dir1,
-          exit: dir2
-        };
-      } else {
-        // Other corner - maintain clockwise flow
-        const clockwise = (dir1 === 'N' && dir2 === 'E') ||
-                         (dir1 === 'E' && dir2 === 'S') ||
-                         (dir1 === 'S' && dir2 === 'W') ||
-                         (dir1 === 'W' && dir2 === 'N');
-        grid[row][col].connections = clockwise ? {
-          entry: dir1,
-          exit: dir2
-        } : {
-          entry: dir2,
-          exit: dir1
-        };
-      }
+    if (grid[row][col]?.hasCube) {
+      connectedCubes.push([row, col]);
+      
+      // Check all adjacent cells
+      const directions: CompassDirection[] = ['N', 'S', 'E', 'W'];
+      directions.forEach(dir => {
+        let nextRow = row;
+        let nextCol = col;
+        
+        switch (dir) {
+          case 'N': nextRow--; break;
+          case 'S': nextRow++; break;
+          case 'E': nextCol++; break;
+          case 'W': nextCol--; break;
+        }
+        
+        if (nextRow >= 0 && nextRow < grid.length &&
+            nextCol >= 0 && nextCol < grid[0].length &&
+            grid[nextRow][nextCol]?.hasCube) {
+          queue.push([nextRow, nextCol]);
+        }
+      });
     }
   }
+
+  // Check if any cube is more than 1 step away (indicating a U-shape)
+  return connectedCubes.length >= 3 && 
+    connectedCubes.some(([r, c]) => 
+      Math.abs(r - startRow) > 1 || Math.abs(c - startCol) > 1
+    );
 };
 
 /**
- * Finds all cubes connected to the starting cube and sets their connections
+ * Finds all cubes connected to the starting cube
  */
 export const findConnectedCubes = (grid: GridCell[][], startRow: number, startCol: number): [number, number][] => {
   // Validate input parameters
@@ -187,7 +108,6 @@ export const findConnectedCubes = (grid: GridCell[][], startRow: number, startCo
     
     if (grid[row][col]?.hasCube) {
       connected.push([row, col]);
-      setCubeConnections(grid, row, col, visited);
       
       // Check all adjacent cells
       const directions: CompassDirection[] = ['N', 'S', 'E', 'W'];
@@ -202,7 +122,6 @@ export const findConnectedCubes = (grid: GridCell[][], startRow: number, startCo
           case 'W': nextCol--; break;
         }
         
-        // Validate next position is within bounds and has a cube
         if (nextRow >= 0 && nextRow < grid.length &&
             nextCol >= 0 && nextCol < grid[0].length &&
             grid[nextRow][nextCol]?.hasCube) {
@@ -211,9 +130,154 @@ export const findConnectedCubes = (grid: GridCell[][], startRow: number, startCo
       });
     }
   }
+
+  // Now that we have all connected cubes, set their connections
+  connected.forEach(([row, col]) => {
+    setCubeConnections(grid, row, col, visited, connected);
+  });
   
   return connected;
 }
+
+/**
+ * Sets the entry and exit connections for a cube based on its position in the flow
+ */
+const setCubeConnections = (
+  grid: GridCell[][],
+  row: number,
+  col: number,
+  visited: Set<string>,
+  connectedCubes: [number, number][]
+) => {
+  const directions: CompassDirection[] = ['N', 'S', 'E', 'W'];
+
+  // Get connected directions
+  const connections = directions.filter(dir => {
+    let newRow = row, newCol = col;
+    switch (dir) {
+      case 'N': newRow--; break;
+      case 'S': newRow++; break;
+      case 'E': newCol++; break;
+      case 'W': newCol--; break;
+    }
+    return newRow >= 0 && newRow < grid.length &&
+           newCol >= 0 && newCol < grid[0].length &&
+           grid[newRow][newCol].hasCube;
+  });
+
+  // Helper to find the leftmost cube in a straight line
+  const findLeftmostCube = () => {
+    return connectedCubes.reduce((leftmost, [r, c]) => 
+      c < leftmost[1] ? [r, c] : leftmost
+    , connectedCubes[0]);
+  };
+
+  // Helper to find the topmost cube in a straight line
+  const findTopmostCube = () => {
+    return connectedCubes.reduce((topmost, [r, c]) => 
+      r < topmost[0] ? [r, c] : topmost
+    , connectedCubes[0]);
+  };
+
+  // Helper to determine if this is a corner piece
+  const isCornerPiece = () => {
+    return connections.length === 2 && 
+      !((connections[0] === 'N' && connections[1] === 'S') ||
+        (connections[0] === 'S' && connections[1] === 'N') ||
+        (connections[0] === 'E' && connections[1] === 'W') ||
+        (connections[0] === 'W' && connections[1] === 'E'));
+  };
+
+  // Helper to determine if this is the start of an L-shape
+  const isStartOfL = () => {
+    if (!isCornerPiece()) return false;
+    const [leftmostRow, leftmostCol] = findLeftmostCube();
+    const [topmostRow, topmostCol] = findTopmostCube();
+    return row === leftmostRow && col === leftmostCol;
+  };
+
+  // Set entry and exit based on flow direction
+  if (connections.length === 1) {
+    // Endpoint - set entry and exit based on position
+    const dir = connections[0];
+    const [leftmostRow, leftmostCol] = findLeftmostCube();
+    const [topmostRow, topmostCol] = findTopmostCube();
+
+    // For L-shape, ensure consistent flow from left to right, then down
+    if (isStartOfL()) {
+      grid[row][col].connections = {
+        entry: 'W',
+        exit: 'E'
+      };
+    } else {
+      // For straight lines, always flow from left to right or top to bottom
+      if (dir === 'N' || dir === 'S') {
+        // Vertical line
+        const isTop = row === topmostRow;
+        grid[row][col].connections = {
+          entry: isTop ? 'N' : 'S',
+          exit: isTop ? 'S' : 'N'
+        };
+      } else {
+        // Horizontal line
+        const isLeft = col === leftmostCol;
+        grid[row][col].connections = {
+          entry: isLeft ? 'W' : 'E',
+          exit: isLeft ? 'E' : 'W'
+        };
+      }
+    }
+  } else if (connections.length === 2) {
+    const [dir1, dir2] = connections;
+    const opposites = { N: 'S', S: 'N', E: 'W', W: 'E' } as const;
+    const isOpposite = (d1: CompassDirection, d2: CompassDirection) => 
+      opposites[d1] === d2;
+
+    if (isOpposite(dir1, dir2)) {
+      // For straight sections, ensure consistent flow direction
+      const [leftmostRow, leftmostCol] = findLeftmostCube();
+      const [topmostRow, topmostCol] = findTopmostCube();
+
+      if (dir1 === 'N' || dir1 === 'S') {
+        // Vertical straight section - flow top to bottom
+        grid[row][col].connections = {
+          entry: row === topmostRow ? 'N' : 'S',
+          exit: row === topmostRow ? 'S' : 'N'
+        };
+      } else {
+        // Horizontal straight section - flow left to right
+        grid[row][col].connections = {
+          entry: col === leftmostCol ? 'W' : 'E',
+          exit: col === leftmostCol ? 'E' : 'W'
+        };
+      }
+    } else {
+      // For L-shape corners, ensure consistent flow
+      const [leftmostRow, leftmostCol] = findLeftmostCube();
+      const [topmostRow, topmostCol] = findTopmostCube();
+      
+      if (isStartOfL()) {
+        // Start of L-shape - flow from left to right
+        grid[row][col].connections = {
+          entry: 'W',
+          exit: 'E'
+        };
+      } else if (row === topmostRow) {
+        // Top of L-shape - flow from left to right
+        grid[row][col].connections = {
+          entry: 'W',
+          exit: 'E'
+        };
+      } else {
+        // Vertical part of L-shape - flow top to bottom
+        grid[row][col].connections = {
+          entry: 'N',
+          exit: 'S'
+        };
+      }
+    }
+  }
+};
 
 /**
  * Validates that the irrigation path is valid:
@@ -254,3 +318,4 @@ export const validateIrrigationPath = (grid: GridCell[][]): boolean => {
   // All cubes must be connected
   return connectedCubes.length === totalCubes;
 }
+

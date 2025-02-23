@@ -83,25 +83,59 @@ export const normalizeFlow = (cube: PathCube): PathCube => {
  * Analyzes a path of cubes to validate flow and identify where connectors are needed
  */
 export const analyzePath = (path: PathCube[]): PathCube[] => {
-  // First pass: normalize flow to ensure straight paths
+  // First pass: detect U-shape configuration
+  const isUShape = path.length >= 3 && 
+    path.some((cube, i) => {
+      if (i === 0) return false;
+      return Math.abs(cube.row - path[0].row) > 1 || Math.abs(cube.col - path[0].col) > 1;
+    });
+
+  // Second pass: normalize flow to ensure straight paths
   const normalizedPath = path.map(normalizeFlow);
   
-  // Second pass: validate connections between cubes
+  // Third pass: validate and adjust connections between cubes
   for (let i = 0; i < normalizedPath.length - 1; i++) {
     const current = normalizedPath[i];
     const next = normalizedPath[i + 1];
     
-    // If flow direction changes between cubes, a corner connector is needed
-    // The visualization of the corner will be handled by the connector, not the cubes
-    if (current.flowDirection !== next.flowDirection) {
-      // Ensure the exit of current cube aligns with the connector
-      // and the entry of next cube aligns with the connector
-      if (current.flowDirection === 'horizontal') {
-        current.exit = 'E';
-        next.entry = 'N';
-      } else {
+    if (isUShape) {
+      // For U-shape, ensure consistent flow direction
+      if (i === 0) {
+        // First vertical piece
+        current.entry = 'N';
         current.exit = 'S';
-        next.entry = 'W';
+        current.flowDirection = 'vertical';
+        current.rotation = 0;
+      } else if (i === normalizedPath.length - 2) {
+        // Last horizontal piece before final vertical
+        current.entry = 'W';
+        current.exit = 'E';
+        current.flowDirection = 'horizontal';
+        current.rotation = 90;
+      } else if (i === normalizedPath.length - 1) {
+        // Final vertical piece
+        current.entry = 'S';
+        current.exit = 'N';
+        current.flowDirection = 'vertical';
+        current.rotation = 180;
+      } else {
+        // Middle pieces (bottom of U)
+        current.entry = 'W';
+        current.exit = 'E';
+        current.flowDirection = 'horizontal';
+        current.rotation = 90;
+      }
+    } else {
+      // For non-U-shape configurations
+      if (current.flowDirection !== next.flowDirection) {
+        // If flow direction changes between cubes, a corner connector is needed
+        if (current.flowDirection === 'horizontal') {
+          current.exit = 'E';
+          next.entry = 'N';
+        } else {
+          current.exit = 'S';
+          next.entry = 'W';
+        }
       }
     }
   }
