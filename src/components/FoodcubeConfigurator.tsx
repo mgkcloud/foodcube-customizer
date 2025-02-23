@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { HelpTooltip } from './HelpTooltip';
 import { Grid } from './Grid';
 import { PresetConfigs } from './PresetConfigs';
@@ -15,6 +15,7 @@ interface FoodcubeConfiguratorProps {
 export const FoodcubeConfigurator: React.FC<FoodcubeConfiguratorProps> = ({ variants, onUpdate }) => {
   console.log('FoodcubeConfigurator received variants:', variants);
   const { grid, requirements, toggleCell, toggleCladding, applyPreset, error } = useGridState();
+  const [hasInteracted, setHasInteracted] = useState(false);
 
   React.useEffect(() => {
     const selections = {
@@ -45,12 +46,22 @@ export const FoodcubeConfigurator: React.FC<FoodcubeConfiguratorProps> = ({ vari
         
         <div className='flex justify-center items-center gap-2 mb-4'>
           <h4 className="text-sm my-2 text-center font-semibold">Preset Configurations</h4>
-          <PresetConfigs onApply={applyPreset} />
+          <PresetConfigs 
+            onApply={(preset) => {
+              applyPreset(preset);
+              setHasInteracted(true);
+            }} 
+          />
         </div>
 
         <div className="flex gap-6">
           <div className="flex-1">
-            <Grid grid={grid} onToggleCell={toggleCell} onToggleCladding={toggleCladding} />
+            <Grid 
+              grid={grid} 
+              onToggleCell={toggleCell} 
+              onToggleCladding={toggleCladding}
+              setHasInteracted={setHasInteracted}
+            />
           </div>
           <div className="w-64">
             <CladdingKey requirements={requirements} />

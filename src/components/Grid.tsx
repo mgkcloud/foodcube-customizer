@@ -8,18 +8,21 @@ interface GridProps {
   grid: GridCell[][];
   onToggleCell: (row: number, col: number) => void;
   onToggleCladding: (row: number, col: number, edge: 'N' | 'E' | 'S' | 'W') => void;
+  setHasInteracted?: (value: boolean) => void;
 }
 
-export const Grid: React.FC<GridProps> = ({ grid, onToggleCell, onToggleCladding }) => {
-  const [hasInteracted, setHasInteracted] = useState(false);
+export const Grid: React.FC<GridProps> = ({ grid, onToggleCell, onToggleCladding, setHasInteracted }) => {
+  const [hasInteractedLocal, setHasInteractedLocal] = useState(false);
 
   const handleCellClick = (rowIndex: number, colIndex: number) => {
-    setHasInteracted(true);
+    setHasInteractedLocal(true);
+    if (setHasInteracted) setHasInteracted(true);
     onToggleCell(rowIndex, colIndex);
   };
 
   const handleOverlayClick = () => {
-    setHasInteracted(true);
+    setHasInteractedLocal(true);
+    if (setHasInteracted) setHasInteracted(true);
     // Place a cube in the middle cell (1,1) of the 3x3 grid
     onToggleCell(1, 1);
   };
@@ -52,7 +55,7 @@ export const Grid: React.FC<GridProps> = ({ grid, onToggleCell, onToggleCladding
 
   return (
     <div className="relative grid grid-cols-3 gap-1 bg-gray-100 p-4 rounded-lg">
-      {!hasInteracted && (
+      {!hasInteractedLocal && (
         <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 z-10 rounded-lg cursor-pointer"
              onClick={handleOverlayClick}>
           <div className="bg-white px-6 py-3 rounded-full shadow-lg text-sm font-semibold">

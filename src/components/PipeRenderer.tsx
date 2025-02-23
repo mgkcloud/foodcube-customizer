@@ -1,0 +1,26 @@
+import React from 'react';
+import { SubgridState } from '@/utils/visualization/pipeConfigurator';
+
+interface PipeRendererProps {
+  subgrid: SubgridState;
+}
+
+export const PipeRenderer: React.FC<PipeRendererProps> = ({ subgrid }) => {
+  return (
+    <div className="absolute inset-0 grid grid-cols-2 gap-0.5 pointer-events-none">
+      {subgrid.map((row, rowIndex) =>
+        row.map((isActive, colIndex) => (
+          <div
+            key={`${rowIndex}-${colIndex}`}
+            className={`
+              relative
+              ${isActive ? 'bg-red-500' : 'bg-transparent'}
+              transition-colors duration-200
+            `}
+            data-testid={`pipeline-cell-${rowIndex}-${colIndex}`}
+          />
+        ))
+      )}
+    </div>
+  );
+}; 

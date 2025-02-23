@@ -52,13 +52,13 @@ const getLShapeRequirements = (): Requirements => ({
  * Calculate panel requirements for a U-shaped configuration
  */
 const getUShapeRequirements = (): Requirements => ({
-  fourPackRegular: 1,
+  fourPackRegular: 2,
   fourPackExtraTall: 0,
   twoPackRegular: 2,
   twoPackExtraTall: 0,
-  sidePanels: 6,
-  leftPanels: 1,
-  rightPanels: 1,
+  sidePanels: 8,
+  leftPanels: 2,
+  rightPanels: 2,
   straightCouplings: 2,
   cornerConnectors: 2
 });
@@ -97,23 +97,20 @@ export const calculateFlowPathPanels = (cubes: PathCube[]): Requirements => {
   // First pass: Count connections and find endpoints
   for (let i = 0; i < cubes.length; i++) {
     const cube = cubes[i];
-    if (!cube.entry || !cube.exit) continue;
+    if (!cube.entry && !cube.exit) continue;
 
-    // Count side panels for each cube
-    if (i === 0 || i === cubes.length - 1) {
-      sidePanelCount += 3; // End cubes need 3 side panels
-    } else {
-      sidePanelCount += 2; // Middle cubes need 2 side panels
-    }
-
-    // Determine left/right panels based on flow direction
-    if (i === 0) {
-      // First cube gets left panel
+    // Entry point gets left panel, exit point gets right panel
+    if (cube.entry) {
       leftPanelCount++;
-    } else if (i === cubes.length - 1) {
-      // Last cube gets right panel
+    }
+    if (cube.exit) {
       rightPanelCount++;
     }
+
+    // All other edges are side panels
+    const totalEdges = 4;
+    const entryExitCount = (cube.entry ? 1 : 0) + (cube.exit ? 1 : 0);
+    sidePanelCount += totalEdges - entryExitCount;
 
     // Count corners and straights
     if (i < cubes.length - 1) {

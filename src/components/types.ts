@@ -6,7 +6,11 @@ export interface CubeConnection {
 }
 
 export interface GridCell {
+  id: string;
+  row: number;
+  col: number;
   hasCube: boolean;
+  type: string;
   claddingEdges: Set<CompassDirection>;
   connections: CubeConnection;
   rotation: 0 | 90 | 180 | 270;

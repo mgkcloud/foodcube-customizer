@@ -65,19 +65,19 @@ export const CONFIGURATION_RULES = {
     cornerConnectors: 1
   },
   // For U-shaped (12 edges) configurations:
-  // 1 four-pack (2 side + 1 right + 1 left)
+  // 2 four-pack (4 side + 2 right + 2 left)
   // 1 2 pack (2 sides)
   // 1 2 pack (2 sides)
   // 2 corner connector
   // 2 straight coupling
   U_SHAPE: {
-    fourPackRegular: 1,
+    fourPackRegular: 2,
     fourPackExtraTall: 0,
     twoPackRegular: 2,
     twoPackExtraTall: 0,
-    sidePanels: 6,
-    leftPanels: 1,
-    rightPanels: 1,
+    sidePanels: 8,
+    leftPanels: 2,
+    rightPanels: 2,
     straightCouplings: 2,
     cornerConnectors: 2
   }
@@ -89,50 +89,18 @@ export function getPanelType(
   entry: CompassDirection | null,
   exit: CompassDirection | null
 ): 'side' | 'left' | 'right' {
-  if (!entry || !exit) {
-    return 'side'; // Default to side panel if no flow
+  if (!entry && !exit) {
+    return 'side'; // No flow, all panels are side panels
   }
 
-  // The flow path creates a direction vector from entry to exit
-  // Edges that the flow passes through are side panels (entry/exit faces)
-  // Edges parallel to the flow are left/right panels based on their position relative to the flow
-
-  // If this edge is the entry or exit point, it's a side panel
-  if (edge === entry || edge === exit) {
-    return 'side';
+  // Entry point gets left panel, exit point gets right panel
+  if (edge === entry) {
+    return 'left';
+  }
+  if (edge === exit) {
+    return 'right';
   }
 
-  // For any other edge, we need to determine if it's left or right of the flow
-  // This is determined by following the flow path and checking which side the edge is on
-  const flowPath = `${entry}→${exit}`;
-  
-  // Map each flow path to its left and right edges
-  // Due to offset coupling connections, the left/right panel determination
-  // is based on the physical offset of the coupling from the cube center
-  const FLOW_SIDES = new Map<string, { left: CompassDirection; right: CompassDirection }>([
-    // Straight flows - coupling offset means opposite sides from visual center
-    ['N→S', { left: 'E', right: 'W' }], // Flow down, coupling offset right
-    ['S→N', { left: 'W', right: 'E' }], // Flow up, coupling offset left
-    ['E→W', { left: 'S', right: 'N' }], // Flow left, coupling offset down
-    ['W→E', { left: 'N', right: 'S' }], // Flow right, coupling offset up
-    // Corner flows - coupling offset affects which side is left/right
-    ['N→E', { left: 'S', right: 'W' }],
-    ['E→S', { left: 'W', right: 'N' }],
-    ['S→W', { left: 'N', right: 'E' }],
-    ['W→N', { left: 'E', right: 'S' }],
-    ['N→W', { left: 'E', right: 'S' }],
-    ['W→S', { left: 'N', right: 'E' }],
-    ['S→E', { left: 'W', right: 'N' }],
-    ['E→N', { left: 'S', right: 'W' }],
-  ]);
-
-  const flowSides = FLOW_SIDES.get(flowPath);
-  if (!flowSides) {
-    return 'side'; // Invalid flow path, default to side
-  }
-
-  if (edge === flowSides.left) return 'left';
-  if (edge === flowSides.right) return 'right';
-  
-  return 'side'; // Default case
+  // All other edges are side panels
+  return 'side';
 }

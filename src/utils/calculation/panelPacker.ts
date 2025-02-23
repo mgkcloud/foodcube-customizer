@@ -18,17 +18,33 @@ export const packPanels = (requirements: Requirements): Requirements => {
   
   // Step 1: Apply configuration rules based on connectors
   if (requirements.cornerConnectors === 2 && requirements.straightCouplings === 2) {
-    // U-shape configuration
-    Object.assign(packedRequirements, CONFIGURATION_RULES.U_SHAPE);
+    // U-shape configuration - needs 2 four-packs
+    Object.assign(packedRequirements, {
+      ...CONFIGURATION_RULES.U_SHAPE,
+      leftPanels: requirements.leftPanels,  // Keep original entry/exit based counts
+      rightPanels: requirements.rightPanels
+    });
   } else if (requirements.cornerConnectors === 1 && requirements.straightCouplings === 1) {
-    // L-shape configuration
-    Object.assign(packedRequirements, CONFIGURATION_RULES.L_SHAPE);
+    // L-shape configuration - needs 1 four-pack plus extra panels
+    Object.assign(packedRequirements, {
+      ...CONFIGURATION_RULES.L_SHAPE,
+      leftPanels: requirements.leftPanels,  // Keep original entry/exit based counts
+      rightPanels: requirements.rightPanels
+    });
   } else if (requirements.cornerConnectors === 0 && requirements.straightCouplings === 2) {
     // Three-line configuration
-    Object.assign(packedRequirements, CONFIGURATION_RULES.THREE_LINE);
+    Object.assign(packedRequirements, {
+      ...CONFIGURATION_RULES.THREE_LINE,
+      leftPanels: requirements.leftPanels,  // Keep original entry/exit based counts
+      rightPanels: requirements.rightPanels
+    });
   } else {
     // Single cube configuration
-    Object.assign(packedRequirements, CONFIGURATION_RULES.SINGLE_CUBE);
+    Object.assign(packedRequirements, {
+      ...CONFIGURATION_RULES.SINGLE_CUBE,
+      leftPanels: requirements.leftPanels,  // Keep original entry/exit based counts
+      rightPanels: requirements.rightPanels
+    });
   }
 
   // Step 2: Create two-packs from remaining side panels
@@ -36,14 +52,6 @@ export const packPanels = (requirements: Requirements): Requirements => {
   if (twoPackCount > 0) {
     packedRequirements.twoPackRegular = twoPackCount;
     packedRequirements.sidePanels -= twoPackCount * 2;
-  }
-
-  // Step 3: Handle special L-shape case
-  if (requirements.cornerConnectors === 1) {
-    // Ensure we have one extra side panel and one extra left panel
-    packedRequirements.sidePanels = 1;  // Extra side panel at turn
-    packedRequirements.leftPanels = 1;  // Extra left panel
-    packedRequirements.rightPanels = 0; // Used in four-pack
   }
 
   return packedRequirements;
