@@ -129,6 +129,42 @@ export const PipelineVisualizer: React.FC<PipelineVisualizerProps> = ({
       const flowSquareStyle = "bg-red-500 opacity-50";
       const emptySquareStyle = "bg-transparent";
 
+      // Handle corner turns
+      if (actualEntry && actualExit && actualEntry !== actualExit) {
+        // W→S corner turn
+        if (actualEntry === 'W' && actualExit === 'S') {
+          console.log(`[${row},${col}] Corner turn W→S`);
+          return {
+            pattern: [flowSquareStyle, emptySquareStyle, flowSquareStyle, emptySquareStyle],
+            rotation: 270
+          };
+        }
+        // E→S corner turn
+        if (actualEntry === 'E' && actualExit === 'S') {
+          console.log(`[${row},${col}] Corner turn E→S`);
+          return {
+            pattern: [emptySquareStyle, flowSquareStyle, emptySquareStyle, flowSquareStyle],
+            rotation: 0
+          };
+        }
+        // N→E corner turn
+        if (actualEntry === 'N' && actualExit === 'E') {
+          console.log(`[${row},${col}] Corner turn N→E`);
+          return {
+            pattern: [flowSquareStyle, flowSquareStyle, emptySquareStyle, emptySquareStyle],
+            rotation: 0
+          };
+        }
+        // N→W corner turn
+        if (actualEntry === 'N' && actualExit === 'W') {
+          console.log(`[${row},${col}] Corner turn N→W`);
+          return {
+            pattern: [flowSquareStyle, flowSquareStyle, emptySquareStyle, emptySquareStyle],
+            rotation: 180
+          };
+        }
+      }
+
       // For horizontal flow (W→E or E→E)
       if (isHorizontalFlow(actualEntry, actualExit)) {
         console.log(`[${row},${col}] Horizontal flow`);
@@ -141,9 +177,17 @@ export const PipelineVisualizer: React.FC<PipelineVisualizerProps> = ({
       // For vertical flow (N→S or N→N)
       if (isVerticalFlow(actualEntry, actualExit)) {
         console.log(`[${row},${col}] Vertical flow`);
+        // After a W→S corner turn, rotate 180° to align with the flow
+        const prevCell = grid[row - 1]?.[col];
+        if (prevCell?.connections.entry === 'W' && prevCell?.connections.exit === 'S') {
+          return {
+            pattern: [flowSquareStyle, emptySquareStyle, flowSquareStyle, emptySquareStyle],
+            rotation: 180
+          };
+        }
         return {
           pattern: [flowSquareStyle, emptySquareStyle, flowSquareStyle, emptySquareStyle],
-          rotation: 0  // No rotation for vertical flow
+          rotation: 0  // No rotation for normal vertical flow
         };
       }
 
