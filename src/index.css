@@ -48,7 +48,10 @@
 
     --sidebar-border: 220 13% 91%;
 
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* Flow visualization colors */
+    --flow-start: 120 70% 40%;  /* Green */
+    --flow-middle: 210 70% 50%; /* Blue */
+    --flow-end: 0 70% 50%;      /* Red */
   }
 
   .dark {
@@ -98,4 +101,310 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Flow Visualization Styles */
+.pipe-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+/* Flow position indicators */
+.flow-start .pipe-subgrid {
+  border: 2px solid hsl(var(--flow-start));
+}
+
+.flow-middle .pipe-subgrid {
+  border: 2px solid hsl(var(--flow-middle));
+}
+
+.flow-end .pipe-subgrid {
+  border: 2px solid hsl(var(--flow-end));
+}
+
+/* Flow direction indicators */
+.flow-indicator {
+  position: absolute;
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  font-size: 10px;
+  padding: 2px 4px;
+  border-radius: 3px;
+  z-index: 10;
+}
+
+.entry {
+  background-color: hsl(var(--flow-start) / 0.8);
+}
+
+.exit {
+  background-color: hsl(var(--flow-end) / 0.8);
+}
+
+/* Positioning for direction indicators */
+.entry-n, .exit-n {
+  top: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.entry-s, .exit-s {
+  bottom: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.entry-e, .exit-e {
+  right: -2px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.entry-w, .exit-w {
+  left: -2px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* Position indicator */
+.position-indicator {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: rgba(0, 0, 0, 0.6);
+  color: white;
+  font-size: 10px;
+  padding: 1px 3px;
+  border-radius: 3px;
+  z-index: 10;
+}
+
+/* Flow direction highlights */
+.flow-from-n .pipe-subgrid {
+  box-shadow: 0 -4px 0 -2px rgba(0, 255, 0, 0.5);
+}
+
+.flow-from-s .pipe-subgrid {
+  box-shadow: 0 4px 0 -2px rgba(0, 255, 0, 0.5);
+}
+
+.flow-from-e .pipe-subgrid {
+  box-shadow: 4px 0 0 -2px rgba(0, 255, 0, 0.5);
+}
+
+.flow-from-w .pipe-subgrid {
+  box-shadow: -4px 0 0 -2px rgba(0, 255, 0, 0.5);
+}
+
+.flow-to-n .pipe-subgrid {
+  box-shadow: 0 -4px 0 -2px rgba(255, 0, 0, 0.5);
+}
+
+.flow-to-s .pipe-subgrid {
+  box-shadow: 0 4px 0 -2px rgba(255, 0, 0, 0.5);
+}
+
+.flow-to-e .pipe-subgrid {
+  box-shadow: 4px 0 0 -2px rgba(255, 0, 0, 0.5);
+}
+
+.flow-to-w .pipe-subgrid {
+  box-shadow: -4px 0 0 -2px rgba(255, 0, 0, 0.5);
+}
+
+/* Combined shadows for both entry and exit */
+.flow-from-n.flow-to-s .pipe-subgrid,
+.flow-from-s.flow-to-n .pipe-subgrid {
+  box-shadow: 0 -4px 0 -2px rgba(0, 255, 0, 0.5), 0 4px 0 -2px rgba(255, 0, 0, 0.5);
+}
+
+.flow-from-e.flow-to-w .pipe-subgrid,
+.flow-from-w.flow-to-e .pipe-subgrid {
+  box-shadow: 4px 0 0 -2px rgba(0, 255, 0, 0.5), -4px 0 0 -2px rgba(255, 0, 0, 0.5);
+}
+
+.flow-from-n.flow-to-e .pipe-subgrid,
+.flow-from-e.flow-to-n .pipe-subgrid {
+  box-shadow: 0 -4px 0 -2px rgba(0, 255, 0, 0.5), 4px 0 0 -2px rgba(255, 0, 0, 0.5);
+}
+
+.flow-from-n.flow-to-w .pipe-subgrid,
+.flow-from-w.flow-to-n .pipe-subgrid {
+  box-shadow: 0 -4px 0 -2px rgba(0, 255, 0, 0.5), -4px 0 0 -2px rgba(255, 0, 0, 0.5);
+}
+
+.flow-from-s.flow-to-e .pipe-subgrid,
+.flow-from-e.flow-to-s .pipe-subgrid {
+  box-shadow: 0 4px 0 -2px rgba(0, 255, 0, 0.5), 4px 0 0 -2px rgba(255, 0, 0, 0.5);
+}
+
+.flow-from-s.flow-to-w .pipe-subgrid,
+.flow-from-w.flow-to-s .pipe-subgrid {
+  box-shadow: 0 4px 0 -2px rgba(0, 255, 0, 0.5), -4px 0 0 -2px rgba(255, 0, 0, 0.5);
+}
+
+/* Flow direction arrows */
+.flow-arrow {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  font-weight: bold;
+  font-size: 12px;
+  z-index: 10;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Positioning for arrow indicators */
+.entry-n {
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.exit-n {
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%) rotate(180deg);
+}
+
+.entry-s {
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%) rotate(180deg);
+}
+
+.exit-s {
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.entry-e {
+  right: -8px;
+  top: 50%;
+  transform: translateY(-50%) rotate(270deg);
+}
+
+.exit-e {
+  right: -8px;
+  top: 50%;
+  transform: translateY(-50%) rotate(90deg);
+}
+
+.entry-w {
+  left: -8px;
+  top: 50%;
+  transform: translateY(-50%) rotate(90deg);
+}
+
+.exit-w {
+  left: -8px;
+  top: 50%;
+  transform: translateY(-50%) rotate(270deg);
+}
+
+/* Connector type indicator */
+.connector-type {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 10px;
+  font-weight: bold;
+  background-color: white;
+  border: 2px solid;
+  z-index: 9;
+}
+
+.connector-type.corner {
+  border-color: #FF9800;
+  color: #FF9800;
+}
+
+.connector-type.straight {
+  border-color: #2196F3;
+  color: #2196F3;
+}
+
+/* Special styling for corners */
+.connector-corner .pipe-subgrid {
+  border: 2px solid #FF9800;
+}
+
+/* Special styling for straight connections */
+.connector-straight .pipe-subgrid {
+  border: 2px solid #2196F3;
+}
+
+/* Debug labels */
+.debug-labels {
+  position: absolute;
+  top: -16px;
+  right: -16px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  z-index: 20;
+}
+
+.debug-label {
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  font-size: 8px;
+  padding: 1px 2px;
+  border-radius: 2px;
+  margin-bottom: 2px;
+}
+
+.debug-label.cube-type {
+  background-color: #673AB7;
+}
+
+.debug-label.position {
+  background-color: #3F51B5;
+}
+
+/* Enhanced styling for flow types */
+.flow-start .connector-type {
+  border-color: #4CAF50;
+  color: #4CAF50;
+}
+
+.flow-end .connector-type {
+  border-color: #F44336;
+  color: #F44336;
+}
+
+/* Corner visualization overrides */
+.corner-n-e .pipe-subgrid,
+.corner-w-s .pipe-subgrid {
+  border-top-left-radius: 8px;
+}
+
+.corner-n-w .pipe-subgrid,
+.corner-e-s .pipe-subgrid {
+  border-top-right-radius: 8px;
+}
+
+.corner-s-e .pipe-subgrid,
+.corner-w-n .pipe-subgrid {
+  border-bottom-left-radius: 8px;
+}
+
+.corner-s-w .pipe-subgrid,
+.corner-e-n .pipe-subgrid {
+  border-bottom-right-radius: 8px;
 }

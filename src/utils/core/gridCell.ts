@@ -4,7 +4,11 @@ import { GridCell, CompassDirection, CubeConnection } from '@/components/types';
  * Creates an empty grid cell without a cube
  */
 export const createEmptyCell = (): GridCell => ({
+  id: `cell-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+  row: 0,
+  col: 0,
   hasCube: false,
+  type: 'empty',
   connections: { entry: null, exit: null },
   claddingEdges: new Set<CompassDirection>(),
   rotation: 0
@@ -24,7 +28,11 @@ export const createCubeCell = (
   edges: CompassDirection[] = [],
   connections: CubeConnection = { entry: null, exit: null }
 ): GridCell => ({
+  id: `cube-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+  row: 0,
+  col: 0,
   hasCube: true,
+  type: 'cube',
   connections,
   claddingEdges: new Set(edges),
   rotation: connections.entry ? ROTATION_MAP[connections.entry] : 0
@@ -39,18 +47,17 @@ export const createFlowCell = (entry: CompassDirection, exit: CompassDirection):
   const opposites = { N: 'S', S: 'N', E: 'W', W: 'E' } as const;
   const edges: CompassDirection[] = ['N', 'S', 'E', 'W'];
   
-  // Remove entry and exit directions from edges as they'll have connectors
-  const claddingEdges = new Set(
-    edges.filter(edge => 
-      edge !== entry && 
-      edge !== exit && 
-      edge !== opposites[entry] && 
-      edge !== opposites[exit]
-    )
+  // Remove entry and exit directions from the cladding edges
+  const claddingEdges = new Set<CompassDirection>(
+    edges.filter(edge => edge !== entry && edge !== exit)
   );
 
   return {
+    id: `flow-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    row: 0,
+    col: 0,
     hasCube: true,
+    type: 'flow-cube',
     connections: { entry, exit },
     claddingEdges,
     rotation

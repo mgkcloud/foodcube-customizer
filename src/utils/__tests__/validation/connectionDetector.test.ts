@@ -1,5 +1,5 @@
-import { detectConnections } from './connectionDetector';
-import { createTestGrid } from './testUtils';
+import { detectConnections } from '@/utils/validation/connectionDetector';
+import { createTestGrid } from '@/utils/testing/testHelpers';
 
 describe('detectConnections', () => {
   /**

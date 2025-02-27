@@ -78,9 +78,9 @@ describe('packPanels', () => {
         fourPackExtraTall: 0,
         twoPackRegular: 1,     // Uses 2 side panels (1 two-pack)
         twoPackExtraTall: 0,
-        leftPanels: 1,         // 1 extra left panel
-        rightPanels: 0,        // Used in four-pack
-        sidePanels: 1,         // 1 extra side panel at turn
+        leftPanels: 1,         // The extra left panel
+        rightPanels: 0,
+        sidePanels: 0,
         straightCouplings: 1,   // One straight coupling
         cornerConnectors: 1     // One corner connector
       });
@@ -89,7 +89,7 @@ describe('packPanels', () => {
   // Truth: For U-shaped configuration(12 edges)
   test('U-shaped configuration with cladding', () => {
     const counts: Requirements = {
-      sidePanels: 8,  // 3 pairs of top/bottom
+      sidePanels: 8,  // 4 pairs of top/bottom edges
       leftPanels: 2,  // 2 left edges
       rightPanels: 2, // 2 right edges
       fourPackRegular: 0,
@@ -102,9 +102,9 @@ describe('packPanels', () => {
 
     const result = packPanels(counts);
       expect(result).toEqual({
-        fourPackRegular: 2,     // Uses 4 side + 2 left + 2 right
+        fourPackRegular: 1,     // Uses 2 side + 1 left + 1 right
         fourPackExtraTall: 0,
-        twoPackRegular: 2,      // Uses remaining 4 side panels
+        twoPackRegular: 2,      // Uses remaining 6 side + 1 left + 1 right panels
         twoPackExtraTall: 0,
         leftPanels: 0,         
         rightPanels: 0,      

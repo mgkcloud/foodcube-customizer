@@ -1,0 +1,116 @@
+
+> vite_react_shadcn_ts@0.0.0 test
+> jest --config jest.config.cjs src/utils/__tests__/calculation/panelPacker.test.ts
+
+  console.log
+    Packing panels for raw requirements: {
+      sidePanels: 2,
+      leftPanels: 1,
+      rightPanels: 1,
+      fourPackRegular: 0,
+      fourPackExtraTall: 0,
+      twoPackRegular: 0,
+      twoPackExtraTall: 0,
+      straightCouplings: 0,
+      cornerConnectors: 0
+    }
+
+      at packPanels (src/utils/calculation/panelPacker.ts:16:11)
+
+  console.log
+    Total panels: 4, Corner connectors: 0, Straight couplings: 0
+
+      at packPanels (src/utils/calculation/panelPacker.ts:24:11)
+
+  console.log
+    Detected single cube configuration
+
+      at packPanels (src/utils/calculation/panelPacker.ts:47:13)
+
+  console.log
+    Packing panels for raw requirements: {
+      sidePanels: 6,
+      leftPanels: 1,
+      rightPanels: 1,
+      fourPackRegular: 0,
+      fourPackExtraTall: 0,
+      twoPackRegular: 0,
+      twoPackExtraTall: 0,
+      straightCouplings: 2,
+      cornerConnectors: 0
+    }
+
+      at packPanels (src/utils/calculation/panelPacker.ts:16:11)
+
+  console.log
+    Total panels: 8, Corner connectors: 0, Straight couplings: 2
+
+      at packPanels (src/utils/calculation/panelPacker.ts:24:11)
+
+  console.log
+    Detected line configuration
+
+      at packPanels (src/utils/calculation/panelPacker.ts:41:13)
+
+  console.log
+    Packing panels for raw requirements: {
+      sidePanels: 5,
+      leftPanels: 2,
+      rightPanels: 1,
+      fourPackRegular: 0,
+      fourPackExtraTall: 0,
+      twoPackRegular: 0,
+      twoPackExtraTall: 0,
+      straightCouplings: 1,
+      cornerConnectors: 1
+    }
+
+      at packPanels (src/utils/calculation/panelPacker.ts:16:11)
+
+  console.log
+    Total panels: 8, Corner connectors: 1, Straight couplings: 1
+
+      at packPanels (src/utils/calculation/panelPacker.ts:24:11)
+
+  console.log
+    Detected L-shape configuration
+
+      at packPanels (src/utils/calculation/panelPacker.ts:35:13)
+
+  console.log
+    Packing panels for raw requirements: {
+      sidePanels: 8,
+      leftPanels: 2,
+      rightPanels: 2,
+      fourPackRegular: 0,
+      fourPackExtraTall: 0,
+      twoPackRegular: 0,
+      twoPackExtraTall: 0,
+      straightCouplings: 2,
+      cornerConnectors: 2
+    }
+
+      at packPanels (src/utils/calculation/panelPacker.ts:16:11)
+
+  console.log
+    Total panels: 12, Corner connectors: 2, Straight couplings: 2
+
+      at packPanels (src/utils/calculation/panelPacker.ts:24:11)
+
+  console.log
+    Detected U-shape configuration
+
+      at packPanels (src/utils/calculation/panelPacker.ts:29:13)
+
+PASS src/utils/__tests__/calculation/panelPacker.test.ts
+  packPanels
+    ✓ single cube with all edges cladded (16 ms)
+    ✓ three cubes in a line with cladding (1 ms)
+    ✓ L-shaped configuration with cladding (3 ms)
+    ✓ U-shaped configuration with cladding (1 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       4 passed, 4 total
+Snapshots:   0 total
+Time:        4.05 s
+Ran all test suites matching /src\/utils\/__tests__\/calculation\/panelPacker.test.ts/i.

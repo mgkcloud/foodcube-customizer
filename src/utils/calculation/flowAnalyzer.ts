@@ -7,7 +7,7 @@ export interface PathCube {
   entry: CompassDirection | null;
   exit: CompassDirection | null;
   flowDirection: 'horizontal' | 'vertical';
-  rotation: 0 | 90 | 180;  // 0 for N→S, 90 for W→E, 180 for rotated end blocks
+  rotation: 0 | 90 | 180 | 270;
 }
 
 const VALID_FLOWS: Record<CompassDirection, CompassDirection> = {
@@ -45,100 +45,273 @@ const getNeighbors = (cube: PathCube, path: PathCube[]): { [key in CompassDirect
 };
 
 /**
- * Normalizes flow through a cube to ensure it follows straight-line rules
+ * Gets the opposite direction
  */
-export const normalizeFlow = (cube: PathCube): PathCube => {
-  if (!cube.entry && !cube.exit) return cube;
-  
-  // Set subgrid structure
-  cube.subgrid = [
-    { subgridRow: cube.row * 2, subgridCol: cube.col * 2 },
-    { subgridRow: cube.row * 2, subgridCol: cube.col * 2 + 1 },
-    { subgridRow: cube.row * 2 + 1, subgridCol: cube.col * 2 },
-    { subgridRow: cube.row * 2 + 1, subgridCol: cube.col * 2 + 1 }
-  ];
-
-  // Normal flow handling
-  const direction = cube.entry || cube.exit;
-  if (!direction) return cube;
-
-  if (isHorizontalFlow(direction)) {
-    cube.flowDirection = 'horizontal';
-  // For horizontal flow, rotate based on entry direction
-  cube.rotation = direction === 'W' ? 90 : 180;  // 180° is equivalent to 270° for our purposes
-    cube.entry = direction === 'W' ? 'W' : 'E';
-    cube.exit = direction === 'W' ? 'E' : 'W';
-  } else {
-    cube.flowDirection = 'vertical';
-    // For vertical flow, rotate based on entry direction
-  cube.rotation = direction === 'N' ? 0 : 180;
-    cube.entry = direction === 'N' ? 'N' : 'S';
-    cube.exit = direction === 'N' ? 'S' : 'N';
-  }
-  
-  return cube;
-};
+function getOppositeDirection(dir: CompassDirection | null): CompassDirection | null {
+  if (!dir) return null;
+  return VALID_FLOWS[dir];
+}
 
 /**
- * Analyzes a path of cubes to validate flow and identify where connectors are needed
+ * Analyze the path through connected cubes and determine flow directions
+ * This is the main entry point for flow analysis
  */
-export const analyzePath = (path: PathCube[]): PathCube[] => {
-  // First pass: detect U-shape configuration
-  const isUShape = path.length >= 3 && 
-    path.some((cube, i) => {
-      if (i === 0) return false;
-      return Math.abs(cube.row - path[0].row) > 1 || Math.abs(cube.col - path[0].col) > 1;
-    });
+export const analyzePath = (cubes: PathCube[]): PathCube[] => {
+  if (!cubes || cubes.length === 0) {
+    return [];
+  }
 
-  // Second pass: normalize flow to ensure straight paths
-  const normalizedPath = path.map(normalizeFlow);
+  console.log(`Analyzing path for ${cubes.length} cubes`);
   
-  // Third pass: validate and adjust connections between cubes
-  for (let i = 0; i < normalizedPath.length - 1; i++) {
-    const current = normalizedPath[i];
-    const next = normalizedPath[i + 1];
-    
-    if (isUShape) {
-      // For U-shape, ensure consistent flow direction
-      if (i === 0) {
-        // First vertical piece
-        current.entry = 'N';
-        current.exit = 'S';
-        current.flowDirection = 'vertical';
-        current.rotation = 0;
-      } else if (i === normalizedPath.length - 2) {
-        // Last horizontal piece before final vertical
-        current.entry = 'W';
-        current.exit = 'E';
-        current.flowDirection = 'horizontal';
-        current.rotation = 90;
-      } else if (i === normalizedPath.length - 1) {
-        // Final vertical piece
-        current.entry = 'S';
-        current.exit = 'N';
-        current.flowDirection = 'vertical';
-        current.rotation = 180;
-      } else {
-        // Middle pieces (bottom of U)
-        current.entry = 'W';
-        current.exit = 'E';
-        current.flowDirection = 'horizontal';
-        current.rotation = 90;
-      }
-    } else {
-      // For non-U-shape configurations
-      if (current.flowDirection !== next.flowDirection) {
-        // If flow direction changes between cubes, a corner connector is needed
-        if (current.flowDirection === 'horizontal') {
-          current.exit = 'E';
-          next.entry = 'N';
-        } else {
-          current.exit = 'S';
-          next.entry = 'W';
+  // Create a map for quick lookup
+  const cubeMap = new Map<string, PathCube>();
+  cubes.forEach(cube => {
+    cubeMap.set(`${cube.row},${cube.col}`, cube);
+  });
+  
+  // Find endpoints (cubes with only one connection)
+  const endpoints = findEndpoints(cubes);
+  
+  if (endpoints.length !== 2 && cubes.length > 1) {
+    console.warn(`Warning: Found ${endpoints.length} endpoints, expected 2 for a valid path`);
+    // If we don't have exactly 2 endpoints, try to make the best guess
+    if (endpoints.length > 2) {
+      // Take the two furthest endpoints
+      endpoints.splice(0, endpoints.length - 2);
+    } else if (endpoints.length < 2) {
+      // If we have a loop or no endpoints, pick any cube as start
+      endpoints.push(cubes[0]);
+      
+      // Find the furthest cube from the start
+      let furthestCube = cubes[0];
+      let maxDistance = 0;
+      
+      cubes.forEach(cube => {
+        const distance = Math.abs(cube.row - cubes[0].row) + Math.abs(cube.col - cubes[0].col);
+        if (distance > maxDistance) {
+          maxDistance = distance;
+          furthestCube = cube;
         }
-      }
+      });
+      
+      endpoints.push(furthestCube);
     }
   }
   
-  return normalizedPath;
+  // Trace the path from one endpoint to the other
+  const startCube = endpoints[0];
+  const tracedPath = tracePath(cubes, cubeMap, startCube);
+  
+  // Validate the traced path
+  validateFlow(tracedPath);
+  
+  return tracedPath;
 };
+
+/**
+ * Find the endpoints of the path (cubes with only one connection)
+ */
+function findEndpoints(cubes: PathCube[]): PathCube[] {
+  const endpoints: PathCube[] = [];
+  
+  cubes.forEach(cube => {
+    let connectionCount = 0;
+    const { row, col } = cube;
+    
+    // Check each direction for connections
+    ['N', 'S', 'E', 'W'].forEach(dir => {
+      let adjacentRow = row;
+      let adjacentCol = col;
+      
+      switch (dir) {
+        case 'N': adjacentRow--; break;
+        case 'S': adjacentRow++; break;
+        case 'E': adjacentCol++; break;
+        case 'W': adjacentCol--; break;
+      }
+      
+      // Check if there's a cube in this direction
+      const hasConnection = cubes.some(c => 
+        c.row === adjacentRow && c.col === adjacentCol
+      );
+      
+      if (hasConnection) {
+        connectionCount++;
+      }
+    });
+    
+    // Endpoints have exactly one connection
+    if (connectionCount === 1) {
+      endpoints.push(cube);
+    }
+  });
+  
+  return endpoints;
+}
+
+/**
+ * Trace a path through connected cubes starting from a given cube
+ */
+function tracePath(
+  cubes: PathCube[],
+  cubeMap: Map<string, PathCube>,
+  startCube: PathCube
+): PathCube[] {
+  const visited = new Set<string>();
+  const path: PathCube[] = [];
+  const id = (cube: PathCube) => `${cube.row},${cube.col}`;
+  
+  // Start with the first cube
+  let currentCube = startCube;
+  visited.add(id(currentCube));
+  path.push(currentCube);
+  
+  // Find the initial direction
+  const directions: CompassDirection[] = ['N', 'S', 'E', 'W'];
+  let nextDirection: CompassDirection | null = null;
+  
+  for (const dir of directions) {
+    let adjacentRow = currentCube.row;
+    let adjacentCol = currentCube.col;
+    
+    switch (dir) {
+      case 'N': adjacentRow--; break;
+      case 'S': adjacentRow++; break;
+      case 'E': adjacentCol++; break;
+      case 'W': adjacentCol--; break;
+    }
+    
+    const nextCubeId = `${adjacentRow},${adjacentCol}`;
+    if (cubeMap.has(nextCubeId) && !visited.has(nextCubeId)) {
+      nextDirection = dir;
+      break;
+    }
+  }
+  
+  // Set the exit direction for the first cube
+  currentCube.exit = nextDirection;
+  currentCube.entry = null; // First cube has no entry
+  currentCube.flowDirection = isHorizontalFlow(nextDirection) ? 'horizontal' : 'vertical';
+  
+  // Continue tracing the path
+  while (nextDirection) {
+    let adjacentRow = currentCube.row;
+    let adjacentCol = currentCube.col;
+    
+    switch (nextDirection) {
+      case 'N': adjacentRow--; break;
+      case 'S': adjacentRow++; break;
+      case 'E': adjacentCol++; break;
+      case 'W': adjacentCol--; break;
+    }
+    
+    const nextCubeId = `${adjacentRow},${adjacentCol}`;
+    if (!cubeMap.has(nextCubeId) || visited.has(nextCubeId)) {
+      break;
+    }
+    
+    // Move to the next cube
+    currentCube = cubeMap.get(nextCubeId)!;
+    visited.add(nextCubeId);
+    path.push(currentCube);
+    
+    // Set the entry direction for this cube (opposite of previous exit)
+    currentCube.entry = getOppositeDirection(nextDirection);
+    
+    // Find the next direction (excluding the entry direction)
+    nextDirection = null;
+    
+    for (const dir of directions) {
+      if (dir === currentCube.entry) continue; // Skip the entry direction
+      
+      let nextRow = currentCube.row;
+      let nextCol = currentCube.col;
+      
+      switch (dir) {
+        case 'N': nextRow--; break;
+        case 'S': nextRow++; break;
+        case 'E': nextCol++; break;
+        case 'W': nextCol--; break;
+      }
+      
+      const potentialNextId = `${nextRow},${nextCol}`;
+      if (cubeMap.has(potentialNextId) && !visited.has(potentialNextId)) {
+        nextDirection = dir;
+        break;
+      }
+    }
+    
+    // Set the exit direction for this cube
+    currentCube.exit = nextDirection;
+    
+    // Determine flow direction based on entry and exit
+    if (currentCube.entry && currentCube.exit) {
+      if (
+        (currentCube.entry === 'N' && currentCube.exit === 'S') ||
+        (currentCube.entry === 'S' && currentCube.exit === 'N')
+      ) {
+        currentCube.flowDirection = 'vertical';
+        currentCube.rotation = 0;
+      } else if (
+        (currentCube.entry === 'E' && currentCube.exit === 'W') ||
+        (currentCube.entry === 'W' && currentCube.exit === 'E')
+      ) {
+        currentCube.flowDirection = 'horizontal';
+        currentCube.rotation = 0;
+      } else {
+        // Corner piece - determine rotation based on entry/exit
+        currentCube.flowDirection = 'horizontal'; // Default, will be adjusted
+        
+        if (
+          (currentCube.entry === 'N' && currentCube.exit === 'E') ||
+          (currentCube.entry === 'E' && currentCube.exit === 'N')
+        ) {
+          currentCube.rotation = 90;
+        } else if (
+          (currentCube.entry === 'E' && currentCube.exit === 'S') ||
+          (currentCube.entry === 'S' && currentCube.exit === 'E')
+        ) {
+          currentCube.rotation = 180;
+        } else if (
+          (currentCube.entry === 'S' && currentCube.exit === 'W') ||
+          (currentCube.entry === 'W' && currentCube.exit === 'S')
+        ) {
+          currentCube.rotation = 270;
+        } else {
+          currentCube.rotation = 0;
+        }
+      }
+    } else if (currentCube.entry) {
+      // Last cube - only has entry
+      currentCube.flowDirection = isHorizontalFlow(currentCube.entry) ? 'horizontal' : 'vertical';
+      currentCube.rotation = 0;
+    }
+  }
+  
+  // Last cube has no exit
+  if (path.length > 0) {
+    const lastCube = path[path.length - 1];
+    if (lastCube.exit === null) {
+      // This is expected for the end of the path
+    }
+  }
+  
+  return path;
+}
+
+/**
+ * Validate the flow path to ensure it's continuous and valid
+ */
+function validateFlow(cubes: PathCube[]): void {
+  if (cubes.length <= 1) return;
+  
+  for (let i = 0; i < cubes.length - 1; i++) {
+    const currentCube = cubes[i];
+    const nextCube = cubes[i + 1];
+    
+    // Check if exit of current cube connects to entry of next cube
+    if (currentCube.exit !== getOppositeDirection(nextCube.entry)) {
+      console.warn(`Flow validation error: Cube at [${currentCube.row},${currentCube.col}] has exit=${currentCube.exit} but next cube at [${nextCube.row},${nextCube.col}] has entry=${nextCube.entry}`);
+    }
+  }
+}

@@ -16,11 +16,13 @@ interface PresetConfigsProps {
 
 export const PresetConfigs: React.FC<PresetConfigsProps> = ({ onApply }) => {
   return (
-    <div className="flex flex-wrap gap-4">
+    <div className="flex flex-wrap gap-4" data-testid="preset-configs">
       <Button 
         variant="outline"
         className='text-xs md:text-sm font-semibold bg-white '
         onClick={() => onApply(PRESETS.straight)}
+        data-testid="preset-straight"
+        aria-label="Apply straight 3x1 configuration"
       >
         Straight (3x1)
       </Button>
@@ -28,6 +30,8 @@ export const PresetConfigs: React.FC<PresetConfigsProps> = ({ onApply }) => {
         variant="outline"
         className='text-xs md:text-sm font-semibold bg-white'
         onClick={() => onApply(PRESETS.L)}
+        data-testid="preset-l-shape"
+        aria-label="Apply L-shaped configuration"
       >
         L-Shape
       </Button>
@@ -35,6 +39,8 @@ export const PresetConfigs: React.FC<PresetConfigsProps> = ({ onApply }) => {
         variant="outline"
         className='text-xs md:text-sm font-semibold bg-white'
         onClick={() => onApply(PRESETS.U)}
+        data-testid="preset-u-shape"
+        aria-label="Apply U-shaped configuration"
       >
         U-Shape
       </Button>

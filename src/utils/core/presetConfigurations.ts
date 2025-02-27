@@ -38,11 +38,11 @@ export const createUShapeCubes = (): GridCell[][] => {
     [[1, 1, 1],
      [1, 0, 1]],
     {
-      '0,0': { entry: 'W', exit: 'S' },   // First corner
-      '1,0': { entry: 'N', exit: 'E' },   // Bottom left
-      '1,1': { entry: 'W', exit: 'E' },   // Bottom middle
-      '1,2': { entry: 'W', exit: 'N' },   // Bottom right
-      '0,2': { entry: 'S', exit: 'E' }    // Second corner
+      '1,0': { entry: 'N', exit: 'S' },
+      '0,0': { entry: 'N', exit: 'E' },
+      '0,1': { entry: 'W', exit: 'E' },
+      '0,2': { entry: 'W', exit: 'S' },
+      '1,2': { entry: 'N', exit: 'S' }
     }
   );
 };

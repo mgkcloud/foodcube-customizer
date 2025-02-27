@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { GridCell } from './types';
 import { CladdingVisualizer } from './CladdingVisualizer';
 import { PipelineVisualizer } from './PipelineVisualizer';
@@ -9,10 +9,28 @@ interface GridProps {
   onToggleCell: (row: number, col: number) => void;
   onToggleCladding: (row: number, col: number, edge: 'N' | 'E' | 'S' | 'W') => void;
   setHasInteracted?: (value: boolean) => void;
+  debug?: boolean;
 }
 
-export const Grid: React.FC<GridProps> = ({ grid, onToggleCell, onToggleCladding, setHasInteracted }) => {
+export const Grid: React.FC<GridProps> = ({ 
+  grid, 
+  onToggleCell, 
+  onToggleCladding, 
+  setHasInteracted,
+  debug = false
+}) => {
   const [hasInteractedLocal, setHasInteractedLocal] = useState(false);
+
+  // Effect to sync hasInteractedLocal with parent's hasInteracted state
+  useEffect(() => {
+    if (setHasInteracted && !hasInteractedLocal) {
+      // Check if any cube exists in the grid, which would indicate a preset was applied
+      const hasCubeInGrid = grid.some(row => row.some(cell => cell.hasCube));
+      if (hasCubeInGrid) {
+        setHasInteractedLocal(true);
+      }
+    }
+  }, [grid, hasInteractedLocal, setHasInteracted]);
 
   const handleCellClick = (rowIndex: number, colIndex: number) => {
     setHasInteractedLocal(true);
@@ -53,6 +71,44 @@ export const Grid: React.FC<GridProps> = ({ grid, onToggleCell, onToggleCladding
     );
   };
 
+  // Update the renderCell method to pass debug mode to PipelineVisualizer
+  const renderCell = (rowIndex: number, colIndex: number) => {
+    const cell = grid[rowIndex][colIndex];
+    return (
+      <div 
+        key={`${rowIndex}-${colIndex}`}
+        className={`relative w-full h-full border-gray-200 ${cell.hasCube ? 'bg-gray-100' : 'bg-white'}`}
+        onClick={() => handleCellClick(rowIndex, colIndex)}
+        data-testid={`grid-cell-${rowIndex}-${colIndex}`}
+      >
+        {cell.hasCube && (
+          <PipelineVisualizer 
+            cell={cell} 
+            row={rowIndex} 
+            col={colIndex} 
+            grid={grid}
+            debug={debug}
+          />
+        )}
+        {cell.hasCube && (
+          <CladdingVisualizer 
+            cell={cell} 
+            row={rowIndex} 
+            col={colIndex} 
+            grid={grid}
+            onToggle={(edge) => handleCladdingToggle(rowIndex, colIndex, edge)}
+            isEdgeExposed={{
+              N: !hasAdjacentCube(grid, rowIndex, colIndex, 'N'),
+              E: !hasAdjacentCube(grid, rowIndex, colIndex, 'E'),
+              S: !hasAdjacentCube(grid, rowIndex, colIndex, 'S'),
+              W: !hasAdjacentCube(grid, rowIndex, colIndex, 'W')
+            }}
+          />
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="relative grid grid-cols-3 gap-1 bg-gray-100 p-4 rounded-lg">
       {!hasInteractedLocal && (
@@ -88,6 +144,13 @@ export const Grid: React.FC<GridProps> = ({ grid, onToggleCell, onToggleCladding
             {cell.hasCube && (
               <>
                 {renderSubgrid(rowIndex, colIndex)}
+                <PipelineVisualizer
+                  cell={cell}
+                  row={rowIndex}
+                  col={colIndex}
+                  grid={grid}
+                  debug={debug}
+                />
                 <CladdingVisualizer
                   cell={cell}
                   row={rowIndex}
@@ -100,12 +163,6 @@ export const Grid: React.FC<GridProps> = ({ grid, onToggleCell, onToggleCladding
                     S: !hasAdjacentCube(grid, rowIndex, colIndex, 'S'),
                     W: !hasAdjacentCube(grid, rowIndex, colIndex, 'W')
                   }}
-                />
-                <PipelineVisualizer
-                  cell={cell}
-                  row={rowIndex}
-                  col={colIndex}
-                  grid={grid}
                 />
               </>
             )}

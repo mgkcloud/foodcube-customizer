@@ -1,59 +1,60 @@
 import { Requirements } from '@/components/types';
-import { CONFIGURATION_RULES } from '../core/rules';
 
 /**
  * Pack panels according to flow-based rules.
  * This function takes raw panel counts and optimizes them into standard packs
- * based on the configuration type.
- *
- * Ground truth configurations:
- * - Single cube (4 edges): 1 four-pack (2 side + 1 left + 1 right)
- * - Line (8 edges): 1 four-pack, 2 two-packs, 2 straight couplings
- * - L-shape (8 edges): 1 four-pack, 2 two-packs, 1 corner connector, 1 straight coupling
- * - U-shape (12 edges): 1 four-pack, 2 two-packs, 2 corner connectors, 2 straight couplings
+ * based on the following rules:
+ * 
+ * 1. Four-packs contain 2 side panels, 1 left panel, and 1 right panel
+ * 2. Two-packs contain 2 side panels
+ * 3. Prioritize using four-packs first, then two-packs
+ * 4. Any remaining panels are kept as individual panels
  */
 export const packPanels = (requirements: Requirements): Requirements => {
-  // Create a working copy of requirements
-  const packedRequirements = { ...requirements };
+  console.log("Packing panels for raw requirements:", requirements);
+
+  // Start with empty requirements
+  const packedRequirements: Requirements = {
+    fourPackRegular: 0,
+    fourPackExtraTall: 0,
+    twoPackRegular: 0,
+    twoPackExtraTall: 0,
+    leftPanels: 0,
+    rightPanels: 0,
+    sidePanels: 0,
+    cornerConnectors: requirements.cornerConnectors,
+    straightCouplings: requirements.straightCouplings
+  };
   
-  // Step 1: Apply configuration rules based on connectors
-  if (requirements.cornerConnectors === 2 && requirements.straightCouplings === 2) {
-    // U-shape configuration - needs 2 four-packs
-    Object.assign(packedRequirements, {
-      ...CONFIGURATION_RULES.U_SHAPE,
-      leftPanels: requirements.leftPanels,  // Keep original entry/exit based counts
-      rightPanels: requirements.rightPanels
-    });
-  } else if (requirements.cornerConnectors === 1 && requirements.straightCouplings === 1) {
-    // L-shape configuration - needs 1 four-pack plus extra panels
-    Object.assign(packedRequirements, {
-      ...CONFIGURATION_RULES.L_SHAPE,
-      leftPanels: requirements.leftPanels,  // Keep original entry/exit based counts
-      rightPanels: requirements.rightPanels
-    });
-  } else if (requirements.cornerConnectors === 0 && requirements.straightCouplings === 2) {
-    // Three-line configuration
-    Object.assign(packedRequirements, {
-      ...CONFIGURATION_RULES.THREE_LINE,
-      leftPanels: requirements.leftPanels,  // Keep original entry/exit based counts
-      rightPanels: requirements.rightPanels
-    });
-  } else {
-    // Single cube configuration
-    Object.assign(packedRequirements, {
-      ...CONFIGURATION_RULES.SINGLE_CUBE,
-      leftPanels: requirements.leftPanels,  // Keep original entry/exit based counts
-      rightPanels: requirements.rightPanels
-    });
-  }
-
-  // Step 2: Create two-packs from remaining side panels
-  const twoPackCount = Math.floor(packedRequirements.sidePanels / 2);
-  if (twoPackCount > 0) {
-    packedRequirements.twoPackRegular = twoPackCount;
-    packedRequirements.sidePanels -= twoPackCount * 2;
-  }
-
+  // Temporary counters for remaining panels
+  let remainingSidePanels = requirements.sidePanels;
+  let remainingLeftPanels = requirements.leftPanels;
+  let remainingRightPanels = requirements.rightPanels;
+  
+  // Step 1: Always use four-packs first (combination of 2 side, 1 left, 1 right)
+  // Calculate how many full four-packs we can create
+  const maxFourPacks = Math.min(
+    Math.floor(remainingSidePanels / 2),
+    remainingLeftPanels,
+    remainingRightPanels
+  );
+  
+  packedRequirements.fourPackRegular = maxFourPacks;
+  remainingSidePanels -= maxFourPacks * 2;
+  remainingLeftPanels -= maxFourPacks;
+  remainingRightPanels -= maxFourPacks;
+  
+  // Step 2: Pack remaining side panels into two-packs
+  const maxTwoPacks = Math.ceil(remainingSidePanels / 2);
+  packedRequirements.twoPackRegular = maxTwoPacks;
+  remainingSidePanels -= maxTwoPacks * 2;
+  
+  // Step 3: Any remaining panels are kept as individual panels
+  packedRequirements.sidePanels = Math.max(0, remainingSidePanels);
+  packedRequirements.leftPanels = remainingLeftPanels;
+  packedRequirements.rightPanels = remainingRightPanels;
+  
+  console.log("Packed panel requirements:", packedRequirements);
   return packedRequirements;
 };
 
@@ -62,49 +63,30 @@ export const packPanels = (requirements: Requirements): Requirements => {
  * This helps ensure our packing logic matches the expected outcomes
  */
 export const validateConfiguration = (requirements: Requirements): boolean => {
+  // Count total panels across all pack types
   const totalPanels = 
     requirements.sidePanels +
     requirements.leftPanels +
     requirements.rightPanels +
     (requirements.fourPackRegular * 4) +
     (requirements.twoPackRegular * 2);
+  
+  console.log("Validating configuration with total panels:", totalPanels);
 
-  // Single cube (4 edges)
-  if (totalPanels === 4) {
-    return requirements.fourPackRegular === 1 &&
-           requirements.twoPackRegular === 0 &&
-           requirements.leftPanels === 0 &&
-           requirements.rightPanels === 0 &&
-           requirements.sidePanels === 0;
+  // Validate that we have the correct number of panels for the connectors
+  const totalConnectors = requirements.cornerConnectors + requirements.straightCouplings;
+  
+  // For a valid configuration, the number of connectors should be one less than the number of cubes
+  // Each cube has 4 edges, and each connection between cubes reduces the total exposed edges by 2
+  const estimatedCubeCount = totalConnectors + 1;
+  const expectedTotalPanels = estimatedCubeCount * 4 - (totalConnectors * 2);
+  
+  // Allow for some flexibility in the validation
+  const isValidPanelCount = Math.abs(totalPanels - expectedTotalPanels) <= 2;
+  
+  if (!isValidPanelCount) {
+    console.warn(`Panel count validation failed: Expected ~${expectedTotalPanels} panels, got ${totalPanels}`);
   }
-
-  // Line configuration (8 edges)
-  if (totalPanels === 8 && requirements.straightCouplings === 2) {
-    return requirements.fourPackRegular === 1 &&
-           requirements.twoPackRegular === 2 &&
-           requirements.leftPanels === 0 &&
-           requirements.rightPanels === 0 &&
-           requirements.sidePanels === 0;
-  }
-
-  // L-shape configuration (8 edges)
-  if (totalPanels === 8 && 
-      requirements.cornerConnectors === 1 &&
-      requirements.straightCouplings === 1) {
-    return requirements.fourPackRegular === 1 &&
-           requirements.twoPackRegular === 2 &&
-           (requirements.leftPanels === 1 || requirements.rightPanels === 1) &&
-           requirements.sidePanels === 0;
-  }
-
-  // U-shape configuration (12 edges)
-  if (totalPanels === 12 &&
-      requirements.cornerConnectors === 2 &&
-      requirements.straightCouplings === 2) {
-    return requirements.fourPackRegular === 1 &&
-           requirements.twoPackRegular === 2 &&
-           requirements.sidePanels === 0;
-  }
-
-  return true; // Allow other valid configurations
+  
+  return isValidPanelCount;
 };

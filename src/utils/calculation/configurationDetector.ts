@@ -42,6 +42,28 @@ export const isStraightFlow = (entry: CompassDirection | null, exit: CompassDire
 };
 
 /**
+ * Count the number of corner connectors in a path
+ */
+export const countCornerConnectors = (path: PathCube[]): number => {
+  let cornerCount = 0;
+  
+  // Corner is detected when a flow changes direction (not straight)
+  for (let i = 0; i < path.length; i++) {
+    const curr = path[i];
+    if (curr.entry && curr.exit) {
+      const flow = `${curr.entry}→${curr.exit}`;
+      if (VALID_TURNS.has(flow)) {
+        console.log(`Detected corner at cube [${curr.row},${curr.col}]: ${flow}`);
+        cornerCount++;
+      }
+    }
+  }
+  
+  console.log(`Total corners detected: ${cornerCount}`);
+  return cornerCount;
+};
+
+/**
  * Checks if a configuration is U-shaped
  */
 export const isUShapedConfiguration = (path: { cubes: PathCube[] }): boolean => {
@@ -49,22 +71,7 @@ export const isUShapedConfiguration = (path: { cubes: PathCube[] }): boolean => 
   if (path.cubes.length < 5) return false;
 
   // Count corner turns and validate flow direction
-  let cornerCount = 0;
-  let straightCount = 0;
-  const opposites = { N: 'S', S: 'N', E: 'W', W: 'E' } as const;
-
-  for (let i = 1; i < path.cubes.length; i++) {
-    const prev = path.cubes[i-1];
-    const curr = path.cubes[i];
-
-    if (!prev.exit || !curr.entry) return false;
-
-    if (curr.entry === opposites[prev.exit as keyof typeof opposites]) {
-      straightCount++;
-    } else {
-      cornerCount++;
-    }
-  }
+  let cornerCount = countCornerConnectors(path.cubes);
 
   // U-shape must have exactly 2 corners
   if (cornerCount !== 2) return false;
@@ -84,20 +91,8 @@ export const isUShapedConfiguration = (path: { cubes: PathCube[] }): boolean => 
 export const isLShapedConfiguration = (path: { cubes: PathCube[] }): boolean => {
   if (path.cubes.length < 3) return false;
 
-  // Count corner turns and validate flow direction
-  let cornerCount = 0;
-  const opposites = { N: 'S', S: 'N', E: 'W', W: 'E' } as const;
-
-  for (let i = 1; i < path.cubes.length; i++) {
-    const prev = path.cubes[i-1];
-    const curr = path.cubes[i];
-
-    if (!prev.exit || !curr.entry) return false;
-
-    if (curr.entry !== opposites[prev.exit as keyof typeof opposites]) {
-      cornerCount++;
-    }
-  }
+  // Count corner turns
+  let cornerCount = countCornerConnectors(path.cubes);
 
   // L-shape must have exactly 1 corner
   if (cornerCount !== 1) return false;

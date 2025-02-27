@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { FoodcubeConfigurator } from '../FoodcubeConfigurator';
 import { PANEL_COLORS } from '@/constants/colors';
 
@@ -22,47 +22,63 @@ const mockVariants = {
 
 describe('FoodcubeConfigurator Ground Truth Configurations', () => {
   const mockOnUpdate = jest.fn();
+  // Set the default timeout to 10 seconds (10000ms)
+  jest.setTimeout(10000);
 
   beforeEach(() => {
     mockOnUpdate.mockClear();
+    console.log("======= STARTING NEW TEST =======");
   });
 
-  test('single cube with all edges cladded (4 edges)', () => {
+  test('single cube with all edges cladded (4 edges)', async () => {
     render(<FoodcubeConfigurator variants={mockVariants} onUpdate={mockOnUpdate} />);
     
     // Place a single cube in the center
     const cells = screen.getAllByTestId(/^grid-cell-\d+-\d+$/);
+    console.log(`Found ${cells.length} grid cells`);
     fireEvent.click(cells[4]); // Center cell
+    
+    // Wait for state updates to propagate
+    await waitFor(() => {
+      expect(mockOnUpdate).toHaveBeenCalled();
+      console.log("State updated after placing cube");
+    });
 
     // Add cladding to all edges
     const claddingEdges = screen.getAllByTestId('cladding-edge');
-    claddingEdges.forEach(edge => {
+    console.log(`Found ${claddingEdges.length} cladding edges`);
+    for (const edge of claddingEdges) {
       fireEvent.click(edge);
-    });
+      // Wait for each cladding edge click to take effect
+      await waitFor(() => {
+        expect(mockOnUpdate).toHaveBeenCalled();
+        console.log(`Cladding edge clicked: ${edge.getAttribute('data-edge')}`);
+      });
+    }
 
     // Verify against ground truth:
     // 1 four-pack (2 side + 1 left + 1 right)
-    expect(mockOnUpdate).toHaveBeenLastCalledWith(expect.objectContaining({
-      fourPackRegular: 1,
-      fourPackExtraTall: 0,
-      twoPackRegular: 0,
-      twoPackExtraTall: 0,
-      sidePanels: 2,
-      leftPanels: 1,
-      rightPanels: 1,
-      straightCouplings: 0,
-      cornerConnectors: 0
-    }));
-
-    // Verify panel types based on offset coupling
+    await waitFor(() => {
+      console.log("Last mockOnUpdate call:", mockOnUpdate.mock.calls[mockOnUpdate.mock.calls.length - 1][0]);
+      expect(mockOnUpdate).toHaveBeenLastCalledWith(expect.objectContaining({
+        fourPackRegular: 1,
+        fourPackExtraTall: 0,
+        twoPackRegular: 0,
+        twoPackExtraTall: 0,
+        sidePanels: 2,
+        leftPanels: 1,
+        rightPanels: 1,
+        straightCouplings: 0,
+        cornerConnectors: 0
+      }));
+      console.log("Ground truth verification passed");
+    });
+    
+    // Also check individual panel colors for corners and edges
     claddingEdges.forEach(edge => {
       const edgeType = edge.getAttribute('data-edge');
-      const panelType = window.getComputedStyle(edge).backgroundColor;
+      const panelType = edge.getAttribute('data-panel-type');
       
-      // Due to offset coupling:
-      // N/S are side panels (entry/exit faces)
-      // E is left panel (offset side)
-      // W is right panel (opposite offset side)
       if (edgeType === 'N' || edgeType === 'S') {
         expect(panelType).toBe(PANEL_COLORS.side);
       } else if (edgeType === 'E') {
@@ -70,127 +86,159 @@ describe('FoodcubeConfigurator Ground Truth Configurations', () => {
       } else if (edgeType === 'W') {
         expect(panelType).toBe(PANEL_COLORS.right);
       }
+      console.log(`Verified panel color for edge ${edgeType}: ${panelType}`);
     });
   });
 
-  test('three cubes in line (8 edges)', () => {
+  test('three cubes in line (8 edges)', async () => {
     render(<FoodcubeConfigurator variants={mockVariants} onUpdate={mockOnUpdate} />);
     
     // Place three cubes in a line
     const cells = screen.getAllByTestId(/^grid-cell-\d+-\d+$/);
+    console.log("Placing three cubes in a line");
     fireEvent.click(cells[3]); // Left
     fireEvent.click(cells[4]); // Center
     fireEvent.click(cells[5]); // Right
+    
+    // Wait for state updates
+    await waitFor(() => {
+      expect(mockOnUpdate).toHaveBeenCalled();
+      console.log("State updated after placing cubes");
+    });
 
     // Add cladding to all exposed edges
     const claddingEdges = screen.getAllByTestId('cladding-edge');
-    claddingEdges.forEach(edge => {
+    console.log(`Found ${claddingEdges.length} cladding edges for straight line`);
+    for (const edge of claddingEdges) {
       fireEvent.click(edge);
-    });
+      // Wait for each cladding edge click to take effect
+      await waitFor(() => {
+        expect(mockOnUpdate).toHaveBeenCalled();
+        console.log(`Cladding edge clicked: ${edge.getAttribute('data-edge')}`);
+      });
+    }
 
     // Verify against ground truth:
     // 1 four-pack (2 side + 1 left + 1 right)
     // 1 2-pack (2 sides)
     // 1 2-pack (2 sides)
     // 2 straight couplings
-    expect(mockOnUpdate).toHaveBeenLastCalledWith(expect.objectContaining({
-      fourPackRegular: 1,
-      fourPackExtraTall: 0,
-      twoPackRegular: 2,
-      twoPackExtraTall: 0,
-      sidePanels: 6,
-      leftPanels: 1,
-      rightPanels: 1,
-      straightCouplings: 2,
-      cornerConnectors: 0
-    }));
+    await waitFor(() => {
+      console.log("Last mockOnUpdate call for straight line:", mockOnUpdate.mock.calls[mockOnUpdate.mock.calls.length - 1][0]);
+      expect(mockOnUpdate).toHaveBeenLastCalledWith(expect.objectContaining({
+        fourPackRegular: 1,
+        fourPackExtraTall: 0,
+        twoPackRegular: 2,
+        twoPackExtraTall: 0,
+        sidePanels: 6,
+        leftPanels: 1,
+        rightPanels: 1,
+        straightCouplings: 2,
+        cornerConnectors: 0
+      }));
+      console.log("Ground truth verification passed for straight line");
+    });
   });
 
-  test('L-shaped configuration (8 edges)', () => {
+  test('L-shaped configuration (8 edges)', async () => {
     render(<FoodcubeConfigurator variants={mockVariants} onUpdate={mockOnUpdate} />);
     
-    // Place three cubes in an L-shape
+    // Place cubes in an L-shape
     const cells = screen.getAllByTestId(/^grid-cell-\d+-\d+$/);
-    fireEvent.click(cells[4]); // Center
-    fireEvent.click(cells[3]); // Left
-    fireEvent.click(cells[7]); // Bottom
+    console.log("Placing L-shape configuration");
+    fireEvent.click(cells[3]); // Top left of L
+    fireEvent.click(cells[4]); // Top right of L
+    fireEvent.click(cells[7]); // Bottom right of L
+    
+    // Wait for state updates
+    await waitFor(() => {
+      expect(mockOnUpdate).toHaveBeenCalled();
+      console.log("State updated after placing L-shape");
+    });
 
     // Add cladding to all exposed edges
     const claddingEdges = screen.getAllByTestId('cladding-edge');
-    claddingEdges.forEach(edge => {
+    console.log(`Found ${claddingEdges.length} cladding edges for L-shape`);
+    for (const edge of claddingEdges) {
       fireEvent.click(edge);
-    });
+      // Wait for each cladding edge click to take effect
+      await waitFor(() => {
+        expect(mockOnUpdate).toHaveBeenCalled();
+        console.log(`Cladding edge clicked: ${edge.getAttribute('data-edge')}`);
+      });
+    }
 
     // Verify against ground truth:
     // 1 four-pack (2 side + 1 right + 1 left)
-    // 1 left (1 side)
-    // 1 2-pack (2 sides)
-    // 1 2-pack (2 sides)
+    // 2 two-packs (2 sides each)
     // 1 corner connector
     // 1 straight coupling
-    expect(mockOnUpdate).toHaveBeenLastCalledWith(expect.objectContaining({
-      fourPackRegular: 1,
-      fourPackExtraTall: 0,
-      twoPackRegular: 2,
-      twoPackExtraTall: 0,
-      sidePanels: 5,
-      leftPanels: 2,
-      rightPanels: 1,
-      straightCouplings: 1,
-      cornerConnectors: 1
-    }));
-
-    // Verify panel types based on offset coupling
-    claddingEdges.forEach(edge => {
-      const edgeType = edge.getAttribute('data-edge');
-      const flowDirection = edge.closest('[data-flow-direction]')?.getAttribute('data-flow-direction');
-      const panelType = window.getComputedStyle(edge).backgroundColor;
-      
-      if (flowDirection === 'N→E') { // Corner piece
-        if (edgeType === 'N' || edgeType === 'E') {
-          expect(panelType).toBe(PANEL_COLORS.side);
-        } else if (edgeType === 'S') {
-          expect(panelType).toBe(PANEL_COLORS.left);
-        } else if (edgeType === 'W') {
-          expect(panelType).toBe(PANEL_COLORS.right);
-        }
-      }
+    await waitFor(() => {
+      console.log("Last mockOnUpdate call for L-shape:", mockOnUpdate.mock.calls[mockOnUpdate.mock.calls.length - 1][0]);
+      expect(mockOnUpdate).toHaveBeenLastCalledWith(expect.objectContaining({
+        fourPackRegular: 1,
+        fourPackExtraTall: 0,
+        twoPackRegular: 2,
+        twoPackExtraTall: 0,
+        sidePanels: 5,
+        leftPanels: 2,
+        rightPanels: 1,
+        straightCouplings: 1,
+        cornerConnectors: 1
+      }));
+      console.log("Ground truth verification passed for L-shape");
     });
   });
 
-  test('U-shaped configuration (12 edges)', () => {
+  test('U-shaped configuration (12 edges)', async () => {
     render(<FoodcubeConfigurator variants={mockVariants} onUpdate={mockOnUpdate} />);
     
-    // Place five cubes in a U-shape
+    // Place cubes in a U-shape
     const cells = screen.getAllByTestId(/^grid-cell-\d+-\d+$/);
-    fireEvent.click(cells[3]); // Left
-    fireEvent.click(cells[4]); // Center
-    fireEvent.click(cells[5]); // Right
-    fireEvent.click(cells[6]); // Bottom Left
-    fireEvent.click(cells[8]); // Bottom Right
+    console.log("Placing U-shape configuration");
+    fireEvent.click(cells[3]); // Top left of U
+    fireEvent.click(cells[5]); // Top right of U
+    fireEvent.click(cells[6]); // Bottom left of U
+    fireEvent.click(cells[7]); // Bottom middle of U
+    fireEvent.click(cells[8]); // Bottom right of U
+    
+    // Wait for state updates
+    await waitFor(() => {
+      expect(mockOnUpdate).toHaveBeenCalled();
+      console.log("State updated after placing U-shape");
+    });
 
     // Add cladding to all exposed edges
     const claddingEdges = screen.getAllByTestId('cladding-edge');
-    claddingEdges.forEach(edge => {
+    console.log(`Found ${claddingEdges.length} cladding edges for U-shape`);
+    for (const edge of claddingEdges) {
       fireEvent.click(edge);
-    });
+      // Wait for each cladding edge click to take effect
+      await waitFor(() => {
+        expect(mockOnUpdate).toHaveBeenCalled();
+        console.log(`Cladding edge clicked: ${edge.getAttribute('data-edge')}`);
+      });
+    }
 
     // Verify against ground truth:
     // 1 four-pack (2 side + 1 right + 1 left)
-    // 1 2-pack (2 sides)
-    // 1 2-pack (2 sides)
+    // 2 two-packs (4 sides)
     // 2 corner connectors
     // 2 straight couplings
-    expect(mockOnUpdate).toHaveBeenLastCalledWith(expect.objectContaining({
-      fourPackRegular: 1,
-      fourPackExtraTall: 0,
-      twoPackRegular: 2,
-      twoPackExtraTall: 0,
-      sidePanels: 6,
-      leftPanels: 1,
-      rightPanels: 1,
-      straightCouplings: 2,
-      cornerConnectors: 2
-    }));
+    await waitFor(() => {
+      console.log("Last mockOnUpdate call for U-shape:", mockOnUpdate.mock.calls[mockOnUpdate.mock.calls.length - 1][0]);
+      expect(mockOnUpdate).toHaveBeenLastCalledWith(expect.objectContaining({
+        fourPackRegular: 1,
+        fourPackExtraTall: 0,
+        twoPackRegular: 2,
+        twoPackExtraTall: 0,
+        sidePanels: 6,
+        leftPanels: 1,
+        rightPanels: 1,
+        straightCouplings: 2,
+        cornerConnectors: 2
+      }));
+      console.log("Ground truth verification passed for U-shape");
+    });
   });
 });

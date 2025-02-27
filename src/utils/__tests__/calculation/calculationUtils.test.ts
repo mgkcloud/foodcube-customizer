@@ -1,5 +1,5 @@
-import { calculateRequirements } from './calculationUtils';
-import { GridCell } from '../components/types';
+import { calculateRequirements } from '@/utils/calculation/calculationUtils';
+import { GridCell } from '@/components/types';
 
 const logGridState = (grid: GridCell[][], testName: string) => {
   console.log(`\n=== ${testName} ===`);

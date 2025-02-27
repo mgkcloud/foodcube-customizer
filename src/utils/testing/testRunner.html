@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cladding Cube Calculator Tests</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      line-height: 1.6;
+    }
+    h1 {
+      color: #333;
+      border-bottom: 2px solid #eee;
+      padding-bottom: 10px;
+    }
+    #results {
+      background-color: #f5f5f5;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 15px;
+      margin: 20px 0;
+      white-space: pre-wrap;
+      font-family: monospace;
+      max-height: 500px;
+      overflow-y: auto;
+    }
+    button {
+      background-color: #4CAF50;
+      border: none;
+      color: white;
+      padding: 10px 20px;
+      text-align: center;
+      text-decoration: none;
+      display: inline-block;
+      font-size: 16px;
+      margin: 4px 2px;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    .test-passed {
+      color: green;
+      font-weight: bold;
+    }
+    .test-failed {
+      color: red;
+      font-weight: bold;
+    }
+    .test-summary {
+      font-size: 18px;
+      margin-top: 20px;
+      padding: 10px;
+      border-radius: 4px;
+    }
+    .summary-passed {
+      background-color: #dff0d8;
+      border: 1px solid #d6e9c6;
+      color: #3c763d;
+    }
+    .summary-failed {
+      background-color: #f2dede;
+      border: 1px solid #ebccd1;
+      color: #a94442;
+    }
+    .grid-visualization {
+      margin: 20px 0;
+      font-family: monospace;
+    }
+    .grid-row {
+      display: flex;
+    }
+    .grid-cell {
+      width: 40px;
+      height: 40px;
+      border: 1px solid #ccc;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 2px;
+      background-color: #f9f9f9;
+    }
+    .grid-cell.active {
+      background-color: #e0f7fa;
+      font-weight: bold;
+    }
+    .flow-indicator {
+      font-size: 20px;
+      color: #0277bd;
+    }
+  </style>
+</head>
+<body>
+  <h1>Cladding Cube Calculator Tests</h1>
+  <p>This page runs tests for the simplified flow-based implementation of the Cladding Cube Calculator.</p>
+  
+  <button id="runTestsBtn">Run Tests</button>
+  
+  <div id="results">Test results will appear here...</div>
+  
+  <script>
+    // Types and interfaces
+    const DIRECTIONS = {
+      N: { row: -1, col: 0, opposite: 'S' },
+      S: { row: 1, col: 0, opposite: 'N' },
+      E: { row: 0, col: 1, opposite: 'W' },
+      W: { row: 0, col: -1, opposite: 'E' }
+    };
+    
+    // Grid representation
+    class Grid {
+      constructor() {
+        this.cells = new Map(); // Map of "row,col" -> cell data
+        this.minRow = Infinity;
+        this.maxRow = -Infinity;
+        this.minCol = Infinity;
+        this.maxCol = -Infinity;
+      }
+      
+      addCube(row, col) {
+        const key = `${row},${col}`;
+        if (!this.cells.has(key)) {
+          this.cells.set(key, {
+            row,
+            col,
+            subgrid: [{ subgridRow: 0, subgridCol: 0 }],
+            entry: null,
+            exit: null,
+            flowDirection: null,
+            rotation: 0
+          });
+          
+          // Update grid boundaries
+          this.minRow = Math.min(this.minRow, row);
+          this.maxRow = Math.max(this.maxRow, row);
+          this.minCol = Math.min(this.minCol, col);
+          this.maxCol = Math.max(this.maxCol, col);
+        }
+        return this;
+      }
+      
+      getCube(row, col) {
+        return this.cells.get(`${row},${col}`) || null;
+      }
+      
+      hasCube(row, col) {
+        return this.cells.has(`${row},${col}`);
+      }
+      
+      getAllCubes() {
+        return Array.from(this.cells.values());
+      }
+      
+      // Find adjacent cube in the specified direction
+      getAdjacentCube(cube, direction) {
+        const dir = DIRECTIONS[direction];
+        if (!dir) return null;
+        
+        const adjacentRow = cube.row + dir.row;
+        const adjacentCol = cube.col + dir.col;
+        
+        return this.getCube(adjacentRow, adjacentCol);
+      }
+      
+      // Get all adjacent cubes
+      getAdjacentCubes(cube) {
+        const adjacent = [];
+        
+        for (const [dir, offset] of Object.entries(DIRECTIONS)) {
+          const adjacentRow = cube.row + offset.row;
+          const adjacentCol = cube.col + offset.col;
+          
+          const adjacentCube = this.getCube(adjacentRow, adjacentCol);
+          if (adjacentCube) {
+            adjacent.push({ direction: dir, cube: adjacentCube });
+          }
+        }
+        
+        return adjacent;
+      }
+      
+      // Visualize the grid for debugging
+      visualize() {
+        let html = '<div class="grid-visualization">';
+        
+        for (let row = this.minRow; row <= this.maxRow; row++) {
+          html += '<div class="grid-row">';
+          
+          for (let col = this.minCol; col <= this.maxCol; col++) {
+            const cube = this.getCube(row, col);
+            const cellClass = cube ? 'grid-cell active' : 'grid-cell';
+            
+            html += `<div class="${cellClass}">`;
+            if (cube) {
+              if (cube.entry && cube.exit) {
+                html += `<span class="flow-indicator">${cube.entry}→${cube.exit}</span>`;
+              } else if (cube.entry) {
+                html += `<span class="flow-indicator">${cube.entry}→</span>`;
+              } else if (cube.exit) {
+                html += `<span class="flow-indicator">→${cube.exit}</span>`;
+              } else {
+                html += '●';
+              }
+            }
+            html += '</div>';
+          }
+          
+          html += '</div>';
+        }
+        
+        html += '</div>';
+        return html;
+      }
+    }
+    
+    // Flow analyzer
+    class FlowAnalyzer {
+      constructor(grid) {
+        this.grid = grid;
+      }
+      
+      // Find a valid path through the grid
+      analyzePath() {
+        const allCubes = this.grid.getAllCubes();
+        if (!allCubes.length) return [];
+        
+        // Find endpoints (cubes with only one adjacent cube)
+        const endpoints = allCubes.filter(cube => {
+          const adjacentCount = this.grid.getAdjacentCubes(cube).length;
+          return adjacentCount === 1;
+        });
+        
+        // If no endpoints, it might be a closed loop or invalid configuration
+        if (endpoints.length === 0) {
+          if (allCubes.length === 1) {
+            // Single cube case
+            const cube = allCubes[0];
+            cube.exit = 'S'; // Arbitrary exit direction for a single cube
+            cube.flowDirection = 'vertical';
+            return [cube];
+          }
+          
+          // Closed loop or invalid
+          console.warn('No endpoints found in grid. Invalid or closed loop configuration.');
+          return [];
+        }
+        
+        // If more than 2 endpoints, it's an invalid configuration (T-junction)
+        if (endpoints.length > 2) {
+          console.warn(`Found ${endpoints.length} endpoints. T-junctions are not allowed.`);
+          return [];
+        }
+        
+        // Start from one endpoint and trace the path
+        const startCube = endpoints[0];
+        const path = [startCube];
+        const visited = new Set([`${startCube.row},${startCube.col}`]);
+        
+        // Set initial direction
+        const adjacent = this.grid.getAdjacentCubes(startCube)[0];
+        startCube.exit = adjacent.direction;
+        startCube.flowDirection = this.determineFlowDirection(null, adjacent.direction);
+        
+        // Trace the path
+        let currentCube = startCube;
+        
+        while (true) {
+          // Find the next cube in the path
+          const exitDir = currentCube.exit;
+          if (!exitDir) break;
+          
+          const nextCube = this.grid.getAdjacentCube(currentCube, exitDir);
+          if (!nextCube || visited.has(`${nextCube.row},${nextCube.col}`)) break;
+          
+          // Set entry direction for the next cube
+          nextCube.entry = DIRECTIONS[exitDir].opposite;
+          
+          // Find exit direction for the next cube (any adjacent cube except the one we came from)
+          const adjacentCubes = this.grid.getAdjacentCubes(nextCube)
+            .filter(adj => adj.cube !== currentCube && !visited.has(`${adj.cube.row},${adj.cube.col}`));
+          
+          if (adjacentCubes.length > 0) {
+            // Continue the path
+            nextCube.exit = adjacentCubes[0].direction;
+          } else {
+            // End of path
+            nextCube.exit = null;
+          }
+          
+          // Set flow direction
+          nextCube.flowDirection = this.determineFlowDirection(nextCube.entry, nextCube.exit);
+          
+          // Add to path and continue
+          path.push(nextCube);
+          visited.add(`${nextCube.row},${nextCube.col}`);
+          currentCube = nextCube;
+        }
+        
+        return path;
+      }
+      
+      // Determine flow direction based on entry and exit
+      determineFlowDirection(entry, exit) {
+        if (!entry && !exit) return 'horizontal'; // Default
+        
+        if (entry === 'N' || entry === 'S' || exit === 'N' || exit === 'S') {
+          return 'vertical';
+        }
+        
+        return 'horizontal';
+      }
+      
+      // Get exposed edges for a cube
+      getExposedEdges(cube) {
+        const exposedEdges = [];
+        
+        // Check each direction
+        for (const [dir, offset] of Object.entries(DIRECTIONS)) {
+          const adjacentRow = cube.row + offset.row;
+          const adjacentCol = cube.col + offset.col;
+          
+          // If there's no adjacent cube in this direction, the edge is exposed
+          if (!this.grid.hasCube(adjacentRow, adjacentCol)) {
+            exposedEdges.push(dir);
+          }
+        }
+        
+        return exposedEdges;
+      }
+      
+      // Determine panel type for an edge
+      getPanelType(cube, edge) {
+        if (!cube.entry && !cube.exit) {
+          return 'side'; // No flow, all panels are side panels
+        }
+        
+        // Entry point gets left panel, exit point gets right panel
+        if (edge === cube.entry) {
+          return 'left';
+        }
+        if (edge === cube.exit) {
+          return 'right';
+        }
+        
+        // All other edges are side panels
+        return 'side';
+      }
+      
+      // Determine connector type between cubes
+      getConnectorType(fromCube, toCube) {
+        if (!fromCube.exit || !toCube.entry) {
+          return null; // No connection
+        }
+        
+        const exitDir = fromCube.exit;
+        const entryDir = toCube.entry;
+        
+        // Verify cubes are adjacent
+        const expectedEntryDir = DIRECTIONS[exitDir].opposite;
+        if (entryDir !== expectedEntryDir) {
+          console.warn(`Invalid connection: ${exitDir} → ${entryDir}`);
+          return 'straight'; // Default to straight if invalid
+        }
+        
+        // Check if it's a straight path
+        if (
+          (exitDir === 'N' && entryDir === 'S') ||
+          (exitDir === 'S' && entryDir === 'N') ||
+          (exitDir === 'E' && entryDir === 'W') ||
+          (exitDir === 'W' && entryDir === 'E')
+        ) {
+          return 'straight';
+        }
+        
+        // It's a corner connector
+        // Determine if it's a left or right turn
+        const turns = {
+          'N→E': 'corner-right',
+          'E→S': 'corner-right',
+          'S→W': 'corner-right',
+          'W→N': 'corner-right',
+          'N→W': 'corner-left',
+          'W→S': 'corner-left',
+          'S→E': 'corner-left',
+          'E→N': 'corner-left'
+        };
+        
+        const turnKey = `${fromCube.exit}→${toCube.exit}`;
+        return turns[turnKey] || 'corner'; // Default to generic corner if not specified
+      }
+    }
+    
+    // Requirements calculator
+    class RequirementsCalculator {
+      constructor(grid) {
+        this.grid = grid;
+        this.flowAnalyzer = new FlowAnalyzer(grid);
+      }
+      
+      calculate() {
+        // Analyze the path
+        const path = this.flowAnalyzer.analyzePath();
+        if (!path.length) {
+          return this.getEmptyRequirements();
+        }
+        
+        // Count panel types and connectors
+        let sidePanels = 0;
+        let leftPanels = 0;
+        let rightPanels = 0;
+        let straightCouplings = 0;
+        let cornerConnectors = 0;
+        
+        // Process each cube in the path
+        path.forEach((cube, index) => {
+          // Count panel types for each exposed edge
+          const exposedEdges = this.flowAnalyzer.getExposedEdges(cube);
+          
+          exposedEdges.forEach(edge => {
+            const panelType = this.flowAnalyzer.getPanelType(cube, edge);
+            
+            switch (panelType) {
+              case 'side':
+                sidePanels++;
+                break;
+              case 'left':
+                leftPanels++;
+                break;
+              case 'right':
+                rightPanels++;
+                break;
+            }
+          });
+          
+          // Count connector types between cubes
+          if (index < path.length - 1) {
+            const nextCube = path[index + 1];
+            const connectorType = this.flowAnalyzer.getConnectorType(cube, nextCube);
+            
+            if (connectorType === 'straight') {
+              straightCouplings++;
+            } else if (connectorType && connectorType.startsWith('corner')) {
+              cornerConnectors++;
+            }
+          }
+        });
+        
+        // Optimize panel packing
+        const packedPanels = this.optimizePanelPacking(sidePanels, leftPanels, rightPanels);
+        
+        // Return final requirements
+        return {
+          ...packedPanels,
+          fourPackExtraTall: 0,
+          twoPackExtraTall: 0,
+          straightCouplings,
+          cornerConnectors
+        };
+      }
+      
+      // Helper function to optimize panel packing
+      optimizePanelPacking(sidePanels, leftPanels, rightPanels) {
+        let remainingSide = sidePanels;
+        let remainingLeft = leftPanels;
+        let remainingRight = rightPanels;
+        
+        // Calculate how many four-packs we can make (limited by the minimum of left/right panels)
+        const maxFourPacks = Math.min(remainingLeft, remainingRight);
+        const fourPacks = Math.min(maxFourPacks, Math.floor(remainingSide / 2));
+        
+        // Update remaining panels after four-packs
+        remainingSide -= fourPacks * 2;
+        remainingLeft -= fourPacks;
+        remainingRight -= fourPacks;
+        
+        // Calculate how many two-packs we can make with remaining side panels
+        const twoPacks = Math.floor(remainingSide / 2);
+        remainingSide -= twoPacks * 2;
+        
+        return {
+          fourPackRegular: fourPacks,
+          twoPackRegular: twoPacks,
+          leftPanels: remainingLeft,
+          rightPanels: remainingRight,
+          sidePanels: remainingSide
+        };
+      }
+      
+      // Empty requirements template
+      getEmptyRequirements() {
+        return {
+          fourPackRegular: 0,
+          fourPackExtraTall: 0,
+          twoPackRegular: 0,
+          twoPackExtraTall: 0,
+          sidePanels: 0,
+          leftPanels: 0,
+          rightPanels: 0,
+          straightCouplings: 0,
+          cornerConnectors: 0
+        };
+      }
+    }
+    
+    // Ground truth configuration rules
+    const CONFIGURATION_RULES = {
+      // For a single cube with all edges(4 edges) cladded, we should get:
+      // 1 four-pack (2 side + 1 left + 1 right)
+      SINGLE_CUBE: {
+        fourPackRegular: 1,
+        fourPackExtraTall: 0,
+        twoPackRegular: 0,
+        twoPackExtraTall: 0,
+        leftPanels: 0,
+        rightPanels: 0,
+        sidePanels: 0,
+        straightCouplings: 0,
+        cornerConnectors: 0
+      },
+      // For three cubes in a line(8 edges), we should get:
+      // 1 four-pack (2 side + 1 left + 1 right)
+      // 2 two-packs (2 sides each)
+      // 2 straight couplings
+      THREE_LINE: {
+        fourPackRegular: 1,
+        fourPackExtraTall: 0,
+        twoPackRegular: 2,
+        twoPackExtraTall: 0,
+        leftPanels: 0,
+        rightPanels: 0,
+        sidePanels: 0,
+        straightCouplings: 2,
+        cornerConnectors: 0
+      },
+      // For L-shaped configuration(8 edges), we should get:
+      // 1 four-pack (2 side + 1 right + 1 left)
+      // 1 left panel (1 side)
+      // 1 two-pack (2 sides)
+      // 1 corner connector
+      // 1 straight coupling
+      L_SHAPE: {
+        fourPackRegular: 1,
+        fourPackExtraTall: 0,
+        twoPackRegular: 1,
+        twoPackExtraTall: 0,
+        leftPanels: 1,
+        rightPanels: 0,
+        sidePanels: 0,
+        straightCouplings: 1,
+        cornerConnectors: 1
+      },
+      // For U-shaped (12 edges) configurations:
+      // 1 four-pack (2 side + 1 right + 1 left)
+      // 2 two-packs (2 sides each)
+      // 2 corner connectors
+      // 2 straight couplings
+      U_SHAPE: {
+        fourPackRegular: 1,
+        fourPackExtraTall: 0,
+        twoPackRegular: 2,
+        twoPackExtraTall: 0,
+        leftPanels: 0,
+        rightPanels: 0,
+        sidePanels: 0,
+        straightCouplings: 2,
+        cornerConnectors: 2
+      }
+    };
+    
+    // Test functions
+    function testSingleCube() {
+      logTestHeader('Testing single cube configuration...');
+      
+      // Create a grid with a single cube
+      const grid = new Grid().addCube(0, 0);
+      
+      // Calculate requirements
+      const calculator = new RequirementsCalculator(grid);
+      const requirements = calculator.calculate();
+      
+      // Compare with expected results
+      const expected = CONFIGURATION_RULES.SINGLE_CUBE;
+      
+      // Visualize the grid
+      const resultsElement = document.getElementById('results');
+      resultsElement.innerHTML += grid.visualize();
+      
+      logObject('Single cube requirements:', requirements);
+      logObject('Expected:', expected);
+      
+      // Verify results
+      const isValid = 
+        requirements.fourPackRegular === expected.fourPackRegular &&
+        requirements.twoPackRegular === expected.twoPackRegular &&
+        requirements.leftPanels === expected.leftPanels &&
+        requirements.rightPanels === expected.rightPanels &&
+        requirements.sidePanels === expected.sidePanels &&
+        requirements.straightCouplings === expected.straightCouplings &&
+        requirements.cornerConnectors === expected.cornerConnectors;
+      
+      logTestResult('Single cube test', isValid);
+      
+      if (!isValid) {
+        console.error('Test failed: Single cube requirements do not match expected values');
+      }
+      
+      return isValid;
+    }
+    
+    function testThreeCubesLine() {
+      logTestHeader('Testing three cubes in a line configuration...');
+      
+      // Create a grid with three cubes in a line
+      const grid = new Grid()
+        .addCube(0, 0)
+        .addCube(0, 1)
+        .addCube(0, 2);
+      
+      // Calculate requirements
+      const calculator = new RequirementsCalculator(grid);
+      const requirements = calculator.calculate();
+      
+      // Compare with expected results
+      const expected = CONFIGURATION_RULES.THREE_LINE;
+      
+      // Visualize the grid
+      const resultsElement = document.getElementById('results');
+      resultsElement.innerHTML += grid.visualize();
+      
+      logObject('Three cubes line requirements:', requirements);
+      logObject('Expected:', expected);
+      
+      // Verify results
+      const isValid = 
+        requirements.fourPackRegular === expected.fourPackRegular &&
+        requirements.twoPackRegular === expected.twoPackRegular &&
+        requirements.leftPanels === expected.leftPanels &&
+        requirements.rightPanels === expected.rightPanels &&
+        requirements.sidePanels === expected.sidePanels &&
+        requirements.straightCouplings === expected.straightCouplings &&
+        requirements.cornerConnectors === expected.cornerConnectors;
+      
+      logTestResult('Three cubes line test', isValid);
+      
+      if (!isValid) {
+        console.error('Test failed: Three cubes line requirements do not match expected values');
+      }
+      
+      return isValid;
+    }
+    
+    function testLShape() {
+      logTestHeader('Testing L-shaped configuration...');
+      
+      // Create a grid with an L-shaped configuration
+      const grid = new Grid()
+        .addCube(0, 0)
+        .addCube(1, 0)
+        .addCube(1, 1);
+      
+      // Calculate requirements
+      const calculator = new RequirementsCalculator(grid);
+      const requirements = calculator.calculate();
+      
+      // Compare with expected results
+      const expected = CONFIGURATION_RULES.L_SHAPE;
+      
+      // Visualize the grid
+      const resultsElement = document.getElementById('results');
+      resultsElement.innerHTML += grid.visualize();
+      
+      logObject('L-shape requirements:', requirements);
+      logObject('Expected:', expected);
+      
+      // Verify results
+      const isValid = 
+        requirements.fourPackRegular === expected.fourPackRegular &&
+        requirements.twoPackRegular === expected.twoPackRegular &&
+        requirements.leftPanels === expected.leftPanels &&
+        requirements.rightPanels === expected.rightPanels &&
+        requirements.sidePanels === expected.sidePanels &&
+        requirements.straightCouplings === expected.straightCouplings &&
+        requirements.cornerConnectors === expected.cornerConnectors;
+      
+      logTestResult('L-shape test', isValid);
+      
+      if (!isValid) {
+        console.error('Test failed: L-shape requirements do not match expected values');
+      }
+      
+      return isValid;
+    }
+    
+    function testUShape() {
+      logTestHeader('Testing U-shaped configuration...');
+      
+      // Create a grid with a U-shaped configuration
+      const grid = new Grid()
+        .addCube(0, 0)
+        .addCube(0, 1)
+        .addCube(0, 2)
+        .addCube(1, 2)
+        .addCube(1, 1)
+        .addCube(1, 0);
+      
+      // Calculate requirements
+      const calculator = new RequirementsCalculator(grid);
+      const requirements = calculator.calculate();
+      
+      // Compare with expected results
+      const expected = CONFIGURATION_RULES.U_SHAPE;
+      
+      // Visualize the grid
+      const resultsElement = document.getElementById('results');
+      resultsElement.innerHTML += grid.visualize();
+      
+      logObject('U-shape requirements:', requirements);
+      logObject('Expected:', expected);
+      
+      // Verify results
+      const isValid = 
+        requirements.fourPackRegular === expected.fourPackRegular &&
+        requirements.twoPackRegular === expected.twoPackRegular &&
+        requirements.leftPanels === expected.leftPanels &&
+        requirements.rightPanels === expected.rightPanels &&
+        requirements.sidePanels === expected.sidePanels &&
+        requirements.straightCouplings === expected.straightCouplings &&
+        requirements.cornerConnectors === expected.cornerConnectors;
+      
+      logTestResult('U-shape test', isValid);
+      
+      if (!isValid) {
+        console.error('Test failed: U-shape requirements do not match expected values');
+      }
+      
+      return isValid;
+    }
+    
+    // Run all tests
+    function runAllTests() {
+      clearResults();
+      log('Starting test suite...');
+      
+      const results = [
+        testSingleCube(),
+        testThreeCubesLine(),
+        testLShape(),
+        testUShape()
+      ];
+      
+      const passedTests = results.filter(Boolean).length;
+      const totalTests = results.length;
+      
+      const summaryElement = document.createElement('div');
+      summaryElement.className = `test-summary ${passedTests === totalTests ? 'summary-passed' : 'summary-failed'}`;
+      summaryElement.textContent = `Test Results: ${passedTests}/${totalTests} tests passed`;
+      document.getElementById('results').appendChild(summaryElement);
+      
+      if (passedTests < totalTests) {
+        console.error(`${totalTests - passedTests} tests failed. Please check the implementation.`);
+      }
+    }
+    
+    // Logging helpers
+    function clearResults() {
+      document.getElementById('results').innerHTML = '';
+    }
+    
+    function log(message) {
+      const resultsElement = document.getElementById('results');
+      const logElement = document.createElement('div');
+      logElement.textContent = message;
+      resultsElement.appendChild(logElement);
+      console.log(message);
+    }
+    
+    function logTestHeader(message) {
+      const resultsElement = document.getElementById('results');
+      const headerElement = document.createElement('h3');
+      headerElement.textContent = message;
+      resultsElement.appendChild(headerElement);
+      console.log(message);
+    }
+    
+    function logObject(label, obj) {
+      const resultsElement = document.getElementById('results');
+      const logElement = document.createElement('div');
+      logElement.textContent = `${label} ${JSON.stringify(obj, null, 2)}`;
+      resultsElement.appendChild(logElement);
+      console.log(label, obj);
+    }
+    
+    function logTestResult(testName, passed) {
+      const resultsElement = document.getElementById('results');
+      const resultElement = document.createElement('div');
+      resultElement.className = passed ? 'test-passed' : 'test-failed';
+      resultElement.textContent = `${testName} ${passed ? 'PASSED' : 'FAILED'}`;
+      resultsElement.appendChild(resultElement);
+      console.log(`${testName} ${passed ? 'PASSED' : 'FAILED'}`);
+    }
+    
+    // Set up event listeners
+    document.getElementById('runTestsBtn').addEventListener('click', runAllTests);
+    
+    // Auto-run tests when the page loads
+    window.onload = function() {
+      // Uncomment to auto-run tests
+      // runAllTests();
+    };
+  </script>
+</body>
+</html> 

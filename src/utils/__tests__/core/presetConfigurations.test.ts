@@ -1,13 +1,13 @@
-import { countPanels } from '../panelCounter';
-import { detectConnections } from '../connectionDetector';
-import { validateIrrigationPath } from '../connectionValidator';
+import { countPanels } from '@/utils/calculation/panelCounter';
+import { findConnectedCubes } from '@/utils/validation/flowValidator';
+import { validateIrrigationPath } from '@/utils/validation/flowValidator';
 import {
   createSingleCube,
   createLineCubes,
   createLShapeCubes,
   createUShapeCubes,
   EXPECTED_COUNTS
-} from '../presetConfigurations';
+} from '@/utils/core/presetConfigurations';
 
 describe('Preset Configurations', () => {
   describe('Single Cube', () => {

@@ -51,12 +51,13 @@ export const generateLShapePreset = (): GridCell[][] => {
 export const generateUShapePreset = (): GridCell[][] => {
   const grid = createEmptyGrid();
   
-  // Flow direction: West to East through bottom in a U-shape
-  grid[1][0] = createFlowCell('N', 'S'); // Start - flow from North to South
-  grid[2][0] = createFlowCell('N', 'E'); // Bottom left - flow from North to East
+  // Flow direction for a true U-shape pattern:
+  // Start at top left, go down, follow bottom row, then go up to top right
+  grid[1][0] = createFlowCell('W', 'S'); // Top left - flow enters from West and exits South
+  grid[2][0] = createFlowCell('N', 'E'); // Bottom left - flow enters from North and exits East
   grid[2][1] = createFlowCell('W', 'E'); // Bottom middle - straight flow West to East
-  grid[2][2] = createFlowCell('W', 'N'); // Bottom right - flow from West to North
-  grid[1][2] = createFlowCell('S', 'N'); // End - flow from South to North
+  grid[2][2] = createFlowCell('W', 'N'); // Bottom right - flow enters from West and exits North
+  grid[1][2] = createFlowCell('S', 'E'); // Top right - flow enters from South and exits East
   
   // Set hasCube for the path
   grid[1][0].hasCube = true;
