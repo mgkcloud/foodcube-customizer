@@ -3,6 +3,7 @@ import { findConnectedCubes } from '@/utils/validation/flowValidator';
 import { debug } from '../shared/debugUtils';
 import { countCornerConnectors, countStraightConnectors } from './configurationDetector';
 import { getPanelType } from '@/utils/core/rules';
+import { calculatePipeConfiguration } from '../visualization/pipeConfigurator';
 
 // Define a local interface for Path Cube to match configurationDetector.ts
 interface PathCube {
@@ -242,30 +243,36 @@ export const calculateFlowPathPanels = (
     
     console.log(`Cube at [${row},${col}] exposed edges:`, exposedEdges);
     
-    // Count panels based on exposed edges and flow direction
+    // Count panels based on exposed edges and pipe visualization
     exposedEdges.forEach(edge => {
-      // Determine panel type based on flow direction
-      let panelType = 'side'; // Default
+      // Get the pipe configuration to determine panel type
+      const pipeConfig = calculatePipeConfiguration(
+        grid,
+        row,
+        col,
+        grid[row][col],
+        path.map(cube => [cube.row, cube.col]),
+        entry,
+        exit
+      );
       
-      // If this edge is an entry point, it's a left panel
-      if (edge === entry) {
-        panelType = 'left';
+      // Determine panel type based on subgrid
+      const panelType = getPanelType(edge, entry, exit, pipeConfig.subgrid);
+      
+      if (panelType === 'left') {
         leftPanels++;
         leftPanelCount++;
       } 
-      // If this edge is an exit point, it's a right panel
-      else if (edge === exit) {
-        panelType = 'right';
+      else if (panelType === 'right') {
         rightPanels++;
         rightPanelCount++;
       }
-      // Otherwise it's a side panel 
       else {
         sidePanels++;
         sidePanelCount++;
       }
       
-      console.log(`Edge ${edge} on cube [${row},${col}] is panel type: ${panelType}`);
+      console.log(`Edge ${edge} on cube [${row},${col}] is panel type: ${panelType} based on subgrid analysis`);
     });
     
     // Check for connectors between this cube and the next

@@ -117,38 +117,75 @@ export const CONFIGURATION_RULES = {
 } as const;
 
 /**
- * Determines the type of panel needed for a given edge based on flow direction
+ * Determines the type of panel needed for a given edge based on pipe position
  * 
  * The key rules are:
- * 1. Entry points (where flow enters the cube) get LEFT panels
- * 2. Exit points (where flow exits the cube) get RIGHT panels
- * 3. All other edges get SIDE panels
+ * 1. If a red block is on the left side of the face (when looking at the cube from that direction), it's a RIGHT panel
+ * 2. If a red block is on the right side of the face (when looking at the cube from that direction), it's a LEFT panel
+ * 3. If both or neither subgrid cells touching the edge have red blocks, it's a SIDE panel
  * 
  * This is consistent regardless of the overall configuration shape
  */
 export function getPanelType(
   edge: CompassDirection,
   entry: CompassDirection | null,
-  exit: CompassDirection | null
+  exit: CompassDirection | null,
+  subgrid?: boolean[][]
 ): 'side' | 'left' | 'right' {
-  if (!entry && !exit) {
-    return 'side'; // No flow, all panels are side panels
+  // If no flow or subgrid information, default to side panel
+  if ((!entry && !exit) || !subgrid) {
+    console.log(`No flow or subgrid for edge ${edge}, defaulting to SIDE panel`);
+    return 'side';
   }
 
-  // For L-shape and U-shape configurations where we have corner connectors,
-  // the flow-based rules are critical for proper panel type assignment
+  // Based on the edge direction, determine which subgrid cells to check
+  let leftCell: [number, number] | null = null;
+  let rightCell: [number, number] | null = null;
 
-  // If this edge is on the flow path but exposed (entry/exit), it needs special cladding
-  if (edge === entry) {
-    return 'left';  // Entry point gets left panel
-  }
-  
-  if (edge === exit) {
-    return 'right'; // Exit point gets right panel
+  switch (edge) {
+    case 'N':
+      leftCell = [0, 0];  // Top-left
+      rightCell = [0, 1]; // Top-right
+      break;
+    case 'E':
+      leftCell = [0, 1];  // Top-right
+      rightCell = [1, 1]; // Bottom-right
+      break;
+    case 'S':
+      leftCell = [1, 1];  // Bottom-right
+      rightCell = [1, 0]; // Bottom-left
+      break;
+    case 'W':
+      leftCell = [1, 0];  // Bottom-left
+      rightCell = [0, 0]; // Top-left
+      break;
   }
 
-  // All other edges are side panels
-  return 'side';
+  if (!leftCell || !rightCell) {
+    console.log(`Could not determine subgrid cells for edge ${edge}, defaulting to SIDE panel`);
+    return 'side';
+  }
+
+  const [leftRow, leftCol] = leftCell;
+  const [rightRow, rightCol] = rightCell;
+
+  const leftHasRedBlock = subgrid[leftRow][leftCol];
+  const rightHasRedBlock = subgrid[rightRow][rightCol];
+
+  console.log(`Edge ${edge} subgrid analysis:
+    - Left cell [${leftRow},${leftCol}]: ${leftHasRedBlock ? 'RED' : 'EMPTY'}
+    - Right cell [${rightRow},${rightCol}]: ${rightHasRedBlock ? 'RED' : 'EMPTY'}`);
+
+  if (leftHasRedBlock && !rightHasRedBlock) {
+    console.log(`Edge ${edge} has RED block on LEFT side, assigning RIGHT panel`);
+    return 'right';
+  } else if (!leftHasRedBlock && rightHasRedBlock) {
+    console.log(`Edge ${edge} has RED block on RIGHT side, assigning LEFT panel`);
+    return 'left';
+  } else {
+    console.log(`Edge ${edge} has ${leftHasRedBlock && rightHasRedBlock ? 'BOTH' : 'NO'} red blocks, assigning SIDE panel`);
+    return 'side';
+  }
 }
 
 /**
