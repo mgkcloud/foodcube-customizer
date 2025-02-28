@@ -1,5 +1,6 @@
 import React from 'react';
 import { SubgridState } from '@/utils/visualization/pipeConfigurator';
+import { cn } from '@/lib/utils';
 
 interface PipeRendererProps {
   subgrid: SubgridState;
@@ -15,15 +16,22 @@ export const PipeRenderer: React.FC<PipeRendererProps> = ({ subgrid }) => {
         row.map((isActive, colIndex) => (
           <div
             key={`${rowIndex}-${colIndex}`}
-            className={`
-              relative
-              ${isActive ? 'bg-red-500' : 'bg-transparent'}
-              transition-colors duration-200
-            `}
+            className={cn(
+              'relative transition-all duration-200',
+              isActive ? 'water-flow' : 'bg-transparent'
+            )}
             data-active={isActive ? 'true' : 'false'}
             data-position={`${rowIndex}-${colIndex}`}
             data-testid={`pipeline-cell-${rowIndex}-${colIndex}`}
-          />
+          >
+            {isActive && (
+              <>
+                <div className="bubble"></div>
+                <div className="bubble"></div>
+                <div className="bubble"></div>
+              </>
+            )}
+          </div>
         ))
       )}
     </div>
