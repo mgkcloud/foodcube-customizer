@@ -307,6 +307,14 @@ const tracePathAndSetConnections = (
       debug.info(`  Entry direction (from prev): ${entryDir}`);
       debug.info(`  Natural direction to next cube: ${naturalExitDir}`);
       
+      // DEBUG: Log special information for potential N-turns in L-shape
+      if (naturalExitDir === 'N' || entryDir === 'N') {
+        debug.info(`**N-TURN DETECTION** - Potential N-turn for cube [${row},${col}]`);
+        debug.info(`  Flow path: ${entryDir} → ${getOppositeDirection(entryDir)} (straight default)`);
+        debug.info(`  Natural path needed: ${entryDir} → ${naturalExitDir}`);
+        debug.info(`  Is L-shape with upward turn: ${path.length === 3 && naturalExitDir === 'N'}`);
+      }
+      
       // Check for U-shape pattern - special case for middle segment cubes
       const isPartOfUShape = isLikelyUShape(path);
       
@@ -343,6 +351,28 @@ const tracePathAndSetConnections = (
         entryDir = 'W';  // Entry from West
         exitDir = 'E';   // Exit to East
       }
+      // Special handling for L-shape with N-turn
+      else if (path.length === 3 && naturalExitDir === 'N') {
+        // For L-shapes with north turns, we need to ensure panels are mirrored correctly
+        debug.info(`  SPECIAL L-SHAPE N-TURN: Cube [${row},${col}] - overriding flow for proper panel mirroring`);
+        
+        // Force horizontal flow for the corner cube to ensure proper panel assignment
+        if (entryDir === 'N') {
+          // If entry is from North, route East-West
+          debug.info(`  Forcing horizontal flow E->W instead of N->S for proper corner turning`);
+          entryDir = 'E';  // Override entry to East
+          exitDir = 'W';   // Exit to West
+        } else if (entryDir === 'S') {
+          // If entry is from South, route West-East
+          debug.info(`  Forcing horizontal flow W->E instead of S->N for proper corner turning`);
+          entryDir = 'W';  // Override entry to West
+          exitDir = 'E';   // Exit to East
+        } else {
+          // Use standard opposite direction
+          exitDir = getOppositeDirection(entryDir);
+          debug.info(`  Using standard flow ${entryDir}→${exitDir} for L-shape N-turn`);
+        }
+      }
       // Normal straight-through flow for other cubes
       else {
         exitDir = getOppositeDirection(entryDir);
@@ -360,6 +390,20 @@ const tracePathAndSetConnections = (
         debug.info(`  Cube [${row},${col}] has exit ${exitDir}`);
         debug.info(`  But next cube [${nextRow},${nextCol}] is in direction ${naturalExitDir}`);
         debug.info(`  This requires a corner connector: ${exitDir} → ${naturalExitDir}`);
+        
+        // Add more detailed turn analysis
+        const turnDirection = determineTurnDirection(exitDir, naturalExitDir);
+        debug.info(`TURN ANALYSIS for cube [${row},${col}]:`);
+        debug.info(`  Previous: [${prevRow},${prevCol}], Next: [${nextRow},${nextCol}]`);
+        debug.info(`  TURN DETECTED at [${row},${col}]: ${entryDir} → ${exitDir} (natural: ${naturalExitDir})`);
+        debug.info(`  Turn direction: ${turnDirection}`);
+        debug.info(`  Turn mapping: ${exitDir}→${naturalExitDir} (defined in VALID_TURNS: ${VALID_TURNS.has(`${exitDir}→${naturalExitDir}`)})`);
+        
+        // Special case for N-turns
+        if (naturalExitDir === 'N') {
+          debug.info(`  N-TURN SPECIAL CASE: Checking if this turn needs special handling`);
+          debug.info(`  Current flow setup might cause panel mirroring issues for N-turns`);
+        }
       } else {
         debug.info(`STRAIGHT CONNECTION between [${row},${col}] and [${nextRow},${nextCol}]`);
       }

@@ -164,16 +164,22 @@ const useGridState = () => {
       
       // Toggle the cube state
       const targetCell = newGrid[row][col];
+      const isAddingCube = !targetCell.hasCube;
       targetCell.hasCube = !targetCell.hasCube;
       
       // Clear cladding edges if cube is removed
       if (!targetCell.hasCube) {
         targetCell.claddingEdges.clear();
         targetCell.connections = { entry: null, exit: null };
+        console.log(`Removed cube at [${row}, ${col}]`);
+        
+        // For cube removal, no validation needed - just return the updated grid
+        return newGrid;
       }
       
-      // If we don't want to add a cube or validation fails, return previous grid
-      if (!targetCell.hasCube || !validateAndUpdateGrid(newGrid)) {
+      // If we're adding a cube, validate the new configuration
+      if (isAddingCube && !validateAndUpdateGrid(newGrid)) {
+        console.log(`Invalid configuration when adding cube at [${row}, ${col}]`);
         return prevGrid;
       }
       
