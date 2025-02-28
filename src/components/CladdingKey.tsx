@@ -85,6 +85,33 @@ export const CladdingKey: React.FC<CladdingKeyProps> = ({ requirements }) => {
   const totalLeftPanels = requirements.leftPanels + requirements.fourPackRegular;
   const totalRightPanels = requirements.rightPanels + requirements.fourPackRegular;
   
+  console.log("PANEL COUNT DEBUG:");
+  console.log("- Raw panel counts from requirements:", {
+    sidePanels: requirements.sidePanels,
+    leftPanels: requirements.leftPanels,
+    rightPanels: requirements.rightPanels
+  });
+  console.log("- Package counts:", {
+    fourPackRegular: requirements.fourPackRegular,
+    twoPackRegular: requirements.twoPackRegular
+  });
+  console.log("- Panels contributed by packages:", {
+    sideFromFourPack: requirements.fourPackRegular * 2,
+    sideFromTwoPack: requirements.twoPackRegular * 2,
+    leftFromFourPack: requirements.fourPackRegular,
+    rightFromFourPack: requirements.fourPackRegular
+  });
+  console.log("- Total calculated panel counts:", {
+    totalSidePanels,
+    totalLeftPanels,
+    totalRightPanels
+  });
+  
+  // If this is an L-shape, add special debugging
+  if (requirements.cornerConnectors === 1 && requirements.straightCouplings === 1) {
+    console.log("L-SHAPE CONFIGURATION DETECTED - Special panel distribution may apply");
+  }
+  
   // Create a debug element with all the requirements values
   React.useEffect(() => {
     if (typeof document !== 'undefined') {
@@ -178,9 +205,30 @@ export const CladdingKey: React.FC<CladdingKeyProps> = ({ requirements }) => {
       {/* Debug Info */}
       <details className="mt-4 border-t pt-2 text-xs">
         <summary className="font-semibold cursor-pointer">▾ Debug Info</summary>
-        <pre className="mt-2 bg-gray-100 p-2 rounded text-xs overflow-auto">
-          {JSON.stringify(requirements, null, 2)}
-        </pre>
+        <div className="mt-2 bg-gray-100 p-2 rounded text-xs overflow-auto">
+          <h4 className="font-bold mb-1">Raw Requirements (Packages)</h4>
+          <pre className="mb-3">
+            {JSON.stringify(requirements, null, 2)}
+          </pre>
+          
+          <h4 className="font-bold mb-1">Total Panel Counts</h4>
+          <pre>
+            {JSON.stringify({
+              sidePanels: totalSidePanels,
+              leftPanels: totalLeftPanels,
+              rightPanels: totalRightPanels,
+              straightCouplings: requirements.straightCouplings,
+              cornerConnectors: requirements.cornerConnectors
+            }, null, 2)}
+          </pre>
+          <div className="mt-2 text-xs text-gray-500">
+            <p>Note: Total panel counts include panels from packages:</p>
+            <ul className="list-disc pl-4 mt-1">
+              <li>4-Pack = 2 side + 1 left + 1 right</li>
+              <li>2-Pack = 2 side</li>
+            </ul>
+          </div>
+        </div>
       </details>
     </div>
   );

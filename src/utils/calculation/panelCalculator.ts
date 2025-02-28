@@ -1,7 +1,8 @@
 import { GridCell, CompassDirection, Requirements } from '@/components/types';
-import { findConnectedCubes } from '../validation/flowValidator';
+import { findConnectedCubes } from '@/utils/validation/flowValidator';
 import { debug } from '../shared/debugUtils';
 import { countCornerConnectors, countStraightConnectors } from './configurationDetector';
+import { getPanelType } from '@/utils/core/rules';
 
 // Define a local interface for Path Cube to match configurationDetector.ts
 interface PathCube {
@@ -47,6 +48,8 @@ export const calculateFlowPathPanels = (
   // Find path through all cubes
   const connectedCubes = findConnectedCubes(grid, allCubes[0][0], allCubes[0][1]);
   
+  console.log("PANEL CALCULATION DEBUG: Found path through cubes:", connectedCubes);
+  
   // Prepare a readable path from the cubes information
   const path = connectedCubes.map(([row, col]) => ({
     row,
@@ -67,6 +70,13 @@ export const calculateFlowPathPanels = (
   let sidePanels = 0;
   let leftPanels = 0;
   let rightPanels = 0;
+  
+  // Track panel types for each cube
+  console.log("PANEL CALCULATION DEBUG: Analyzing panel types by cube:");
+  
+  let sidePanelCount = 0;
+  let leftPanelCount = 0;
+  let rightPanelCount = 0;
   
   // Process each cube and determine exposed edges, panel types, and connectors
   for (let i = 0; i < path.length; i++) {
@@ -109,15 +119,18 @@ export const calculateFlowPathPanels = (
       if (edge === entry) {
         panelType = 'left';
         leftPanels++;
+        leftPanelCount++;
       } 
       // If this edge is an exit point, it's a right panel
       else if (edge === exit) {
         panelType = 'right';
         rightPanels++;
+        rightPanelCount++;
       }
       // Otherwise it's a side panel 
       else {
         sidePanels++;
+        sidePanelCount++;
       }
       
       console.log(`Edge ${edge} on cube [${row},${col}] is panel type: ${panelType}`);
@@ -161,24 +174,64 @@ export const calculateFlowPathPanels = (
   // Special case for L-shaped configuration with 3 cubes
   if (path.length === 3 && cornerCount > 0) {
     console.log("L-shaped configuration detected with 3 cubes and corners");
-    console.log("Using L-shaped requirements with corner connectors: " + cornerCount);
     
-    // For an L-shape with 3 cubes, we know we need:
-    // - 1 four-pack
-    // - 1 2-pack
-    // - 1 corner connector
-    // - 1 straight connector
-    return {
-      fourPackRegular: 1,
-      twoPackRegular: 1, 
-      leftPanels: 0,
-      rightPanels: 0,
-      sidePanels: 0,
-      fourPackExtraTall: 0,
-      twoPackExtraTall: 0,
-      straightCouplings: 1,
-      cornerConnectors: 1
-    };
+    // Enhanced logging for L-shape analysis
+    console.log("RAW COUNTS BEFORE L-SHAPE PACKAGING:", {
+      sidePanels,
+      leftPanels,
+      rightPanels,
+      straightCouplings: straightCount,
+      cornerConnectors: cornerCount,
+      totalPanels: sidePanels + leftPanels + rightPanels
+    });
+    
+    // Log visual panel counts from the actual grid
+    const visualPanelCounts = { side: 0, left: 0, right: 0 };
+    path.forEach(({ row, col }) => {
+      const cell = grid[row][col];
+      const entry = cell.connections?.entry;
+      const exit = cell.connections?.exit;
+      
+      ['N', 'E', 'S', 'W'].forEach(dir => {
+        // Only count edges that would be exposed
+        let isExposed = false;
+        switch (dir) {
+          case 'N': isExposed = row === 0 || !grid[row - 1][col].hasCube; break;
+          case 'S': isExposed = row === grid.length - 1 || !grid[row + 1][col].hasCube; break;
+          case 'E': isExposed = col === grid[0].length - 1 || !grid[row][col + 1].hasCube; break;
+          case 'W': isExposed = col === 0 || !grid[row][col - 1].hasCube; break;
+        }
+        
+        if (isExposed) {
+          if (dir === entry) {
+            visualPanelCounts.left++;
+          } else if (dir === exit) {
+            visualPanelCounts.right++;
+          } else {
+            visualPanelCounts.side++;
+          }
+        }
+      });
+    });
+    
+    console.log("VISUAL PANEL COUNTS IN L-SHAPE:", visualPanelCounts);
+    
+    // Instead of hardcoding, use the actual visual panel counts
+    // This ensures the packages reflect what is shown on screen
+    console.log("Using actual visual panel counts instead of hardcoded values");
+    
+    // Pack the panels according to the actual counts
+    // This ensures we still get optimized packaging while reflecting actual panel needs
+    const result = packPanelsByCount(
+      visualPanelCounts.side,
+      visualPanelCounts.left,
+      visualPanelCounts.right,
+      straightCount,
+      cornerCount
+    );
+    
+    console.log("L-SHAPE CALCULATED REQUIREMENTS:", result);
+    return result;
   }
   
   // Now pack the panels based purely on the count values
@@ -192,6 +245,55 @@ export const calculateFlowPathPanels = (
   
   console.log("DIRECT COUNT CORNER CHECK: Result should have " + cornerCount + " corner connectors");
   console.log("Final requirements object:", result);
+  
+  // After determining panel types for a cube
+  connectedCubes.forEach((cube, index) => {
+    const cell = grid[cube[0]][cube[1]];
+    const { entry, exit } = cell.connections;
+    
+    console.log(`PANEL CALCULATION: Cube [${cube[0]},${cube[1]}] panel analysis:`, {
+      entry,
+      exit,
+      isFirstCube: index === 0,
+      isLastCube: index === connectedCubes.length - 1,
+      exposedEdges: Array.from(cell.claddingEdges)
+    });
+    
+    // Count panel types
+    let cubeRightPanels = 0;
+    let cubeLeftPanels = 0;
+    let cubeSidePanels = 0;
+    
+    ['N', 'E', 'S', 'W'].forEach(edge => {
+      if (cell.claddingEdges.has(edge as CompassDirection)) {
+        const panelType = getPanelType(edge as CompassDirection, entry, exit);
+        
+        if (panelType === 'right') {
+          cubeRightPanels++;
+          rightPanelCount++;
+        } else if (panelType === 'left') {
+          cubeLeftPanels++;
+          leftPanelCount++;
+        } else {
+          cubeSidePanels++;
+          sidePanelCount++;
+        }
+        
+        console.log(`  - Edge ${edge}: ${panelType} panel`);
+      }
+    });
+    
+    console.log(`  - Summary for cube [${cube[0]},${cube[1]}]: ${cubeSidePanels} side, ${cubeLeftPanels} left, ${cubeRightPanels} right panels`);
+  });
+  
+  console.log("PANEL CALCULATION DEBUG: Total counts before packaging:", {
+    sidePanels: sidePanelCount,
+    leftPanels: leftPanelCount,
+    rightPanels: rightPanelCount
+  });
+  
+  // Before returning final requirements
+  console.log("PANEL CALCULATION DEBUG: Final packaged requirements:", requirements);
   
   return result;
 };

@@ -59,12 +59,19 @@ export const CladdingVisualizer = ({ cell, row, col, grid, onToggle, isEdgeExpos
     const panelType = getPanelType(edge as CompassDirection, entry, exit);
     const baseColor = PANEL_COLORS[panelType];
     
-    // Log panel details
-    console.log(`Panel [${edge}]:`, JSON.stringify({
+    // Enhanced panel logging
+    console.log(`VISUALIZATION: Panel [${row},${col}:${edge}]:`, JSON.stringify({
       type: panelType,
       isSelected,
       color: baseColor,
-      isExposed: isEdgeExposed[edge]
+      isExposed: isEdgeExposed[edge],
+      flowContext: {
+        edge,
+        entry,
+        exit,
+        isEntryPoint: edge === entry,
+        isExitPoint: edge === exit
+      }
     }, null, 2));
     
     return {
@@ -76,12 +83,12 @@ export const CladdingVisualizer = ({ cell, row, col, grid, onToggle, isEdgeExpos
     };
   };
 
-  // Log all edges' panel types
-  console.log('Panel Configuration:', JSON.stringify({
-    north: getPanelType('N', entry, exit),
-    east: getPanelType('E', entry, exit),
-    south: getPanelType('S', entry, exit),
-    west: getPanelType('W', entry, exit)
+  // Log all edges' panel types with a special note for right panels
+  console.log(`VISUALIZATION: All panels for cube [${row},${col}]:`, JSON.stringify({
+    north: getPanelType('N', entry, exit) + (getPanelType('N', entry, exit) === 'right' ? ' (RIGHT PANEL)' : ''),
+    east: getPanelType('E', entry, exit) + (getPanelType('E', entry, exit) === 'right' ? ' (RIGHT PANEL)' : ''),
+    south: getPanelType('S', entry, exit) + (getPanelType('S', entry, exit) === 'right' ? ' (RIGHT PANEL)' : ''),
+    west: getPanelType('W', entry, exit) + (getPanelType('W', entry, exit) === 'right' ? ' (RIGHT PANEL)' : '')
   }, null, 2));
 
   console.groupEnd();
