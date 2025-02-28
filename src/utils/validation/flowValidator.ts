@@ -330,17 +330,18 @@ const tracePathAndSetConnections = (
       // Special handling for the first corner in a U (typically [1,0] in our example)
       else if (isFirstCornerOfU && row === 1 && col === 0) {
         // For the first corner, we specifically want to route from South to North
-        // This will force a corner connector to be used between [1,0] and [1,1]
-        debug.info(`  SPECIAL U-SHAPE CORNER: Cube [${row},${col}] - setting exit to North to force corner connector`);
-        exitDir = 'N';
+        // This will force a corner connector to be used between [1,0] and [0,0]
+        debug.info(`  SPECIAL U-SHAPE CORNER: Cube [${row},${col}] - setting entry to South, exit to North to force corner connector`);
+        entryDir = 'S';  // Override entry from South
+        exitDir = 'N';   // Exit to North
       }
       // Special handling for middle cube in U-shape (typically [1,1])
       else if (isMiddleOfU && row === 1 && col === 1 && isPartOfUShape) {
-        // For the middle of U, we need to flip the flow to connect properly
-        // with the corner connectors on both sides
-        debug.info(`  SPECIAL U-SHAPE MIDDLE: Cube [${row},${col}] - flipping to East->West flow`);
-        entryDir = 'E';  // Override entry from East
-        exitDir = 'W';   // Exit to West
+        // For the middle of U, we need to ensure the flow goes around the outside
+        // This means routing along the top side of the cube
+        debug.info(`  SPECIAL U-SHAPE MIDDLE: Cube [${row},${col}] - setting flow West->East along top side`);
+        entryDir = 'W';  // Entry from West
+        exitDir = 'E';   // Exit to East
       }
       // Normal straight-through flow for other cubes
       else {
