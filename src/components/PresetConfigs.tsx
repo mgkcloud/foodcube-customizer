@@ -1,17 +1,8 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { GridCell } from './types';
-import { generateStraightPreset, generateLShapePreset, generateUShapePreset } from '@/utils/core/presetGenerators';
-import { addCladdingToExposedEdges } from '@/utils/core/presetTransformers';
-
-const PRESETS = {
-  straight: addCladdingToExposedEdges(generateStraightPreset()),
-  L: addCladdingToExposedEdges(generateLShapePreset()),
-  U: addCladdingToExposedEdges(generateUShapePreset())
-} as const;
 
 interface PresetConfigsProps {
-  onApply: (preset: GridCell[][]) => void;
+  onApply: (preset: string) => void;
 }
 
 export const PresetConfigs: React.FC<PresetConfigsProps> = ({ onApply }) => {
@@ -20,7 +11,7 @@ export const PresetConfigs: React.FC<PresetConfigsProps> = ({ onApply }) => {
       <Button 
         variant="outline"
         className='text-xs md:text-sm font-semibold bg-white '
-        onClick={() => onApply(PRESETS.straight)}
+        onClick={() => onApply('line')}
         data-testid="preset-straight"
         aria-label="Apply straight 3x1 configuration"
       >
@@ -29,7 +20,7 @@ export const PresetConfigs: React.FC<PresetConfigsProps> = ({ onApply }) => {
       <Button 
         variant="outline"
         className='text-xs md:text-sm font-semibold bg-white'
-        onClick={() => onApply(PRESETS.L)}
+        onClick={() => onApply('l-shape')}
         data-testid="preset-l-shape"
         aria-label="Apply L-shaped configuration"
       >
@@ -38,7 +29,7 @@ export const PresetConfigs: React.FC<PresetConfigsProps> = ({ onApply }) => {
       <Button 
         variant="outline"
         className='text-xs md:text-sm font-semibold bg-white'
-        onClick={() => onApply(PRESETS.U)}
+        onClick={() => onApply('u-shape')}
         data-testid="preset-u-shape"
         aria-label="Apply U-shaped configuration"
       >

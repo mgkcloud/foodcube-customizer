@@ -135,12 +135,16 @@ export function getPanelType(
     return 'side'; // No flow, all panels are side panels
   }
 
-  // Entry point gets left panel, exit point gets right panel
+  // For L-shape and U-shape configurations where we have corner connectors,
+  // the flow-based rules are critical for proper panel type assignment
+
+  // If this edge is on the flow path but exposed (entry/exit), it needs special cladding
   if (edge === entry) {
-    return 'left';
+    return 'left';  // Entry point gets left panel
   }
+  
   if (edge === exit) {
-    return 'right';
+    return 'right'; // Exit point gets right panel
   }
 
   // All other edges are side panels

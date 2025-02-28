@@ -1,8 +1,8 @@
 import { GridCell, Requirements } from '@/components/types';
-import { PathCube } from '../calculation/flowAnalyzer';
 import { findConnectedCubes } from './flowValidator';
 import { countCornerConnectors } from '../calculation/configurationDetector';
 import { CONFIGURATION_RULES } from '../core/rules';
+import { debug, debugFlags } from '../shared/debugUtils';
 
 /**
  * Validate a configuration against expected results from PRD
@@ -29,9 +29,22 @@ export const validateConfiguration = (requirements: Requirements, expectedType: 
  * Debug a configuration and output detailed information
  */
 export const debugConfiguration = (grid: GridCell[][], requirements: Requirements): void => {
-  console.group('Configuration Debugger');
-  console.log('Grid:', grid);
-  console.log('Requirements:', requirements);
+  if (!debugFlags.SHOW_REQUIREMENTS_CALC) return;
+
+  debug.info('Configuration Debug:');
+  
+  // Log grid dimensions instead of full grid
+  debug.info(`Grid: ${grid.length}x${grid[0].length} with ${countCubes(grid)} cubes`);
+  
+  // Log key requirements instead of full object
+  debug.info('Requirements:', {
+    fourPacks: requirements.fourPackRegular,
+    twoPacks: requirements.twoPackRegular,
+    leftPanels: requirements.leftPanels,
+    rightPanels: requirements.rightPanels,
+    cornerConnectors: requirements.cornerConnectors,
+    straightCouplings: requirements.straightCouplings
+  });
   
   // Find connected cubes path
   try {
@@ -50,25 +63,31 @@ export const debugConfiguration = (grid: GridCell[][], requirements: Requirement
     
     if (startRow !== -1 && startCol !== -1) {
       const path = findConnectedCubes(grid, startRow, startCol);
-      console.log('Connected Path:', path);
+      // Log the path length and first few elements
+      debug.debug(`Connected Path: ${path.length} cubes`, {
+        startPosition: path[0],
+        samplePath: path.slice(0, 3)
+      });
       
       // Configuration detection
       const configType = detectConfigurationType(requirements);
-      console.log('Detected configuration type:', configType);
+      debug.info(`Detected type: ${configType || 'unknown'}`);
       
       // Validate against expected
       if (configType) {
         const isValid = validateConfiguration(requirements, configType);
-        console.log('Valid against PRD requirements:', isValid);
+        debug.info(`Valid against PRD: ${isValid}`);
+        if (!isValid) {
+          // Only log expected requirements if validation fails
+          debug.debug(`Expected requirements for ${configType}:`, CONFIGURATION_RULES[configType]);
+        }
       }
     } else {
-      console.log('No cubes found in grid');
+      debug.info('No cubes found in grid');
     }
   } catch (error) {
-    console.error('Error debugging configuration:', error);
+    debug.error('Error debugging configuration:', error);
   }
-  
-  console.groupEnd();
 };
 
 /**
@@ -119,4 +138,17 @@ const detectConfigurationType = (requirements: Requirements): 'SINGLE_CUBE' | 'T
   }
   
   return null;
-}; 
+};
+
+// Helper function to count cubes in grid
+const countCubes = (grid: GridCell[][]): number => {
+  let count = 0;
+  for (let row = 0; row < grid.length; row++) {
+    for (let col = 0; col < grid[row].length; col++) {
+      if (grid[row][col].hasCube) {
+        count++;
+      }
+    }
+  }
+  return count;
+} 

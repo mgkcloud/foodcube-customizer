@@ -1,7 +1,6 @@
 import { GridCell, Requirements } from '@/components/types';
 import { findConnectedCubes } from '../validation/flowValidator';
-import { PathCube } from './flowAnalyzer';
-import { isCorner, isStraightFlow, isLShapedConfiguration, isUShapedConfiguration } from './configurationDetector';
+import { isCorner, isStraightFlow, detectConfigurationType } from './configurationDetector';
 import { calculateFlowPathPanels } from './panelCalculator';
 
 /**
@@ -40,24 +39,26 @@ export const countPanels = (grid: GridCell[][]): Requirements => {
   const connectedCubes = findConnectedCubes(grid, startCube[0], startCube[1]);
   
   // Convert to path cubes
-  const path = {
-    cubes: connectedCubes.map(([row, col]) => ({
-      row,
-      col,
-      subgrid: [] as { subgridRow: number; subgridCol: number }[],
-      entry: grid[row][col].connections.entry,
-      exit: grid[row][col].connections.exit,
-      flowDirection: 
-        grid[row][col].connections.entry === 'W' || 
-        grid[row][col].connections.entry === 'E' || 
-        grid[row][col].connections.exit === 'W' || 
-        grid[row][col].connections.exit === 'E' 
-          ? 'horizontal' as const 
-          : 'vertical' as const,
-      rotation: grid[row][col].rotation as 0 | 90 | 180 | 270
-    }))
-  };
+  const pathCubes = connectedCubes.map(([row, col]) => ({
+    row,
+    col,
+    subgrid: [] as { subgridRow: number; subgridCol: number }[],
+    entry: grid[row][col].connections.entry,
+    exit: grid[row][col].connections.exit,
+    flowDirection: 
+      grid[row][col].connections.entry === 'W' || 
+      grid[row][col].connections.entry === 'E' || 
+      grid[row][col].connections.exit === 'W' || 
+      grid[row][col].connections.exit === 'E' 
+        ? 'horizontal' as const 
+        : 'vertical' as const,
+    rotation: grid[row][col].rotation as 0 | 90 | 180 | 270
+  }));
 
-  // Calculate panels based on flow path and configuration
-  return calculateFlowPathPanels(path.cubes);
+  // Detect configuration type
+  const configurationType = detectConfigurationType(pathCubes);
+  console.log("Detected configuration type:", configurationType);
+
+  // Calculate panels based on flow path
+  return calculateFlowPathPanels(pathCubes);
 };

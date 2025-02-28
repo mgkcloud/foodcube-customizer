@@ -1,6 +1,11 @@
 import React from 'react';
 import { PANEL_COLORS } from '@/constants/colors';
 
+const CONNECTOR_COLORS = {
+  corner: '#D97706', // Amber
+  straight: '#4B5563' // Gray
+};
+
 interface KeyItemProps {
   color?: string;
   label: string;
@@ -73,6 +78,26 @@ interface CladdingKeyProps {
 }
 
 export const CladdingKey: React.FC<CladdingKeyProps> = ({ requirements }) => {
+  console.log("CladdingKey received requirements:", JSON.stringify(requirements, null, 2));
+  
+  // Create a debug element with all the requirements values
+  React.useEffect(() => {
+    if (typeof document !== 'undefined') {
+      const debugElement = document.createElement('div');
+      debugElement.id = 'debug-requirements';
+      debugElement.style.display = 'none';
+      debugElement.setAttribute('data-requirements', JSON.stringify(requirements));
+      
+      // Remove any existing debug element
+      const existingDebug = document.getElementById('debug-requirements');
+      if (existingDebug) {
+        existingDebug.remove();
+      }
+      
+      document.body.appendChild(debugElement);
+    }
+  }, [requirements]);
+  
   return (
     <div className="bg-white p-2 sm:p-4 rounded-lg shadow-sm text-xs sm:text-sm" data-testid="cladding-key">
       <h3 className="text-base sm:text-lg font-semibold mb-2" data-testid="packages-heading">Required Packages</h3>
@@ -121,30 +146,32 @@ export const CladdingKey: React.FC<CladdingKeyProps> = ({ requirements }) => {
         
         <div data-testid="connectors-section">
           <h3 className="text-base sm:text-lg font-semibold mb-2" data-testid="connectors-heading">Connectors</h3>
-          <div className="space-y-1">
+          <div className="space-y-1 mb-3">
             <KeyItem 
-              icon="⌟"
-              label="Corner"
+              color={CONNECTOR_COLORS.corner} 
+              label="Corner" 
               count={requirements.cornerConnectors}
-              description="Connects panels at 90° angles"
+              description="L-shaped connector"
               testId="connector-corner"
             />
             <KeyItem 
-              icon="━"
-              label="Straight"
+              color={CONNECTOR_COLORS.straight} 
+              label="Straight" 
               count={requirements.straightCouplings}
-              description="Connects panels in a straight line"
+              description="Straight connector"
               testId="connector-straight"
             />
           </div>
         </div>
       </div>
-
-      <div className="mt-3 pt-2 border-t border-gray-100" data-testid="cladding-key-footer">
-        <div className="text-[10px] sm:text-xs text-gray-500">
-          <p>* Hover over items for details • Colors match visual configuration</p>
-        </div>
-      </div>
+      
+      {/* Debug Info */}
+      <details className="mt-4 border-t pt-2 text-xs">
+        <summary className="font-semibold cursor-pointer">▾ Debug Info</summary>
+        <pre className="mt-2 bg-gray-100 p-2 rounded text-xs overflow-auto">
+          {JSON.stringify(requirements, null, 2)}
+        </pre>
+      </details>
     </div>
   );
 };

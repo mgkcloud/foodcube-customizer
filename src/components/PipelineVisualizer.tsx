@@ -6,6 +6,7 @@ import { calculatePipeConfiguration } from '@/utils/visualization/pipeConfigurat
 import { PipeRenderer } from './PipeRenderer';
 import { visualizeFlow } from '@/utils/core/flowVisualizer';
 import { CompassDirection } from './types';
+import { debug } from '@/utils/shared/debugUtils';
 
 interface PipelineVisualizerProps {
   cell: GridCell;
@@ -47,7 +48,7 @@ export const PipelineVisualizer: React.FC<PipelineVisualizerProps> = ({
   row,
   col,
   grid,
-  debug = false,
+  debug: showDebug = false,
 }) => {
   // Memoize the grid to prevent unnecessary recalculations
   const gridKey = useMemo(() => {
@@ -111,40 +112,39 @@ export const PipelineVisualizer: React.FC<PipelineVisualizerProps> = ({
   
   // Enhanced logging for cube status - throttled to prevent log flooding
   useEffect(() => {
-    if (debug && isCubeInPath) {
-      console.group(`PipelineVisualizer [${row},${col}]`);
-      console.log('Cube Status:', JSON.stringify({
-        isInPath: isCubeInPath,
+    if (showDebug && isCubeInPath) {
+      // Use the new debug utility with compact format
+      const cubeInfo = {
+        position: [row, col],
         pathPosition,
-        totalConnectedCubes: connectedCubes.length,
-        isValidPath,
-        isStartCube,
-        isEndCube,
-        isCorner,
-        cubeType,
-        connections: cell.connections,
-        connectedCubes: connectedCubes.map(([r, c]) => `[${r},${c}]`)
-      }, null, 2));
+        total: connectedCubes.length,
+        status: {
+          isStart: isStartCube,
+          isEnd: isEndCube,
+          isCorner,
+          type: cubeType
+        },
+        connections: {
+          entry: cell.connections.entry,
+          exit: cell.connections.exit
+        }
+      };
       
+      debug.debug(`Cube [${row},${col}] in path`, cubeInfo);
+      
+      // Only log neighbors at trace level to reduce token usage
       if (isCubeInPath) {
         const prevCube = pathPosition > 0 ? connectedCubes[pathPosition - 1] : null;
         const nextCube = pathPosition < connectedCubes.length - 1 ? connectedCubes[pathPosition + 1] : null;
         
-        console.log('Path Details:', JSON.stringify({
-          position: pathPosition,
-          totalCubes: connectedCubes.length,
-          previousCube: prevCube ? `[${prevCube[0]},${prevCube[1]}]` : 'none',
-          nextCube: nextCube ? `[${nextCube[0]},${nextCube[1]}]` : 'none',
-          isFirstCube: isStartCube,
-          isLastCube: isEndCube,
-          entry: cell.connections.entry,
-          exit: cell.connections.exit,
-          fullPath: connectedCubes.map(([r, c]) => `[${r},${c}]`).join(' → ')
-        }, null, 2));
+        debug.trace(`Path neighbors for [${row},${col}]`, {
+          prev: prevCube,
+          next: nextCube,
+          pathLength: connectedCubes.length
+        });
       }
-      console.groupEnd();
     }
-  }, [debug, isCubeInPath, row, col, pathPosition, connectedCubes.length, isValidPath, 
+  }, [showDebug, isCubeInPath, row, col, pathPosition, connectedCubes.length, isValidPath, 
       isStartCube, isEndCube, isCorner, cubeType, cell.connections, pathInfo, gridKey]);
   
   if (!isCubeInPath || !cell.hasCube) {
@@ -171,16 +171,20 @@ export const PipelineVisualizer: React.FC<PipelineVisualizerProps> = ({
 
   // Log the subgrid state for debugging - moved to effect to prevent re-renders
   useEffect(() => {
-    if (debug) {
-      console.group(`Subgrid State [${row},${col}]`);
-      console.log('Entry:', visualEntry);
-      console.log('Exit:', visualExit);
-      console.log('Connector Type:', isCorner ? 'Corner Connector' : 'Straight Coupling');
-      console.log('Block Count:', subgrid.flat().filter(Boolean).length);
-      console.log('Subgrid:\n' + subgrid.map(row => row.map(cell => cell ? 'R' : '.')).join('\n'));
-      console.groupEnd();
+    if (showDebug) {
+      debug.debug(`Subgrid for [${row},${col}]`, {
+        entry: visualEntry,
+        exit: visualExit,
+        type: isCorner ? 'Corner' : 'Straight',
+        blockCount: subgrid.flat().filter(Boolean).length
+      });
+      
+      // Only show full subgrid at trace level
+      debug.trace(`Subgrid matrix for [${row},${col}]`, {
+        grid: subgrid.map(row => row.map(cell => cell ? 'R' : '.'))
+      });
     }
-  }, [debug, row, col, visualEntry, visualExit, subgrid, isCorner, gridKey]);
+  }, [showDebug, row, col, visualEntry, visualExit, subgrid, isCorner, gridKey]);
 
   // Determine CSS classes based on flow direction and position
   const flowClasses = [];
@@ -249,14 +253,14 @@ export const PipelineVisualizer: React.FC<PipelineVisualizerProps> = ({
       </div>
       
       {/* Position indicator */}
-      {debug && (
+      {showDebug && (
         <div className="position-indicator">
           {pathPosition + 1}/{connectedCubes.length}
         </div>
       )}
       
       {/* Debug flow labels */}
-      {debug && (
+      {showDebug && (
         <div className="debug-labels">
           <div className="debug-label cube-type">
             {cubeType.toUpperCase()}

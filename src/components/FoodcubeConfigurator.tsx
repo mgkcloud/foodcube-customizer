@@ -32,7 +32,7 @@ export const FoodcubeConfigurator: React.FC<FoodcubeConfiguratorProps> = ({ vari
 
   React.useEffect(() => {
     // Update the parent component with the current requirements
-    console.log("Calling onUpdate with requirements:", requirements);
+    console.log("Calling onUpdate with requirements:", JSON.stringify(requirements, null, 2));
     const selections = {
       fourPackRegular: requirements.fourPackRegular,
       fourPackExtraTall: requirements.fourPackExtraTall,
@@ -44,6 +44,9 @@ export const FoodcubeConfigurator: React.FC<FoodcubeConfiguratorProps> = ({ vari
       cornerConnectors: requirements.cornerConnectors,
       straightCouplings: requirements.straightCouplings
     };
+
+    // Log the actual values for debugging
+    console.log("Selections for CladdingKey:", JSON.stringify(selections, null, 2));
 
     // Add a data attribute to the document body with the current requirements for testing
     document.body.setAttribute('data-requirements', JSON.stringify(selections));
@@ -66,6 +69,7 @@ export const FoodcubeConfigurator: React.FC<FoodcubeConfiguratorProps> = ({ vari
           <h4 className="text-sm my-2 text-center font-semibold" data-testid="preset-title">Preset Configurations</h4>
           <PresetConfigs 
             onApply={(preset) => {
+              console.log(`Applying preset type: ${preset}`);
               applyPreset(preset);
               setHasInteracted(true);
               

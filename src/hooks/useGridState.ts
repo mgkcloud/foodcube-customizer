@@ -1,25 +1,42 @@
 import { useState, useCallback, useEffect } from 'react';
 import { GridCell, Requirements, CompassDirection } from '@/components/types';
-import { hasAdjacentCube } from '@/utils/shared/gridUtils';
 import { calculateRequirements as calculateFlowRequirements } from '@/utils/calculation/requirementsCalculator';
-import { createEmptyCell } from '@/utils/core/gridCell';
-import { validateIrrigationPath, clearConnectedCubesCache, findConnectedCubes } from '@/utils/validation/flowValidator';
-import { analyzePath, PathCube } from '@/utils/calculation/flowAnalyzer';
+import { calculateFlowPathPanels } from '@/utils/calculation/panelCalculator';
+import { validateIrrigationPath, findConnectedCubes } from '@/utils/validation/flowValidator';
+import { hasAdjacentCube } from '@/utils/shared/gridUtils';
+import { clearConnectedCubesCache } from '@/utils/validation/flowValidator';
+import { debug } from '@/utils/shared/debugUtils';
 
+// Constant for the grid size
 const GRID_SIZE = 3;
 
-// Initialize grid with proper cell structure
+// Initialize a grid with empty cells
 const initializeGrid = (): GridCell[][] => {
-  return Array(GRID_SIZE).fill(null).map((_, rowIndex) =>
+  return Array(GRID_SIZE).fill(null).map((_, rowIndex) => 
     Array(GRID_SIZE).fill(null).map((_, colIndex) => ({
-      ...createEmptyCell(),
-      id: `cell-${rowIndex}-${colIndex}`,
+      hasCube: false,
       row: rowIndex,
       col: colIndex,
-      type: 'standard'
+      claddingEdges: new Set<CompassDirection>(),
+      connections: { entry: null, exit: null },
+      id: `cell-${rowIndex}-${colIndex}`,
+      type: 'standard',
+      rotation: 0
     }))
   );
 };
+
+// Define a local interface for Path Cube to match other files
+interface PathCube {
+  row: number;
+  col: number;
+  entry: CompassDirection | null;
+  exit: CompassDirection | null;
+  subgrid?: { subgridRow: number; subgridCol: number }[];
+  flowDirection?: 'horizontal' | 'vertical';
+  rotation?: number;
+  [key: string]: any;
+}
 
 const useGridState = () => {
   const [grid, setGrid] = useState<GridCell[][]>(initializeGrid);
@@ -36,23 +53,20 @@ const useGridState = () => {
     straightCouplings: 0
   });
 
-  // Debug logging helper
   const logGridState = (grid: GridCell[][], requirements: Requirements) => {
-    const gridState = grid.map((row, rowIndex) => 
-      row.map((cell, colIndex) => ({
-        position: `[${rowIndex},${colIndex}]`,
+    const gridState = grid.map(row => row.map(cell => {
+      return {
         hasCube: cell.hasCube,
+        claddingEdges: [...cell.claddingEdges],
         connections: cell.connections,
-        claddingEdges: Array.from(cell.claddingEdges),
-        rotation: cell.rotation,
         adjacentCubes: {
-          north: hasAdjacentCube(grid, rowIndex, colIndex, 'N'),
-          east: hasAdjacentCube(grid, rowIndex, colIndex, 'E'),
-          south: hasAdjacentCube(grid, rowIndex, colIndex, 'S'),
-          west: hasAdjacentCube(grid, rowIndex, colIndex, 'W')
+          north: hasAdjacentCube(grid, cell.row, cell.col, 'N'),
+          east: hasAdjacentCube(grid, cell.row, cell.col, 'E'),
+          south: hasAdjacentCube(grid, cell.row, cell.col, 'S'),
+          west: hasAdjacentCube(grid, cell.row, cell.col, 'W')
         }
-      }))
-    );
+      };
+    }));
 
     console.group('Grid State Update');
     console.log('Grid:', gridState);
@@ -104,61 +118,12 @@ const useGridState = () => {
       
       setError(null);
       
-      // Find all cubes in the grid
-      const allCubes: [number, number][] = [];
+      // Use the new universal rule-based approach from panelCalculator
+      console.log("Using universal rule-based approach from panelCalculator");
+      const panelRequirements = calculateFlowPathPanels(grid);
+      console.log("Panel requirements from universal approach:", JSON.stringify(panelRequirements, null, 2));
       
-      for (let row = 0; row < grid.length; row++) {
-        for (let col = 0; col < grid[0].length; col++) {
-          if (grid[row][col].hasCube) {
-            allCubes.push([row, col]);
-          }
-        }
-      }
-      
-      if (allCubes.length === 0) {
-        return {
-          fourPackRegular: 0,
-          fourPackExtraTall: 0,
-          twoPackRegular: 0,
-          twoPackExtraTall: 0,
-          leftPanels: 0,
-          rightPanels: 0,
-          sidePanels: 0,
-          cornerConnectors: 0,
-          straightCouplings: 0
-        };
-      }
-      
-      // Find connected cubes
-      const connectedCubes = findConnectedCubes(grid, allCubes[0][0], allCubes[0][1]);
-      
-      // Convert to PathCube format for flow analysis
-      const pathCubes: PathCube[] = connectedCubes.map(([row, col]) => {
-        const entry = grid[row][col].connections.entry;
-        const exit = grid[row][col].connections.exit;
-        
-        // Determine flow direction based on entry/exit
-        let flowDirection: 'horizontal' | 'vertical' = 'horizontal';
-        if (entry === 'N' || entry === 'S' || exit === 'N' || exit === 'S') {
-          flowDirection = 'vertical';
-        }
-        
-        return {
-          row,
-          col,
-          subgrid: [{ subgridRow: 0, subgridCol: 0 }],
-          entry,
-          exit,
-          flowDirection,
-          rotation: 0
-        };
-      });
-      
-      // Calculate requirements using our simplified flow-based approach
-      const packedRequirements = calculateFlowRequirements(pathCubes);
-      console.log("Flow-based requirements:", packedRequirements);
-      
-      return packedRequirements;
+      return panelRequirements;
     } catch (err) {
       console.error('Error calculating requirements:', err);
       setError('An error occurred while calculating requirements.');
@@ -198,124 +163,141 @@ const useGridState = () => {
       );
       
       // Toggle the cube state
-      const cell = newGrid[row][col];
-      cell.hasCube = !cell.hasCube;
+      const targetCell = newGrid[row][col];
+      targetCell.hasCube = !targetCell.hasCube;
       
-      // Reset connections and cladding edges when toggling
-      cell.connections = { entry: null, exit: null };
-      cell.claddingEdges = new Set();
-      
-      // If removing a cube, we need to validate the remaining path
-      // Otherwise the validation will happen after calculating panels
-      if (!cell.hasCube) {
-        const isValidPath = validateIrrigationPath(newGrid);
-        if (!isValidPath) {
-          setError('Invalid irrigation path. Cubes must form a continuous line.');
-        } else {
-          setError(null);
-        }
+      // Clear cladding edges if cube is removed
+      if (!targetCell.hasCube) {
+        targetCell.claddingEdges.clear();
+        targetCell.connections = { entry: null, exit: null };
       }
       
-      // Recalculate panel requirements
-      const newRequirements = calculateRequirements(newGrid);
-      setRequirements(newRequirements);
+      // If we don't want to add a cube or validation fails, return previous grid
+      if (!targetCell.hasCube || !validateAndUpdateGrid(newGrid)) {
+        return prevGrid;
+      }
       
-      // Log the updated state (for debugging)
-      logGridState(newGrid, newRequirements);
+      // Validate the updated grid configuration and update connections
+      const updatedCubes = validateIrrigationPath(newGrid);
+      if (!updatedCubes) {
+        console.warn('Invalid configuration detected after adding cube');
+        // Revert the change
+        return prevGrid;
+      }
       
       return newGrid;
     });
-  }, [calculateRequirements]);
-
-  const toggleCladding = useCallback((row: number, col: number, edge: 'N' | 'E' | 'S' | 'W') => {
-    setGrid(prev => {
-      // Only allow toggling if the edge is exposed (no adjacent cube)
-      if (hasAdjacentCube(prev, row, col, edge)) {
-        return prev;
-      }
-
-      const newGrid = [...prev];
-      newGrid[row] = [...prev[row]];
-      const cell = { ...prev[row][col] };
-      const newEdges = new Set(cell.claddingEdges);
-      
-      if (newEdges.has(edge)) {
-        newEdges.delete(edge);
-      } else {
-        newEdges.add(edge);
-      }
-      
-      cell.claddingEdges = newEdges;
-      newGrid[row][col] = cell;
- 
-      // Recalculate requirements immediately after updating the grid
-      const newRequirements = calculateRequirements(newGrid);
-      setRequirements(newRequirements);
-      
-      // Log the updated state (for debugging)
-      logGridState(newGrid, newRequirements);
-      
-      return newGrid;
-    });
-  }, [calculateRequirements]);
-
-  const applyPreset = useCallback((preset: GridCell[][]) => {
-    // Clear caches to ensure fresh calculation
-    clearConnectedCubesCache();
     
-    if (!Array.isArray(preset) || !preset.every(row => Array.isArray(row))) {
-      console.error('Invalid preset format:', preset);
-      return;
+    // Recalculate requirements after grid update
+    setRequirements(prevReqs => {
+      // Get updated grid with any cladding changes
+      const updatedGrid = grid.map(row => row.map(cell => ({ ...cell, claddingEdges: new Set([...cell.claddingEdges]) })));
+      updatedGrid[row][col].hasCube = !grid[row][col].hasCube;
+      
+      // Calculate new requirements based on updated grid
+      const newRequirements = calculateRequirements(updatedGrid);
+      
+      // Update the grid state visualization
+      logGridState(updatedGrid, newRequirements);
+      
+      return newRequirements;
+    });
+  }, [grid, calculateRequirements, validateAndUpdateGrid]);
+
+  // Toggle cladding at a specific edge
+  const toggleCladding = useCallback((row: number, col: number, edge: CompassDirection) => {
+    setGrid(prevGrid => {
+      const newGrid = prevGrid.map(gridRow => 
+        gridRow.map(cell => ({
+          ...cell,
+          claddingEdges: new Set([...cell.claddingEdges])
+        }))
+      );
+      
+      const targetCell = newGrid[row][col];
+      
+      // Toggle cladding edge
+      if (targetCell.claddingEdges.has(edge)) {
+        targetCell.claddingEdges.delete(edge);
+      } else {
+        targetCell.claddingEdges.add(edge);
+      }
+      
+      return newGrid;
+    });
+    
+    // No need to recalculate requirements as cladding doesn't affect them
+  }, []);
+
+  // Apply a preset configuration
+  const applyPreset = useCallback((preset: string) => {
+    console.log(`Applying preset: ${preset}`);
+    // Initialize a fresh grid with no cubes
+    const newGrid = initializeGrid();
+    
+    switch (preset) {
+      case 'single':
+        // Single cube in the center
+        console.log("Applying single cube preset");
+        newGrid[1][1].hasCube = true;
+        break;
+      case 'line':
+        // Three cubes in a line
+        console.log("Applying line preset");
+        newGrid[1][0].hasCube = true;
+        newGrid[1][1].hasCube = true;
+        newGrid[1][2].hasCube = true;
+        break;
+      case 'l-shape':
+        // L-shaped configuration
+        console.log("Applying L-shape preset");
+        newGrid[1][0].hasCube = true;
+        newGrid[1][1].hasCube = true;
+        newGrid[2][1].hasCube = true;
+        break;
+      case 'u-shape':
+        // U-shaped configuration
+        console.log("Applying U-shape preset");
+        newGrid[2][0].hasCube = true;
+        newGrid[1][0].hasCube = true;
+        newGrid[1][1].hasCube = true;
+        newGrid[1][2].hasCube = true;
+        newGrid[2][2].hasCube = true;
+        break;
+      default:
+        // Do nothing for unknown presets
+        console.warn(`Unknown preset: ${preset}`);
+        return;
     }
-
-    // Create a deep copy of the preset grid
-    const ROTATION_MAP = {
-      N: 0,   // Flow from North to South
-      E: 90,  // Flow from East to West
-      S: 180, // Flow from South to North
-      W: 270  // Flow from West to East
-    } as const;
-
-    // Create a new grid with all required properties
-    const newGrid: GridCell[][] = preset.map((row, rowIndex) => 
-      row.map((cell, colIndex) => ({
-        id: `cell-${rowIndex}-${colIndex}`,
-        row: rowIndex,
-        col: colIndex,
-        type: 'standard',
-        hasCube: cell.hasCube,
-        claddingEdges: new Set(cell.claddingEdges),
-        connections: {
-          entry: cell.connections?.entry || null,
-          exit: cell.connections?.exit || null
-        },
-        rotation: cell.connections?.entry ? ROTATION_MAP[cell.connections.entry] : 0
-      }))
-    );
-
-    // Validate the irrigation path
-    const isValidPath = validateIrrigationPath(newGrid);
-    if (!isValidPath) {
-      console.error('Invalid preset configuration: Invalid irrigation path');
-      setError('Invalid preset configuration: Invalid irrigation path');
-      return;
+    
+    console.log("Preset grid prepared:", newGrid.map(row => row.map(cell => cell.hasCube ? "■" : "□").join(" ")).join("\n"));
+    
+    // Update the grid and validate the new configuration
+    if (validateAndUpdateGrid(newGrid)) {
+      console.log("Grid validated, updating with flow path");
+      // Validate again with connection tracing enabled
+      validateIrrigationPath(newGrid);
+      
+      // Ensure we're setting a completely new grid object to trigger state updates
+      setGrid(newGrid);
+      
+      // Calculate requirements for the new grid
+      const newRequirements = calculateRequirements(newGrid);
+      setRequirements(newRequirements);
+      
+      // Update the grid state visualization
+      logGridState(newGrid, newRequirements);
+      console.log("Preset application completed");
+    } else {
+      console.error("Preset validation failed");
     }
+  }, [calculateRequirements, validateAndUpdateGrid]);
 
-    // Update the grid
-    setGrid(newGrid);
-
-    // Calculate requirements for the new grid
-    const newRequirements = calculateRequirements(newGrid);
-    setRequirements(newRequirements);
-
-    // Log the updated state (for debugging)
-    logGridState(newGrid, newRequirements);
-  }, [calculateRequirements]);
-
-  // Recalculate requirements whenever the grid changes
+  // Update requirements whenever the grid changes
   useEffect(() => {
     const newRequirements = calculateRequirements(grid);
     setRequirements(newRequirements);
+    logGridState(grid, newRequirements);
   }, [grid, calculateRequirements]);
 
   return {

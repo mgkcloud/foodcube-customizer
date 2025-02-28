@@ -30,10 +30,11 @@ export const generateStraightPreset = (): GridCell[][] => {
 export const generateLShapePreset = (): GridCell[][] => {
   const grid = createEmptyGrid();
   
-  // Flow direction: West to South in an L-shape
-  grid[1][0] = createFlowCell('W', 'E'); // Start - flow from West
-  grid[1][1] = createFlowCell('W', 'S'); // Corner - flow turns South
-  grid[2][1] = createFlowCell('N', 'S'); // End - flow exits South
+  // Flow direction for an L-shape in row 1 horizontal, then down vertically 
+  // This matches the physical arrangement in the screenshot
+  grid[1][0] = createFlowCell('W', 'E'); // Left cube - flow from West to East
+  grid[1][1] = createFlowCell('W', 'S'); // Middle cube - flow turns from West to South (corner)
+  grid[2][1] = createFlowCell('N', 'S'); // Bottom cube - flow from North to South
   
   // Set hasCube for the path
   grid[1][0].hasCube = true;

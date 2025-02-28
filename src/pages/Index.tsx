@@ -1,4 +1,5 @@
 import FoodcubeConfigurator from "@/components/FoodcubeConfigurator";
+import '@/utils/debugConfig'; // Import debug configuration
 
 const variants = {
   fourPackRegular: {

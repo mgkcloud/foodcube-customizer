@@ -52,6 +52,30 @@ The Cladding Cube Customizer is a tool for calculating and visualizing the requi
    - Shows panel placements
    - Indicates flow direction within subgrids
 
+## Fundamental Flow Constraints
+
+### Cube Flow Behavior
+- **Each cube only supports straight-through flow** in one of two directions:
+  1. West→East (horizontal)
+  2. North→South (vertical)
+- **No cube can have internal turns or T-junctions**
+- Flow through a cube must be straight along one of these axes
+- Each cube has exactly one entry point and one exit point
+
+### Connection System
+- **Corner connectors** are used to create 90-degree turns between cubes
+- A corner connector bridges between the exit of one cube and the entry of another at a 90-degree angle
+- Corner connectors are external components, not part of the internal cube flow
+- In an L-shape configuration, the corner connector bridges the East exit of one cube to the North entry of the adjacent cube
+
+### Panel Type Determination
+- Panel types are determined by the internal flow direction of each cube
+- Each cube has one of two possible internal flow patterns:
+  1. West→East (horizontal flow)
+  2. North→South (vertical flow)
+- Side panels are used where there is no flow (perpendicular to flow direction)
+- Left/Right panels are used at entry and exit points based on flow direction
+
 ## Configuration Rules
 
 ### Panel Types
@@ -92,12 +116,23 @@ The Cladding Cube Customizer is a tool for calculating and visualizing the requi
    - 2 corner connectors
    - 2 straight couplings
 
+## L-Shape Configuration Example
+- **Configuration**: Cubes at [1,0], [1,1], [1,2], [2,2]
+- **Flow Paths**:
+  - [1,0]: Internal flow W→E (straight through)
+  - [1,1]: Internal flow W→E (straight through)
+  - [1,2]: Internal flow W→E (straight through)
+  - [2,2]: Internal flow N→S (straight through)
+- **Corner Connector**: Bridges the East exit of [1,2] to the North entry of [2,2]
+- This explicitly illustrates how each cube has a straight-through flow, with corner connectors handling the 90-degree turns
+
 ## Validation Rules
 
 1. **Flow Validation**
    - All cubes must be connected
    - No T-junctions allowed
    - Valid entry/exit points required
+   - Each cube must have straight-through flow
 
 2. **Panel Validation**
    - All exposed edges must be covered

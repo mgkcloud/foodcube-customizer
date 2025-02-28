@@ -1,4 +1,5 @@
 import { GridCell, CompassDirection } from '@/components/types';
+import { debug, debugFlags } from '../shared/debugUtils';
 
 interface FlowVisualization {
   redCubes: { row: number; col: number; subRow: number; subCol: number }[];
@@ -103,28 +104,23 @@ export const visualizeFlow = (grid: GridCell[][]): FlowVisualization => {
     }
   }
 
-  console.group('Flow Path Visualization');
-  console.log('Red Cube Locations:', redCubes);
-  console.log('Continuous Flow Path:', flowPath);
+  // Log flow visualization data using optimized debug utilities
+  if (debugFlags.SHOW_FLOW_PATHS) {
+    debug.info(`Flow visualization: ${redCubes.length / 2} cubes, ${flowPath.length} path points`);
+    
+    // Log sample red cubes with efficient truncation
+    debug.debug('Flow path sample', {
+      redCubeCount: redCubes.length,
+      pathLength: flowPath.length,
+      sampleCubes: redCubes.slice(0, 3).map(c => `[${c.row},${c.col}]`)
+    });
+  }
   
-  // Visual representation in console
-  const visualGrid = Array(grid.length * 2 + 1).fill('.').map(() => 
-    Array(grid[0].length * 2 + 1).fill('.')
-  );
-
-  // Mark red cubes with 'R'
-  redCubes.forEach(({row, col, subRow, subCol}) => {
-    visualGrid[row * 2 + subRow][col * 2 + subCol] = 'R';
-  });
-
-  // Mark flow path with 'F'
-  flowPath.forEach(({row, col, subRow, subCol}) => {
-    visualGrid[row * 2 + subRow][col * 2 + subCol] = 'F';
-  });
-
-  console.log('Visual Grid (R=Red Cube, F=Flow Path, .=Empty):');
-  visualGrid.forEach(row => console.log(row.join(' ')));
-  console.groupEnd();
+  // Visualize grid if enabled and not too large
+  if (debugFlags.SHOW_GRID_VISUALIZATION) {
+    // Use the grid visualization utility
+    debug.grid(grid.map(row => row.map(cell => cell.hasCube)));
+  }
 
   return { redCubes, flowPath };
 }; 

@@ -29,6 +29,7 @@ The goal is to develop a production-ready cladding and coupling calculator for a
 - Front-end testing of preset configurations
 - Cross-browser compatibility testing
 - Final documentation updates
+- Implementation of fundamental flow constraints (straight-through flows with external corner connectors)
 
 ❌ **Remaining Issues:**
 - Further performance optimizations for large grid configurations 
@@ -36,6 +37,34 @@ The goal is to develop a production-ready cladding and coupling calculator for a
 - Potential edge cases in unusual configurations
 - Flow path visualization issues in straight and L-shaped configurations
 - Inconsistent flow direction between cubes causing connectivity errors
+- Flow direction not properly enforcing straight-through constraint
+
+## Fundamental Flow Constraints
+
+### Key Implementation Insight
+Recently, we've identified a critical architectural constraint that clarifies much of the implementation:
+
+1. **Cube Flow Constraint**: Each cube must have a straight-through flow in one of two directions:
+   - West→East (horizontal)
+   - North→South (vertical)
+
+2. **Corner Connector Function**: Corner connectors are external components that handle 90-degree turns between cubes, not within cubes.
+
+3. **Example L-Shape Implementation**:
+   - Cubes at [1,0], [1,1], [1,2]: Internal flow W→E (straight through horizontally)
+   - Cube at [2,2]: Internal flow N→S (straight through vertically)
+   - Corner connector: Bridges the East exit of [1,2] to the North entry of [2,2]
+
+This insight resolves many flow validation problems by enforcing a clear physical constraint on the system.
+
+### Implementation Impact
+
+These constraints affect several key components:
+
+1. **Flow Validator**: Must enforce straight-through flow within each cube
+2. **Connection Detector**: Must correctly identify where corner connectors are needed
+3. **Panel Counter**: Must account for the panel types based on straight-through flow direction
+4. **Flow Visualizer**: Must clearly show the entry/exit points and flow direction in each cube
 
 ## Testing Validation
 
@@ -48,29 +77,60 @@ The goal is to develop a production-ready cladding and coupling calculator for a
 
 ## Immediate Next Steps
 
-1. **Front-end Testing of All Configurations**
+1. **Update Flow Validator for Straight-Through Flows**
+   - Modify `flowValidator.ts` to enforce that each cube can only have straight-through flow (W→E or N→S)
+   - Validate that all entry/exit points respect this constraint
+   - Update flow tracing algorithm to set consistent entry/exit points respecting physical constraints
+   - Test against all standard configurations
+
+2. **Fix L-Shape Flow Direction Issue**
+   - Update the flow analysis for L-shaped configurations to match the correct physical model
+   - Ensure horizontal cubes have W→E flow and vertical cubes have N→S flow
+   - Fix corner detection to properly identify the external corner connector
+   - Test against the expected L-shape configuration
+
+3. **Front-end Testing of All Configurations**
    - Test all preset configurations via the UI
    - Verify calculations against PRD requirements
    - Document test results with screenshots
    - Check for any remaining visual anomalies
 
-2. **Performance Testing**
+4. **Performance Testing**
    - Test with larger grid configurations (10x10+)
    - Monitor memory usage and rendering performance
    - Document performance metrics
    - Identify any remaining bottlenecks
 
-3. **Browser Compatibility Verification**
+5. **Browser Compatibility Verification**
    - Test in Chrome, Firefox, Safari, and Edge
    - Ensure consistent rendering and functionality
    - Document any browser-specific issues
    - Fix any critical compatibility problems
 
-4. **Final Documentation Update**
+6. **Final Documentation Update**
    - Update README with comprehensive usage instructions
    - Document system architecture and component interactions
    - Create detailed explanation of calculation logic
    - Add troubleshooting section for common issues
+
+## Core Logic Improvements
+
+Based on the fundamental flow constraints, we need to focus on these core improvements:
+
+1. **Flow Direction Enforcement**
+   - Update `flowValidator.ts` to enforce straight-through flow in each cube
+   - Modify direction detection to respect physical constraints
+   - Update connection validation to properly connect exit and entry points
+
+2. **Corner Connector Logic**
+   - Enhance `connectionDetector.ts` to properly identify corner connectors
+   - Make sure corner connectors are placed between cubes, not within them
+   - Update visualization to show connector types correctly
+
+3. **Path Tracing Algorithm**
+   - Fix `tracePathAndSetConnections` in flowValidator.ts to correctly trace paths
+   - Ensure entry/exit points follow physical constraints
+   - Update path visualization to clearly show flow directions
 
 ## Future Enhancements
 
@@ -98,245 +158,106 @@ The goal is to develop a production-ready cladding and coupling calculator for a
 4. For U-shaped configuration (12 edges): 1 four-pack, 2 two-packs, 2 corner connectors, 2 straight couplings
 5. Panel types (left/right) are determined by the flow direction (like a snake or tron game)
 6. The flow path must be valid with no T-junctions (due to lack of three-way connectors)
+7. **Each cube must have straight-through flow** (either W→E or N→S)
+8. **Corner connectors handle 90-degree turns between cubes** (not within cubes)
 
-## Implementation Plan
+## Current Technical Challenges
 
-### Phase 1: Fix Flow Direction and Path Tracking
+1. **Flow Direction Inconsistency**
+   - **Problem**: Current implementation doesn't consistently enforce straight-through flow within cubes
+   - **Root Cause**: Misunderstanding of the physical constraint that each cube can only have W→E or N→S internal flow
+   - **Impact**: Incorrect entry/exit point assignment, especially in corners and ends
+   - **Fix Priority**: HIGH - This is fundamental to the correct operation of the entire system
 
-#### Task 1.1: Update Flow Direction Logic (COMPLETED)
-- **File**: `src/utils/validation/flowValidator.ts` and `src/utils/calculation/flowAnalyzer.ts`
-- **Progress**: 100% complete
-- **Actions**:
-  - ✅ Reviewed the validation algorithm for entry/exit point tracking
-  - ✅ Fixed the inconsistency with entry/exit directions in most configurations
-  - ✅ Ensured the flow direction is coherently maintained throughout connected cubes
-  - ✅ Identified logging issues and implemented fixes
-  - ✅ Added U-shape specific logic to handle entry/exit points
-  - ✅ Fixed U-shape entry/exit direction issues in traceUShapePath function
+2. **Corner Connector Misplacement**
+   - **Problem**: Corner connectors aren't properly placed between cubes at 90-degree turns
+   - **Root Cause**: Current implementation doesn't clearly separate internal cube flow from external connections
+   - **Impact**: Incorrect visualization and calculation of corner connectors
+   - **Fix Priority**: HIGH - Directly affects calculation accuracy
 
-#### Task 1.2: Enhance Path Visualization (COMPLETED)
-- **File**: `src/components/PipelineVisualizer.tsx`
-- **Progress**: 100% complete
-- **Actions**:
-  - ✅ Reviewed current visualization implementation
-  - ✅ Added debug mode toggle to the UI
-  - ✅ Updated visualization to show flow paths
-  - ✅ Added clear indicators for entry/exit points on each cube
-  - ✅ Added visual distinction for corner connectors vs. straight couplings
-  - ✅ Ensured consistency between visual representation and internal data model
-  - ✅ Added CSS styling for enhanced visualization
-  - ✅ **HUMAN VALIDATION NEEDED**: Verify that flow visualization matches expected behavior
+3. **Flow Path Visualization Issues**
+   - **Problem**: Flow visualization doesn't accurately reflect the physical constraints
+   - **Root Cause**: Visualization doesn't enforce straight-through flow and clear entry/exit direction
+   - **Impact**: Confusing UI that doesn't match the actual physical model
+   - **Fix Priority**: MEDIUM - Affects user understanding but not calculation correctness
 
-### Phase 2: Correct Panel Type Assignment
+4. **Edge Case Handling**
+   - **Problem**: Potential edge cases in unusual configurations
+   - **Current status**: Core configurations working correctly
+   - **Planned solution**: Additional testing and validation
+   - **Fix Priority**: LOW - Focused on ensuring core configurations work correctly first
 
-#### Task 2.1: Update Panel Type Logic
-- **File**: `src/utils/calculation/panelCounter.ts`
-- **Progress**: 80% complete
-- **Actions**:
-  - ✅ Reviewed and updated panel counting implementation
-  - ✅ Modified panel counting to use flow direction for type assignment
-  - ✅ Implemented consistent rules for left/right panel assignment based on position in flow
-  - ✅ Ensured beginning of flow gets left panel, end gets right panel
-  - ✅ Added validation tests for panel type assignment
-  - ⬜ **HUMAN VALIDATION NEEDED**: Verify panel types match expected positioning based on flow
+5. **Performance for Large Grids**
+   - **Problem**: Potential performance issues with larger grid configurations
+   - **Current status**: Normal use cases perform well
+   - **Planned solution**: Further optimizations and performance monitoring
+   - **Fix Priority**: LOW - Current performance is acceptable for typical use cases
 
-#### Task 2.2: Review Edge Detection (COMPLETED)
-- **File**: `src/utils/calculation/panelCounter.ts`
-- **Progress**: 100% complete
-- **Actions**:
-  - ✅ Reviewed edge detection logic
-  - ✅ Verified that exposed edges are correctly identified
-  - ✅ Ensured claddingEdges property is correctly populated
-  - ✅ Added validation for edge detection in various configurations
-  - ✅ Created clear rules for edge exposure calculation
+## Root Cause Analysis for U-Shape Issues
 
-#### Task 2.3: Document Panel Type Rules (COMPLETED)
-- **File**: `src/utils/calculation/panelRules.ts`
-- **Progress**: 100% complete
-- **Actions**:
-  - ✅ Created explicit documentation of panel type assignment rules
-  - ✅ Implemented helper functions for determining panel types
-  - ✅ Added validation against known configurations
-  - ✅ Ensured consistent application of rules across the codebase
+The U-shape configuration issue highlighted in the console log:
+```
+Analyzing path: [
+{ row: 1, col: 0, entry: 'N', exit: 'N' },
+{ row: 0, col: 0, entry: 'W', exit: 'S' },
+{ row: 0, col: 1, entry: null, exit: null },
+{ row: 0, col: 2, entry: 'S', exit: 'E' },
+{ row: 1, col: 2, entry: 'N', exit: 'N' }
+]
+```
 
-### Phase 3: Fix Panel Packing Algorithm (COMPLETED)
+Should be:
+```
+Analyzing path: [
+{ row: 1, col: 0, entry: 'N', exit: 'S' },
+{ row: 0, col: 0, entry: 'N', exit: 'S' },
+{ row: 0, col: 1, entry: 'W', exit: 'E' },
+{ row: 0, col: 2, entry: 'S', exit: 'N' },
+{ row: 1, col: 2, entry: 'S', exit: 'N' }
+]
+```
 
-#### Task 3.1: Rewrite Panel Packing Logic (COMPLETED)
-- **File**: `src/utils/calculation/panelPacker.ts`
-- **Progress**: 100% complete
-- **Actions**:
-  - ✅ Reviewed current panel packing implementation
-  - ✅ Separated counting (determining total panels) from packing (grouping into packs)
-  - ✅ Implemented optimized greedy algorithm for panel packing
-  - ✅ Prioritized 4-packs, then 2-packs to minimize total packs
-  - ✅ Validated against PRD examples
+This clearly shows that:
+1. The current implementation isn't enforcing straight-through flows (cubes have entry/exit in same direction)
+2. There's a disconnected cube with null entry/exit
+3. The direction assignment doesn't respect physical constraints
 
-#### Task 3.2: Create Configuration Templates (COMPLETED)
-- **File**: `src/utils/validation/configurationTemplates.ts`
-- **Progress**: 100% complete
-- **Actions**:
-  - ✅ Confirmed file exists with expected panel and connector counts
-  - ✅ Reviewed and updated validation functions to compare actual vs. expected
-  - ✅ Verified template values match PRD specifications
-  - ✅ Used templates in UI feedback for validation
+The core issue is that we haven't properly implemented the fundamental constraint that **each cube must have a straight-through flow** and that corner connectors handle turns between cubes.
 
-#### Task 3.3: Update Panel Requirements Component
-- **File**: `src/components/Summary.tsx`
-- **Progress**: 80% complete
-- **Actions**:
-  - ✅ Located and reviewed the Summary component
-  - ✅ Updated to display panels based on new packing algorithm
-  - ✅ Ensured consistent display of panel counts
-  - ⬜ Add tooltips or info indicators for package information
-  - ⬜ Implement visual validation for known configurations
+## Specific Implementation Fixes Required
 
-### Phase 4: Performance Optimization (COMPLETED)
+1. **Fix Flow Validator Logic**
+   - **File**: `src/utils/validation/flowValidator.ts`
+   - **Keys Changes Needed**:
+     - Enforce straight flow constraint in `tracePathAndSetConnections` 
+     - Fix entry/exit detection to use opposite sides of cube (N→S or W→E)
+     - Remove null entry/exit points; all cubes should have valid connections
+     - Update connection validation to verify proper cube-to-cube connections
 
-#### Task 4.1: Fix Recursion Issue (COMPLETED)
-- **File**: `src/utils/validation/flowValidator.ts` and related components
-- **Progress**: 100% complete
-- **Actions**:
-  - ✅ Identified recursion/re-rendering issue in console logs
-  - ✅ Added memoization to `findConnectedCubes` function
-  - ✅ Implemented caching for expensive calculations
-  - ✅ Fixed React component re-rendering cycles
-  - ✅ Added early exit conditions to prevent unnecessary calculations
-  - ✅ **HUMAN VALIDATION**: Tested application after optimization to verify performance improvement
+2. **Enhance Flow Visualization**
+   - **File**: `src/components/PipelineVisualizer.tsx`
+   - **Key Changes Needed**:
+     - Clearly visualize the straight-through constraint in each cube
+     - Differentiate corner connectors from internal flow
+     - Show distinct entry/exit points at cube boundaries
+     - Add debug visualization mode that shows all constraints
 
-#### Task 4.2: Optimize State Management (COMPLETED)
-- **File**: Various React components and hooks
-- **Progress**: 100% complete
-- **Actions**:
-  - ✅ Reviewed component render cycles and state updates
-  - ✅ Implemented React.memo for components with expensive renders
-  - ✅ Used useCallback for functions passed as props
-  - ✅ Optimized context usage to prevent unnecessary re-renders
-  - ✅ Implemented useMemo for expensive calculations
+3. **Fix Connection Detection**
+   - **File**: `src/utils/validation/connectionDetector.ts`
+   - **Key Changes Needed**:
+     - Update connector detection to properly identify corners between cubes
+     - Ensure connector counts match physical model
+     - Fix corner detection logic for L and U shaped configurations
 
-### Phase 5: Testing and Validation
+## Recommended Approach
 
-#### Task 5.1: Create Comprehensive Test Suite
-- **File**: New files in `src/tests/`
-- **Progress**: 70% complete
-- **Actions**:
-  - ✅ Implemented unit tests for each configuration (Single, Line, L, U)
-  - ✅ Created integration tests for the calculation pipeline
-  - ⬜ Add UI component tests
-  - ✅ Documented expected outcomes based on PRD
-  - ⬜ **HUMAN VALIDATION NEEDED**: Review test results and verify coverage
+1. Start by fixing the flow validator to enforce straight-through flow constraint
+2. Update visualization to clearly show flow direction and constraints
+3. Fix corner connector detection based on the updated flow model
+4. Test against all standard configurations to verify fixes
+5. Update documentation to clearly explain the constraints and implementation
 
-#### Task 5.2: Add Validation Overlay
-- **File**: New component `src/components/ValidationOverlay.tsx`
-- **Progress**: 40% complete
-- **Actions**:
-  - ✅ Created a debug mode that shows validation status
-  - ⬜ Highlight discrepancies between calculated and expected results
-  - ✅ Added toggles for different preset configurations
-  - ⬜ Add detailed breakdown of calculations
-  - ⬜ **HUMAN VALIDATION NEEDED**: Verify the overlay provides useful debugging information
-
-#### Task 5.3: Implement Error Reporting
-- **File**: Various files
-- **Progress**: 60% complete
-- **Actions**:
-  - ✅ Reviewed existing error handling
-  - ✅ Added consistent error handling throughout the application
-  - ✅ Created clear error messages for invalid configurations
-  - ✅ Implemented console logging for debugging purposes
-  - ⬜ Add user-friendly error indicators in the UI
-
-## Human-in-the-Loop Validation Points
-
-At these critical junctures, human validation is required to ensure correctness:
-
-1. **Configuration Testing**
-   - After each configuration implementation, human testing with real grid interactions
-   - Visual verification that flows are correctly rendered with proper entry/exit points
-   - Verification that panel calculations match PRD specifications
-   - ✅ Basic flow visualization implemented
-   - ✅ Enhanced flow visualization with direction indicators added
-   - ✅ Corner connector visualization implemented
-
-2. **Performance Validation**
-   - Test application after performance optimizations
-   - Verify no console errors or recursive calls
-   - Check for smooth UI interactions without lag
-   - ✅ Recursive call issues fixed
-   - ✅ Memoization implemented to prevent excessive recalculations
-
-3. **Panel Counting Accuracy**
-   - For each configuration (single, line, L, U), verify:
-     - Correct total panel counts
-     - Proper panel type assignment (left/right/side)
-     - Appropriate packaging into 4-packs and 2-packs
-     - Connector count accuracy
-   - ✅ Single cube configuration verified
-   - ✅ Straight line configuration verified
-   - ✅ L-shape configuration verified
-   - ✅ U-shape configuration panel count verified
-   - ⬜ Final end-to-end testing needed
-
-4. **Edge Case Testing**
-   - Test invalid configurations to ensure proper error handling
-   - Verify transitions between different configurations
-   - Test boundary conditions (maximum grid size, etc.)
-   - ⬜ Additional edge case testing needed
-
-## Testing Validation Checklist
-
-1. **Single Cube Configuration**
-   - ✅ Verify 1 four-pack (2 side + 1 left + 1 right)
-   - ✅ Ensure correct panel placement
-   - ✅ Validate visual representation
-   - ✅ **HUMAN CHECK**: Verify console for recursion issues (FIXED)
-
-2. **Straight Line Configuration (3 cubes)**
-   - ✅ Verify 1 four-pack (2 side + 1 left + 1 right)
-   - ✅ Verify 2 two-packs (2 sides each)
-   - ✅ Verify 2 straight couplings
-   - ✅ Ensure left panel at start, right panel at end
-   - ✅ **HUMAN CHECK**: Verify console for recursion issues (FIXED)
-
-3. **L-Shape Configuration**
-   - ✅ Verify 1 four-pack (2 side + 1 right + 1 left)
-   - ✅ Verify 2 two-packs (2 sides each)
-   - ✅ Verify 1 corner connector (CORRECT)
-   - ✅ Verify 1 straight coupling (CORRECT)
-   - ✅ Validate correct flow handling of corner
-   - ✅ **HUMAN CHECK**: Verify console for recursion issues (FIXED)
-
-4. **U-Shape Configuration**
-   - ✅ Verify 1 four-pack (2 side + 1 right + 1 left)
-   - ✅ Verify 2 two-packs (CORRECT)
-   - ✅ Verify 2 corner connectors (CORRECT)
-   - ✅ Verify 2 straight couplings (CORRECT)
-   - ✅ Validate correct handling of flow directions (FIXED)
-   - ✅ **HUMAN CHECK**: Verify console for recursion issues (FIXED)
-
-## Next Immediate Steps
-
-1. **End-to-End UI Testing**
-   - Test all preset configurations in the UI
-   - Verify proper calculations for each configuration
-   - Check for any visual glitches or rendering issues
-   - Document test results with screenshots
-
-2. **Performance Optimization**
-   - Test with larger grid configurations
-   - Monitor memory usage and performance
-   - Identify and fix any remaining bottlenecks
-   - Document performance improvements
-
-3. **Cross-Browser Compatibility**
-   - Test in multiple browsers (Chrome, Firefox, Safari, Edge)
-   - Fix any browser-specific rendering issues
-   - Ensure consistent functionality across all platforms
-
-4. **Final Documentation**
-   - Update all documentation
-   - Create comprehensive user guide
-   - Document calculation logic and rules
-   - Add troubleshooting section
+This focused approach addresses the fundamental issues while maintaining the existing code structure.
 
 ## Fixed Issues and Solutions
 
@@ -364,95 +285,6 @@ At these critical junctures, human validation is required to ensure correctness:
    - Problem: Lack of clear visual indicators for flow direction and connector types
    - Solution: Enhanced PipelineVisualizer.tsx with direction arrows and connector indicators
    - Result: Improved visualization that clearly shows flow paths and connector types
-
-## Current Technical Challenges
-
-1. **Edge Case Handling**
-   - Problem: Potential edge cases in unusual configurations
-   - Current status: Core configurations working correctly
-   - Planned solution: Additional testing and validation
-
-2. **Performance for Large Grids**
-   - Problem: Potential performance issues with larger grid configurations
-   - Current status: Normal use cases perform well
-   - Planned solution: Further optimizations and performance monitoring
-
-3. **Browser Compatibility**
-   - Problem: Possible rendering inconsistencies across browsers
-   - Current status: Primary browser testing completed
-   - Planned solution: Cross-browser testing and fixes
-
-4. **Flow Path Visualization Inconsistencies**
-   - Problem: Incorrect visualization of flow paths in straight and L-shaped configurations
-   - Current status: The UI shows the correct panel counts but the visual flow representation is incorrect
-   - Planned solution: Fix flow direction logic in flowValidator.ts and flowAnalyzer.ts
-
-## Flow Path Visualization Analysis
-
-After enabling debug mode and examining all configurations, several issues with the flow visualization were identified, particularly in the straight line and L-shaped configurations:
-
-### 1. Straight Configuration Issues
-- **Flow Continuity Problem**: The red flow blocks don't form a continuous path through all three cubes
-- **Entry/Exit Direction Inconsistency**: Console errors show "Last cube entry doesn't connect from another cube: entry=N"
-- **Multiple START Labels**: The debug visualization shows multiple START points suggesting disconnected flow segments
-- **Visual Assessment**: Cubes at positions [1,0], [1,1], and [1,2] should have a continuous flow, but instead show disconnected segments
-- **Calculation Impact**: Despite visual issues, the calculation for panel counts is correct (1x four-pack, 2x two-packs, 2 straight couplings)
-
-### 2. L-Shape Configuration Issues
-- **Corner Flow Problem**: The flow doesn't make a clean 90-degree turn at the corner connection
-- **Connection Validation Error**: Console shows "Middle cube at [1,1] has invalid connections: entry=W (false), exit=S (true)"
-- **Improper Entry/Exit Assignment**: The cube at position [2,1] has a START marker instead of continuing the flow
-- **Visual Assessment**: The L-shape arrangement shows proper panel count but incorrect flow representation
-- **Panel Count Discrepancy**: UI shows 1 two-pack instead of 2 two-packs as specified in the PRD
-
-### 3. U-Shape Configuration
-- **Generally Correct**: The U-shape configuration shows the most consistent flow representation
-- **Minor Connection Issues**: Console error shows "Middle cube at [2,0] has invalid connections: entry=N (false), exit=E (true)"
-- **Visual Assessment**: The flow paths generally appear correct with proper corner connector visualization
-- **Calculation Accuracy**: Panel and connector counts match PRD requirements (1x four-pack, 2x two-packs, 2 corner connectors, 2 straight couplings)
-
-### Root Cause Analysis
-
-Based on investigation, the primary issues appear to be:
-
-1. **Flow Direction Calculation**: The algorithm determining entry/exit directions between cubes is inconsistent
-2. **Path Continuity Logic**: The system is not correctly maintaining continuous flow paths through connected cubes
-3. **Corner Turn Handling**: Special logic for handling 90-degree turns may have issues, especially in L-shape configurations
-4. **Entry/Exit Point Assignment**: Start and end points for flows are incorrectly marked in some cases
-5. **Flow Visualization vs Calculation Mismatch**: Despite visual inconsistencies, the panel calculations are mostly correct
-
-## Recommended Actions
-
-1. **Fix Flow Validator Logic**
-   - **File**: `src/utils/validation/flowValidator.ts`
-   - **Actions Needed**:
-     - Review the algorithm for determining entry/exit points between adjacent cubes
-     - Fix direction assignment at corners and ends
-     - Ensure all cubes in a continuous path have properly connected entry/exit points
-     - Address console errors about disconnected entry/exit points
-
-2. **Update Flow Analyzer Tracing**
-   - **File**: `src/utils/calculation/flowAnalyzer.ts`
-   - **Actions Needed**:
-     - Review path tracing algorithm for straight lines and L-shapes
-     - Fix entry/exit directions for middle cubes in all configurations
-     - Ensure consistent direction assignment for continuous paths
-     - Fix the L-shape corner transition logic
-
-3. **Enhance Visualization Debugging**
-   - **File**: `src/components/PipelineVisualizer.tsx`
-   - **Actions Needed**:
-     - Add more detailed visual feedback for connection issues
-     - Clearly show direction of flow through each cube
-     - Highlight problematic connections in debug mode
-
-4. **Fix Panel Count Discrepancy in L-Shape**
-   - **File**: `src/utils/calculation/panelPacker.ts`
-   - **Actions Needed**:
-     - Verify L-shape panel packing to ensure it matches PRD (2 two-packs)
-     - Fix the panel counting logic for L-shape configurations
-
-These issues likely explain the console errors observed during testing and should be addressed to ensure the application provides both accurate calculations and correct visual representation of flow paths.
 
 ## Delivery Criteria
 
