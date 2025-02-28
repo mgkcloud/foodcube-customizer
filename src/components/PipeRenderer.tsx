@@ -8,7 +8,7 @@ interface PipeRendererProps {
 export const PipeRenderer: React.FC<PipeRendererProps> = ({ subgrid }) => {
   return (
     <div 
-      className="pipe-subgrid absolute inset-0 grid grid-cols-2 gap-0.5 pointer-events-none z-0" 
+      className="pipe-subgrid absolute inset-0 grid grid-cols-2 gap-0.5 pointer-events-none z-10" 
       data-testid="pipe-subgrid"
     >
       {subgrid.map((row, rowIndex) =>

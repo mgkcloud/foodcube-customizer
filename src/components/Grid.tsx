@@ -71,48 +71,10 @@ export const Grid: React.FC<GridProps> = ({
     );
   };
 
-  // Update the renderCell method to pass debug mode to PipelineVisualizer
-  const renderCell = (rowIndex: number, colIndex: number) => {
-    const cell = grid[rowIndex][colIndex];
-    return (
-      <div 
-        key={`${rowIndex}-${colIndex}`}
-        className={`relative w-full h-full border-gray-200 ${cell.hasCube ? 'bg-gray-100' : 'bg-white'}`}
-        onClick={() => handleCellClick(rowIndex, colIndex)}
-        data-testid={`grid-cell-${rowIndex}-${colIndex}`}
-      >
-        {cell.hasCube && (
-          <PipelineVisualizer 
-            cell={cell} 
-            row={rowIndex} 
-            col={colIndex} 
-            grid={grid}
-            debug={debug}
-          />
-        )}
-        {cell.hasCube && (
-          <CladdingVisualizer 
-            cell={cell} 
-            row={rowIndex} 
-            col={colIndex} 
-            grid={grid}
-            onToggle={(edge) => handleCladdingToggle(rowIndex, colIndex, edge)}
-            isEdgeExposed={{
-              N: !hasAdjacentCube(grid, rowIndex, colIndex, 'N'),
-              E: !hasAdjacentCube(grid, rowIndex, colIndex, 'E'),
-              S: !hasAdjacentCube(grid, rowIndex, colIndex, 'S'),
-              W: !hasAdjacentCube(grid, rowIndex, colIndex, 'W')
-            }}
-          />
-        )}
-      </div>
-    );
-  };
-
   return (
     <div className="relative grid grid-cols-3 gap-1 bg-gray-100 p-4 rounded-lg">
       {!hasInteractedLocal && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 z-10 rounded-lg cursor-pointer"
+        <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 z-30 rounded-lg cursor-pointer"
              onClick={handleOverlayClick}>
           <div className="bg-white px-6 py-3 rounded-full shadow-lg text-sm font-semibold">
             Tap grid to place Foodcube
@@ -128,7 +90,7 @@ export const Grid: React.FC<GridProps> = ({
             className={`
               relative aspect-square cursor-pointer
               ${cell.hasCube 
-                ? 'bg-cover bg-center bg-no-repeat hover:brightness-90' 
+                ? 'bg-cover bg-center bg-no-repeat hover:brightness-90 z-1' 
                 : 'bg-white hover:bg-gray-200'
               }
               border-2 border-gray-300 rounded
@@ -143,7 +105,6 @@ export const Grid: React.FC<GridProps> = ({
           >
             {cell.hasCube && (
               <>
-                {renderSubgrid(rowIndex, colIndex)}
                 <PipelineVisualizer
                   cell={cell}
                   row={rowIndex}

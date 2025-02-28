@@ -126,7 +126,7 @@ export const CladdingVisualizer = ({ cell, row, col, grid, onToggle, isEdgeExpos
   console.groupEnd();
 
   return (
-    <div className="absolute inset-0 pointer-events-none z-10">
+    <div className="absolute inset-0 pointer-events-none z-20">
       <div className="absolute inset-0 flex items-center justify-center">
         {(['N', 'E', 'S', 'W'] as const).map((edge) => isEdgeExposed[edge] && (
           <div

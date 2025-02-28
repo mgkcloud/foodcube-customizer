@@ -132,9 +132,21 @@ export function getPanelType(
   exit: CompassDirection | null,
   subgrid?: boolean[][]
 ): 'side' | 'left' | 'right' {
-  // If no flow or subgrid information, default to side panel
-  if ((!entry && !exit) || !subgrid) {
-    console.log(`No flow or subgrid for edge ${edge}, defaulting to SIDE panel`);
+  // Special case for single cube without flow - maintain 1 left, 1 right, 2 side panels
+  if (!entry && !exit) {
+    console.log(`No flow for edge ${edge}, using standard single cube panel assignment`);
+    // Default assignment for a single cube: N=side, E=right, S=side, W=left
+    switch (edge) {
+      case 'N': return 'side';
+      case 'E': return 'right';
+      case 'S': return 'side';
+      case 'W': return 'left';
+    }
+  }
+
+  // If no subgrid information, default to side panel
+  if (!subgrid) {
+    console.log(`No subgrid for edge ${edge}, defaulting to SIDE panel`);
     return 'side';
   }
 

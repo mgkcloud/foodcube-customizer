@@ -220,7 +220,7 @@ export const PipelineVisualizer: React.FC<PipelineVisualizerProps> = ({
       {/* Flow direction arrows - always visible */}
       {cell.connections.entry && (
         <div 
-          className={`flow-arrow entry entry-${cell.connections.entry.toLowerCase()} z-5`}
+          className={`flow-arrow entry entry-${cell.connections.entry.toLowerCase()} z-15`}
           style={{ 
             transform: `rotate(${getArrowRotation(cell.connections.entry)}deg)`,
             backgroundColor: isStartCube ? '#4CAF50' : isCorner ? '#FF9800' : '#2196F3'
@@ -233,7 +233,7 @@ export const PipelineVisualizer: React.FC<PipelineVisualizerProps> = ({
       
       {cell.connections.exit && (
         <div 
-          className={`flow-arrow exit exit-${cell.connections.exit.toLowerCase()} z-5`}
+          className={`flow-arrow exit exit-${cell.connections.exit.toLowerCase()} z-15`}
           style={{ 
             transform: `rotate(${getArrowRotation(cell.connections.exit)}deg)`,
             backgroundColor: isEndCube ? '#F44336' : isCorner ? '#FF9800' : '#2196F3'
@@ -246,10 +246,10 @@ export const PipelineVisualizer: React.FC<PipelineVisualizerProps> = ({
       
       {/* Connection type indicator */}
       <div 
-        className={`connector-type ${isCorner ? 'corner' : 'straight'} z-5`}
+        className={`connector-type ${isCorner ? 'corner' : 'straight'} z-15`}
         title={isCorner ? 'Corner Connector' : 'Straight Coupling'}
       >
-        {isCorner ? 'C' : 'S'}
+        {isCorner ? '⌟' : '━'}
       </div>
       
       {/* Position indicator */}
