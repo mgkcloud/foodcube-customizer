@@ -80,6 +80,11 @@ interface CladdingKeyProps {
 export const CladdingKey: React.FC<CladdingKeyProps> = ({ requirements }) => {
   console.log("CladdingKey received requirements:", JSON.stringify(requirements, null, 2));
   
+  // Calculate total panels of each type (including those in packages)
+  const totalSidePanels = requirements.sidePanels + (requirements.fourPackRegular * 2) + (requirements.twoPackRegular * 2);
+  const totalLeftPanels = requirements.leftPanels + requirements.fourPackRegular;
+  const totalRightPanels = requirements.rightPanels + requirements.fourPackRegular;
+  
   // Create a debug element with all the requirements values
   React.useEffect(() => {
     if (typeof document !== 'undefined') {
@@ -87,6 +92,11 @@ export const CladdingKey: React.FC<CladdingKeyProps> = ({ requirements }) => {
       debugElement.id = 'debug-requirements';
       debugElement.style.display = 'none';
       debugElement.setAttribute('data-requirements', JSON.stringify(requirements));
+      debugElement.setAttribute('data-total-panels', JSON.stringify({
+        side: totalSidePanels,
+        left: totalLeftPanels,
+        right: totalRightPanels
+      }));
       
       // Remove any existing debug element
       const existingDebug = document.getElementById('debug-requirements');
@@ -96,7 +106,7 @@ export const CladdingKey: React.FC<CladdingKeyProps> = ({ requirements }) => {
       
       document.body.appendChild(debugElement);
     }
-  }, [requirements]);
+  }, [requirements, totalSidePanels, totalLeftPanels, totalRightPanels]);
   
   return (
     <div className="bg-white p-2 sm:p-4 rounded-lg shadow-sm text-xs sm:text-sm" data-testid="cladding-key">
@@ -123,21 +133,21 @@ export const CladdingKey: React.FC<CladdingKeyProps> = ({ requirements }) => {
             <KeyItem 
               color={PANEL_COLORS.side} 
               label="Side"
-              count={requirements.sidePanels}
+              count={totalSidePanels}
               description="Blue - Standard side panels"
               testId="panel-side"
             />
             <KeyItem 
               color={PANEL_COLORS.left} 
               label="Left"
-              count={requirements.leftPanels}
+              count={totalLeftPanels}
               description="Green - Left-facing panels"
               testId="panel-left"
             />
             <KeyItem 
               color={PANEL_COLORS.right} 
               label="Right"
-              count={requirements.rightPanels}
+              count={totalRightPanels}
               description="Purple - Right-facing panels"
               testId="panel-right"
             />

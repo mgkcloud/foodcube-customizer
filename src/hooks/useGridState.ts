@@ -185,6 +185,22 @@ const useGridState = () => {
         return prevGrid;
       }
       
+      // Add cladding to all exposed edges automatically
+      for (let r = 0; r < newGrid.length; r++) {
+        for (let c = 0; c < newGrid[0].length; c++) {
+          if (newGrid[r][c].hasCube) {
+            const edges: CompassDirection[] = ['N', 'E', 'S', 'W'];
+            edges.forEach(edge => {
+              if (!hasAdjacentCube(newGrid, r, c, edge)) {
+                newGrid[r][c].claddingEdges.add(edge);
+              } else {
+                newGrid[r][c].claddingEdges.delete(edge);
+              }
+            });
+          }
+        }
+      }
+      
       return newGrid;
     });
     
@@ -193,6 +209,22 @@ const useGridState = () => {
       // Get updated grid with any cladding changes
       const updatedGrid = grid.map(row => row.map(cell => ({ ...cell, claddingEdges: new Set([...cell.claddingEdges]) })));
       updatedGrid[row][col].hasCube = !grid[row][col].hasCube;
+      
+      // Add cladding to all exposed edges automatically
+      for (let r = 0; r < updatedGrid.length; r++) {
+        for (let c = 0; c < updatedGrid[0].length; c++) {
+          if (updatedGrid[r][c].hasCube) {
+            const edges: CompassDirection[] = ['N', 'E', 'S', 'W'];
+            edges.forEach(edge => {
+              if (!hasAdjacentCube(updatedGrid, r, c, edge)) {
+                updatedGrid[r][c].claddingEdges.add(edge);
+              } else {
+                updatedGrid[r][c].claddingEdges.delete(edge);
+              }
+            });
+          }
+        }
+      }
       
       // Calculate new requirements based on updated grid
       const newRequirements = calculateRequirements(updatedGrid);
@@ -271,6 +303,22 @@ const useGridState = () => {
     }
     
     console.log("Preset grid prepared:", newGrid.map(row => row.map(cell => cell.hasCube ? "■" : "□").join(" ")).join("\n"));
+    
+    // Add cladding to all exposed edges automatically
+    for (let r = 0; r < newGrid.length; r++) {
+      for (let c = 0; c < newGrid[0].length; c++) {
+        if (newGrid[r][c].hasCube) {
+          const edges: CompassDirection[] = ['N', 'E', 'S', 'W'];
+          edges.forEach(edge => {
+            if (!hasAdjacentCube(newGrid, r, c, edge)) {
+              newGrid[r][c].claddingEdges.add(edge);
+            } else {
+              newGrid[r][c].claddingEdges.delete(edge);
+            }
+          });
+        }
+      }
+    }
     
     // Update the grid and validate the new configuration
     if (validateAndUpdateGrid(newGrid)) {
