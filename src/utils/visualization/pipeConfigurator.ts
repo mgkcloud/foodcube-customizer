@@ -206,21 +206,21 @@ const configureStraightPipe = (
   if ((entry === 'N' && exit === 'S') || (entry === 'S' && exit === 'N')) {
     // Vertical line
     // For L-shapes, force consistent vertical line position based on the L-shape corner direction
-    let col: number;
+    let verticalCol: number;
     
     if (isInLShape && lShapeCornerDirection) {
       // Force consistency with the L-shape corner
-      col = lShapeCornerDirection === 'west' ? 0 : 1;
+      verticalCol = lShapeCornerDirection === 'west' ? 0 : 1;
       console.log(`STRAIGHT PIPE: Forcing ${lShapeCornerDirection} side for vertical pipe in L-shape`);
     } else {
       // Use calculated position
-      col = verticalLinePosition === 'east' ? 1 : 0;
+      verticalCol = verticalLinePosition === 'east' ? 1 : 0;
     }
     
-    subgrid[0][col] = true;
-    subgrid[1][col] = true;
+    subgrid[0][verticalCol] = true;
+    subgrid[1][verticalCol] = true;
     
-    console.log(`STRAIGHT PIPE CONFIG: Vertical line at col=${col} (${col === 0 ? 'west' : 'east'} side)`);
+    console.log(`STRAIGHT PIPE CONFIG: Vertical line at col=${verticalCol} (${verticalCol === 0 ? 'west' : 'east'} side)`);
   } else if ((entry === 'E' && exit === 'W') || (entry === 'W' && exit === 'E')) {
     // Horizontal line - always use bottom row
     subgrid[1][0] = true;
@@ -330,6 +330,48 @@ export const calculatePipeConfiguration = (
   console.log(`PIPE CONFIG: Processing cube [${row},${col}] with entry=${entry}, exit=${exit}`);
   
   // -------------------------------------------------------------------------
+  // SIMPLIFIED DETECTION: Direct check for our problematic top cube in L-shape
+  // -------------------------------------------------------------------------
+  
+  // Check if this is cube [0,1] with a vertical flow, directly connected to [1,1]
+  const isTopCubeInLShape = row === 0 && col === 1 && 
+                          ((entry === 'N' && exit === 'S') || (entry === 'S' && exit === 'N')) &&
+                          connectedCubes.some(([r, c]) => r === 1 && c === 1);
+  
+  if (isTopCubeInLShape) {
+    console.log(`❗ TOP CUBE DIRECT CHECK: Found top cube at [${row},${col}] with ${entry}→${exit} flow`);
+    
+    // Directly check if the connected middle cube [1,1] has S→W connection pattern
+    const middleCubeHasWestConnection = false;
+    
+    if (grid[1][1].hasCube && grid[1][1].connections) {
+      // Check if [1,1] connects to [1,0]
+      const middleCubeConnectsWest = connectedCubes.some(([r, c]) => r === 1 && c === 0);
+      
+      if (middleCubeConnectsWest) {
+        console.log(`❗ DIRECT CHECK: Middle cube [1,1] connects to west cube [1,0]`);
+        
+        // Force consistent alignment with the corner - ALWAYS put vertical line on west side
+        const subgrid = createEmptySubgrid();
+        subgrid[0][0] = true;  // Top-left cell - west side
+        subgrid[1][0] = true;  // Bottom-left cell - west side
+        
+        console.log(`❗ DIRECT FIX: Forcing west side for top cube vertical line to match corner connector`);
+        console.log(`❗ Final subgrid: 
+        [${subgrid[0][0] ? 'X' : '.'}, ${subgrid[0][1] ? 'X' : '.'}]
+        [${subgrid[1][0] ? 'X' : '.'}, ${subgrid[1][1] ? 'X' : '.'}]`);
+        
+        return {
+          subgrid,
+          entry,
+          exit,
+          verticalLinePosition: 'west'
+        };
+      }
+    }
+  }
+  
+  // -------------------------------------------------------------------------
   // IMPROVED STATE SHARING: Detect L-shape and SW corners before anything else
   // -------------------------------------------------------------------------
   
@@ -353,20 +395,23 @@ export const calculatePipeConfiguration = (
     for (const [cubeRow, cubeCol] of connectedCubes) {
       const currentCube = grid[cubeRow][cubeCol];
       
-      // Check explicitly for the S→W corner pattern
-      if (currentCube.connections?.entry === 'N' && currentCube.connections?.exit === 'S') {
+      // Enhanced S→W corner pattern detection - check both N→S and S→N flows
+      if ((currentCube.connections?.entry === 'N' && currentCube.connections?.exit === 'S') ||
+          (currentCube.connections?.entry === 'S' && currentCube.connections?.exit === 'N')) {
         // Find if there's another cube to the west in our configuration
         const hasWestNeighbor = connectedCubes.some(([r, c]) => r === cubeRow && c === cubeCol - 1);
         if (hasWestNeighbor) {
           hasSWCorner = true;
-          console.log(`- L-SHAPE PRECHECK: S→W corner found at [${cubeRow},${cubeCol}]`);
+          console.log(`- L-SHAPE PRECHECK: S→W corner found at [${cubeRow},${cubeCol}] with flow ${currentCube.connections?.entry}→${currentCube.connections?.exit}`);
         }
       }
       
-      // Check for direct N→W turn
-      if (currentCube.connections?.entry === 'N' && currentCube.connections?.exit === 'W') {
+      // Enhanced left turn detection - check for any turn toward west
+      if ((currentCube.connections?.entry === 'N' && currentCube.connections?.exit === 'W') ||
+          (currentCube.connections?.entry === 'S' && currentCube.connections?.exit === 'W') ||
+          (currentCube.connections?.entry === 'E' && currentCube.connections?.exit === 'W')) {
         hasLeftTurn = true;
-        console.log(`- L-SHAPE PRECHECK: N→W left turn found at [${cubeRow},${cubeCol}]`);
+        console.log(`- L-SHAPE PRECHECK: Left turn found at [${cubeRow},${cubeCol}] with flow ${currentCube.connections?.entry}→${currentCube.connections?.exit}`);
       }
     }
   }
@@ -377,9 +422,11 @@ export const calculatePipeConfiguration = (
     console.log(`🔥 CRITICAL L-SHAPE FIX: Detected L-shape with west corner for cube [${row},${col}]`);
     console.log(`🔥 FORCING west side vertical position for ALL vertical pipes in this cube`);
     
-    // Force west side for vertical pipes
+    // Force west side for vertical pipes (handling both N→S and S→N flows)
     if ((entry === 'N' && exit === 'S') || (entry === 'S' && exit === 'N')) {
       console.log(`🔥 THIS IS A VERTICAL PIPE IN L-SHAPE: Creating forced west-side configuration`);
+      console.log(`🔥 Flow direction: ${entry}→${exit}`);
+      console.log(`🔥 Cube position: [${row},${col}]`);
       
       // Create a vertical pipe on the west side
       const subgrid = createEmptySubgrid();
@@ -400,8 +447,123 @@ export const calculatePipeConfiguration = (
     }
   }
   
-  // Standard N-turn detection (direct N→W or N→E)
-  const isNTurn = entry === 'N' && (exit === 'W' || exit === 'E');
+  // ENHANCED TOP CUBE DETECTION: Check specifically for cube [0,1] with N→S flow
+  // This is critical for L-shapes with the top cube flowing down to a corner
+  if (isLShape && entry === 'N' && exit === 'S' && row === 0 && col === 1) {
+    console.log(`🔍 TOP CUBE N→S FLOW DETECTION: Found top cube with downward flow at [${row},${col}]`);
+    
+    // Check if we have a west corner in the overall L-shape
+    let hasWestCorner = hasSWCorner || hasLeftTurn;
+    
+    // Check for S→W corner pattern in connected cubes (specifically middle cube [1,1])
+    const middleCubeIndex = connectedCubes.findIndex(([r, c]) => r === 1 && c === 1);
+    if (middleCubeIndex !== -1) {
+      const middleCube = grid[1][1];
+      if (middleCube.connections) {
+        // Check if middle cube flows to a west cube
+        const hasWestNeighbor = connectedCubes.some(([r, c]) => r === 1 && c === 0);
+        if (hasWestNeighbor) {
+          hasWestCorner = true;
+          console.log(`- TOP CUBE: Detected S→W corner in connected middle cube at [1,1]`);
+        }
+      }
+    }
+    
+    if (hasWestCorner) {
+      console.log(`🔥 CRITICAL TOP CUBE FIX: Force west side for downward-flowing pipe in L-shape with west corner`);
+      const subgrid = createEmptySubgrid();
+      subgrid[0][0] = true;  // Top-left cell
+      subgrid[1][0] = true;  // Bottom-left cell
+      
+      console.log(`🔥 FORCED TOP CUBE SUBGRID (WEST SIDE): 
+      [${subgrid[0][0] ? 'X' : '.'}, ${subgrid[0][1] ? 'X' : '.'}]
+      [${subgrid[1][0] ? 'X' : '.'}, ${subgrid[1][1] ? 'X' : '.'}]`);
+      
+      return {
+        subgrid,
+        entry,
+        exit,
+        verticalLinePosition: 'west'
+      };
+    }
+  }
+  
+  // Add special handling for S→N flows (cube [0,1] in L-shape) in case previous check missed it
+  if (isLShape && entry === 'S' && exit === 'N') {
+    console.log(`🔍 S→N FLOW DETECTION: Found north-flowing vertical pipe in L-shape at [${row},${col}]`);
+    console.log(`🔍 Cube position: [${row},${col}]`);
+    
+    // Check if we have a west corner in the overall L-shape
+    let hasWestCorner = hasSWCorner || hasLeftTurn;
+    
+    // Additional check for corner direction from other cubes in the L-shape
+    for (const [cubeRow, cubeCol] of connectedCubes) {
+      if (cubeRow !== row || cubeCol !== col) {
+        // Look for west corners in connected cubes
+        const neighborCube = grid[cubeRow][cubeCol];
+        if (neighborCube.connections) {
+          const neighborEntry = neighborCube.connections.entry;
+          const neighborExit = neighborCube.connections.exit;
+          
+          // Check for any west-turning corner in connected cubes
+          if ((neighborEntry === 'N' && neighborExit === 'W') ||
+              (neighborEntry === 'S' && neighborExit === 'W') ||
+              (neighborExit === 'W')) {
+            hasWestCorner = true;
+            console.log(`- Found evidence of west corner in connected cube at [${cubeRow},${cubeCol}]`);
+          }
+          
+          // Check for corner connectors which might indicate west flow
+          if (neighborEntry === 'N' && neighborExit === 'S') {
+            // Check if this neighbor has a connection that flows west
+            const neighborIndex = connectedCubes.findIndex(([r, c]) => r === cubeRow && c === cubeCol);
+            if (neighborIndex !== -1 && neighborIndex < connectedCubes.length - 1) {
+              const [nextRow, nextCol] = connectedCubes[neighborIndex + 1];
+              // If next cube is to the west of this neighbor, it's a west corner
+              if (nextCol < cubeCol) {
+                hasWestCorner = true;
+                console.log(`- Found S→W corner connector pattern at [${cubeRow},${cubeCol}]`);
+              }
+            }
+          }
+          
+          // Look for existing S→W corner connectors
+          const middleCubeIndex = connectedCubes.findIndex(([r, c]) => r === 1 && c === 1);
+          if (middleCubeIndex !== -1) {
+            const middleCube = grid[1][1];
+            if (middleCube.connections?.entry === 'N' && middleCube.connections?.exit === 'S') {
+              // Check if there's flow to the west from this middle cube
+              const hasWestNeighbor = connectedCubes.some(([r, c]) => r === 1 && c === 0);
+              if (hasWestNeighbor) {
+                hasWestCorner = true;
+                console.log(`- Found S→W pattern in middle cube at [1,1] flowing to [1,0]`);
+              }
+            }
+          }
+        }
+      }
+    }
+    
+    // EXTREMELY IMPORTANT: In an L-shape configuration, ALL vertical pipes should mirror the corner.
+    // For a cube at [0,1] in a standard L-shape with a west corner, always force west side.
+    if (hasWestCorner) {
+      console.log(`🔥 CRITICAL S→N FIX: Force west side for north-flowing pipe in L-shape with west corner`);
+      const subgrid = createEmptySubgrid();
+      subgrid[0][0] = true;  // Top-left cell
+      subgrid[1][0] = true;  // Bottom-left cell
+      
+      console.log(`🔥 FORCED S→N SUBGRID (WEST SIDE): 
+      [${subgrid[0][0] ? 'X' : '.'}, ${subgrid[0][1] ? 'X' : '.'}]
+      [${subgrid[1][0] ? 'X' : '.'}, ${subgrid[1][1] ? 'X' : '.'}]`);
+      
+      return {
+        subgrid,
+        entry,
+        exit,
+        verticalLinePosition: 'west'
+      };
+    }
+  }
   
   // Corner connector with N-turn detection - when entry is N, exit is S, but next cube is to the west/east
   // This is for the case where we have N→S flow but need S→W or S→E corner connector
@@ -427,6 +589,9 @@ export const calculatePipeConfiguration = (
     }
   }
   
+  // Standard N-turn detection (direct N→W or N→E)
+  const isNTurn = entry === 'N' && (exit === 'W' || exit === 'E');
+  
   // Use either direct N-turn or N-turn via corner connector
   const isEffectiveNTurn = isNTurn || (hasCornerConnector && cornerDirection !== null);
   const isLeftTurn = entry === 'N' && exit === 'W' || (entry === 'N' && exit === 'S' && cornerDirection === 'W');
@@ -450,6 +615,26 @@ export const calculatePipeConfiguration = (
     
     console.log(`- L-SHAPE CONFIG SUMMARY: Has S→W corner: ${hasSWCorner}, Has left turn: ${hasLeftTurn}`);
     console.log(`- Global corner direction for ALL cubes: ${lShapeCornerDirection || 'not determined'}`);
+    
+    // CRITICAL: Check if there's a top cube [0,1] with S→N flow
+    const hasTopCubeWithSNFlow = connectedCubes.some(([r, c]) => {
+      if (r === 0 && c === 1) {
+        const topCube = grid[r][c];
+        return topCube.connections?.entry === 'S' && topCube.connections?.exit === 'N';
+      }
+      return false;
+    });
+    
+    if (hasTopCubeWithSNFlow) {
+      console.log(`- CRITICAL: Found top cube [0,1] with S→N flow in the L-shape configuration`);
+      console.log(`- This requires special handling to ensure consistent mirroring with the corner direction`);
+      
+      if (lShapeCornerDirection === 'W') {
+        console.log(`- L-SHAPE with TOP S→N FLOW: Will force WEST side for ALL vertical pipes`);
+      } else if (lShapeCornerDirection === 'E') {
+        console.log(`- L-SHAPE with TOP S→N FLOW: Will force EAST side for ALL vertical pipes`);
+      }
+    }
   }
   
   // Determine if this is a vertical pipe in an L-shape configuration
