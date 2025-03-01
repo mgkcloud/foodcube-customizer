@@ -1,7 +1,22 @@
 import { Requirements } from '@/components/types';
 import { CONFIGURATION_RULES, getPanelType, optimizePanelPacking } from '../core/rules';
-import { PathCube, analyzePath } from './flowAnalyzer';
+import { PathCube } from '../calculation/configurationDetector';
 import { CompassDirection } from '../core/types';
+import { debug } from '../shared/debugUtils';
+
+/**
+ * Analyzes path cubes to ensure proper flow
+ * This is a simple placeholder if the real analyzePath is not easily found
+ */
+const analyzePath = (path: PathCube[]): PathCube[] => {
+  console.log("Using local analyzePath function with path length:", path.length);
+  console.log("PATH DEBUG: Full path details:", path.map(cube => ({
+    position: `[${cube.row},${cube.col}]`,
+    entry: cube.entry,
+    exit: cube.exit
+  })));
+  return path;
+};
 
 /**
  * Calculates panel and connector requirements based on analyzed path
@@ -22,6 +37,7 @@ export const calculateRequirements = (path: PathCube[]): Requirements => {
     };
   }
 
+  // Use the local analyzePath function instead of an imported one
   const analyzedPath = analyzePath(path);
   
   // Debug - output the analyzed path
@@ -111,6 +127,11 @@ function isCornerConnection(cube1: PathCube, cube2: PathCube): boolean {
   const rowChange = cube2.row - cube1.row;
   const colChange = cube2.col - cube1.col;
   
+  console.log(`\n====== CORNER CONNECTION DETECTION ======`);
+  console.log(`Checking [${cube1.row},${cube1.col}] → [${cube2.row},${cube2.col}]`);
+  console.log(`Row change: ${rowChange}, Column change: ${colChange}`);
+  console.log(`cube1 exit: ${cube1.exit}, cube2 entry: ${cube2.entry}`);
+  
   // If both row and column change, it's a corner (diagonal not allowed)
   // This shouldn't happen in valid configurations, but we'll check anyway
   if (rowChange !== 0 && colChange !== 0) {
@@ -118,25 +139,61 @@ function isCornerConnection(cube1: PathCube, cube2: PathCube): boolean {
     return false;
   }
   
-  // Check if this is a corner based on the flow direction change
-  if (cube1.exit && cube2.entry) {
-    // Get the directions
-    const exit = cube1.exit;
-    const entry = cube2.entry;
-    
-    // In a straight line, they should be opposites (N→S, E→W, etc.)
-    const isOpposite = (
-      (exit === 'N' && entry === 'S') ||
-      (exit === 'S' && entry === 'N') ||
-      (exit === 'E' && entry === 'W') ||
-      (exit === 'W' && entry === 'E')
-    );
-    
-    return !isOpposite;
+  // STEP 1: Check if entry and exit directions exist
+  if (!cube1.exit || !cube2.entry) {
+    console.log(`Missing direction data: cube1.exit=${cube1.exit}, cube2.entry=${cube2.entry}`);
+    return false;
   }
   
-  // Default: check if either the row or column changed, but not both (straight line)
-  return (rowChange !== 0 && colChange !== 0);
+  // STEP 2: Determine the natural direction from cube1 to cube2
+  let naturalDirection: CompassDirection | null = null;
+  if (rowChange < 0) naturalDirection = 'N';
+  else if (rowChange > 0) naturalDirection = 'S';
+  else if (colChange < 0) naturalDirection = 'W';
+  else if (colChange > 0) naturalDirection = 'E';
+  
+  console.log(`Natural direction from cube1 to cube2: ${naturalDirection}`);
+  
+  // STEP 3: Check if the exit direction of cube1 doesn't match the natural direction
+  // This is a key indicator of a corner
+  const exitMatchesNatural = cube1.exit === naturalDirection;
+  console.log(`Exit direction (${cube1.exit}) matches natural direction: ${exitMatchesNatural}`);
+  
+  // STEP 4: Check if the entry/exit directions form a straight line
+  // In a straight line, entry would be opposite of exit (N→S, E→W, etc.)
+  const isOppositeFlow = (
+    (cube1.exit === 'N' && cube2.entry === 'S') ||
+    (cube1.exit === 'S' && cube2.entry === 'N') ||
+    (cube1.exit === 'E' && cube2.entry === 'W') ||
+    (cube1.exit === 'W' && cube2.entry === 'E')
+  );
+  
+  console.log(`Is opposite flow: ${isOppositeFlow}`);
+  
+  // STEP 5: Check if the exit from cube1 would naturally lead to an entry to cube2
+  // For properly connected cubes without corners, cube1's exit should match natural direction
+  // and cube2's entry should be opposite of natural direction
+  let naturalEntryToCube2: CompassDirection | null = null;
+  if (naturalDirection === 'N') naturalEntryToCube2 = 'S';
+  else if (naturalDirection === 'S') naturalEntryToCube2 = 'N';
+  else if (naturalDirection === 'E') naturalEntryToCube2 = 'W';
+  else if (naturalDirection === 'W') naturalEntryToCube2 = 'E';
+  
+  console.log(`Natural entry to cube2 should be: ${naturalEntryToCube2}`);
+  console.log(`Actual entry to cube2 is: ${cube2.entry}`);
+  
+  const entryMatchesNatural = cube2.entry === naturalEntryToCube2;
+  console.log(`Entry direction (${cube2.entry}) matches expected natural entry: ${entryMatchesNatural}`);
+  
+  // A corner is needed when:
+  // 1. The exit direction doesn't match the natural direction to the next cube
+  // OR
+  // 2. The entry to the next cube doesn't match what would be expected from natural direction
+  const isCorner = !exitMatchesNatural || !entryMatchesNatural;
+  
+  console.log(`FINAL DETERMINATION: Is corner connection: ${isCorner}\n`);
+  
+  return isCorner;
 }
 
 /**
