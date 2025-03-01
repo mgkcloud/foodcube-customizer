@@ -1,7 +1,7 @@
 export const PANEL_COLORS = {
-  side: '#2563eb',   // blue-600
-  left: '#16a34a',   // green-600
-  right: '#7c3aed',  // purple-600
+  side: '#129fce',   // blue-600
+  left: '#69973f',   // green-600
+  right: '#f97316',  // orange-500
   error: '#ef4444',  // red-500
 } as const;
 

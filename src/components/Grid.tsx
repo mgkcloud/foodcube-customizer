@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { GridCell } from './types';
 import { CladdingVisualizer } from './CladdingVisualizer';
-import { PipelineVisualizer } from './PipelineVisualizer';
+// Temporarily hidden
+// import { PipelineVisualizer } from './PipelineVisualizer';
 import { hasAdjacentCube } from '@/utils/shared/gridUtils';
 
 interface GridProps {
@@ -90,6 +91,7 @@ export const Grid: React.FC<GridProps> = ({
           >
             {cell.hasCube && (
               <>
+                {/* PipelineVisualizer temporarily hidden
                 <PipelineVisualizer
                   cell={cell}
                   row={rowIndex}
@@ -97,6 +99,7 @@ export const Grid: React.FC<GridProps> = ({
                   grid={grid}
                   debug={debug}
                 />
+                */}
                 <CladdingVisualizer
                   cell={cell}
                   row={rowIndex}

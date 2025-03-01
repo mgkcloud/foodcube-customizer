@@ -22,8 +22,7 @@ export interface ValidationResult {
 }
 
 /**
- * Longer debounce times for certain configuration shapes
- * U-shapes tend to need more time to settle than L-shapes
+ * Timing constants for preset application and validation process
  */
 export const VALIDATION_TIMING = {
   // Time to wait after a preset is applied before validating
@@ -31,9 +30,9 @@ export const VALIDATION_TIMING = {
   // Time to wait after any user interaction before validating
   INTERACTION_DEBOUNCE_MS: 300,
   // Time to wait after applying a preset to capture the original grid
-  GRID_CAPTURE_DELAY_MS: 300,
+  GRID_CAPTURE_DELAY_MS: 700,
   // Time to wait after capturing the grid to mark preset application as complete
-  PRESET_COMPLETION_DELAY_MS: 500,
+  PRESET_COMPLETION_DELAY_MS: 300,
 };
 
 /**

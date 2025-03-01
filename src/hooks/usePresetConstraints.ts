@@ -57,6 +57,18 @@ export function usePresetConstraints({
   const validationScheduledRef = useRef<NodeJS.Timeout | null>(null);
   const isStableRef = useRef<boolean>(true);
   
+  // Timer refs to track and manage setTimeout calls
+  const captureGridTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const completePresetTimerRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Keep a ref to the latest grid for capturing in async operations
+  const latestGridRef = useRef<GridCell[][]>(grid);
+  
+  // Update our grid reference whenever the prop changes
+  useEffect(() => {
+    latestGridRef.current = grid;
+  }, [grid]);
+  
   // Function to update the last interaction timestamp
   const updateLastInteraction = useCallback(() => {
     lastInteractionRef.current = Date.now();
@@ -187,7 +199,7 @@ export function usePresetConstraints({
   
   // Handle preset application
   const handlePresetApply = useCallback((preset: string, applyPresetFn: (preset: string) => void) => {
-    console.log(`Applying preset type: ${preset}`);
+    console.log(`Applying preset type: ${preset} at ${new Date().toISOString()}`);
     
     // Mark this as a user interaction
     updateLastInteraction();
@@ -195,6 +207,18 @@ export function usePresetConstraints({
     // Clear any existing errors and flags
     setLocalError(null);
     setShowErrorOverlay(false);
+    
+    // Cancel any pending timers to prevent race conditions
+    if (captureGridTimerRef.current) {
+      clearTimeout(captureGridTimerRef.current);
+      captureGridTimerRef.current = null;
+      console.log("Cancelled previous grid capture timer");
+    }
+    if (completePresetTimerRef.current) {
+      clearTimeout(completePresetTimerRef.current);
+      completePresetTimerRef.current = null;
+      console.log("Cancelled previous completion timer");
+    }
     
     // Reset any previous preset state
     setOriginalPresetGrid(null);
@@ -205,43 +229,60 @@ export function usePresetConstraints({
     lastPresetTimestampRef.current = Date.now();
     
     // Apply the preset first
+    console.log(`About to call applyPresetFn for preset: ${preset}`);
     applyPresetFn(preset);
+    console.log(`After applyPresetFn call for preset: ${preset}`);
     setPresetSelected(true);
     
     // Multi-stage preset application process to ensure state settles properly
     // Stage 1: Apply preset and wait for initial state updates
-    console.log("Starting multi-stage preset application process");
-    setTimeout(() => {
-      console.log("Stage 1: Storing original preset grid for comparison");
+    console.log(`Starting multi-stage preset application process for ${preset} at ${new Date().toISOString()}`);
+    captureGridTimerRef.current = setTimeout(() => {
+      console.log(`Stage 1: Storing original preset grid for ${preset} at ${new Date().toISOString()}`);
       
       try {
+        // Use the latest grid from the ref to ensure we have the most up-to-date state
+        const currentGrid = latestGridRef.current;
+        
+        // Log the grid state before capturing
+        console.log("Grid state before capture:");
+        console.log(currentGrid.map(row => row.map(cell => cell.hasCube ? "■" : "□").join(" ")).join("\n"));
+        
         // Store a copy of the original preset grid for future comparison
-        const gridCopy = cloneGrid(grid);
+        const gridCopy = cloneGrid(currentGrid);
         
         // Log the captured grid state for debugging
-        console.log("Captured original preset grid:");
+        console.log(`Captured original preset grid for ${preset}:`);
         console.log(gridCopy.map(row => row.map(cell => cell.hasCube ? "■" : "□").join(" ")).join("\n"));
         
         // Store the grid state after preset application
         setOriginalPresetGrid(gridCopy);
         setRemovedCubesCount(0);
         
-        console.log("Original preset grid captured with cube count:", countFilledCells(gridCopy));
-        console.log("Grid captured at:", new Date().toISOString());
+        const filledCount = countFilledCells(gridCopy);
+        console.log(`Original preset grid captured with cube count: ${filledCount} for ${preset}`);
+        console.log(`Grid captured at: ${new Date().toISOString()}`);
+        
+        // Extra debugging to check if this is a valid preset grid
+        if (filledCount === 0) {
+          console.error(`ERROR: Captured empty grid for ${preset}! This will cause constraints to fail.`);
+        } else if (preset === 'line' && filledCount !== 3) {
+          console.warn(`WARNING: Straight line preset should have 3 cubes, but captured ${filledCount}`);
+        }
       } catch (err) {
-        console.error("Error during preset grid storage:", err);
+        console.error(`Error during preset grid storage for ${preset}:`, err);
       }
       
       // Stage 2: After another delay, mark preset application as complete
-      setTimeout(() => {
+      completePresetTimerRef.current = setTimeout(() => {
         setIsApplyingPreset(false);
         // Force state to be considered stable
         isStableRef.current = true;
-        console.log("Stage 2: Preset application fully complete, validation enabled at:", new Date().toISOString());
+        console.log(`Stage 2: Preset application for ${preset} fully complete, validation enabled at: ${new Date().toISOString()}`);
       }, VALIDATION_TIMING.PRESET_COMPLETION_DELAY_MS);
       
     }, VALIDATION_TIMING.GRID_CAPTURE_DELAY_MS);
-  }, [grid, updateLastInteraction]);
+  }, [updateLastInteraction]);
   
   // Handle toggling a cell in preset mode
   const handleToggleCubeInPreset = useCallback((
@@ -254,11 +295,20 @@ export function usePresetConstraints({
     
     // Log more details about the action being attempted
     console.log(`Toggle cube at [${rowIndex}, ${colIndex}] requested. Current state: hasCube=${grid[rowIndex][colIndex]?.hasCube}, presetSelected=${presetSelected}, isApplyingPreset=${isApplyingPreset}`);
+    console.log(`  Original preset grid exists: ${!!originalPresetGrid}, Grid dimensions: ${grid.length}x${grid[0].length}`);
+    
+    if (originalPresetGrid) {
+      console.log(`  Original grid has cube at [${rowIndex}, ${colIndex}]: ${originalPresetGrid[rowIndex][colIndex]?.hasCube}`);
+      console.log(`  Original preset grid cube count: ${countFilledCells(originalPresetGrid)}`);
+    }
     
     // Don't validate during or just after preset application
     const now = Date.now();
     const timeSinceLastPreset = now - lastPresetTimestampRef.current;
     const isInPresetCooldown = isApplyingPreset || timeSinceLastPreset < VALIDATION_TIMING.PRESET_DEBOUNCE_MS;
+    
+    console.log(`  Time since last preset: ${timeSinceLastPreset}ms, PRESET_DEBOUNCE_MS: ${VALIDATION_TIMING.PRESET_DEBOUNCE_MS}ms`);
+    console.log(`  In preset cooldown: ${isInPresetCooldown}, isApplyingPreset: ${isApplyingPreset}`);
     
     // If we're trying to add a cube in preset mode (even during cooldown),
     // we need to check if it was in the original preset
@@ -328,6 +378,22 @@ export function usePresetConstraints({
     setLocalError(null);
     return true;
   }, [grid, originalPresetGrid, presetSelected, isApplyingPreset, updateLastInteraction]);
+  
+  // Cleanup timers on unmount
+  useEffect(() => {
+    return () => {
+      // Clean up any pending timers
+      if (validationScheduledRef.current) {
+        clearTimeout(validationScheduledRef.current);
+      }
+      if (captureGridTimerRef.current) {
+        clearTimeout(captureGridTimerRef.current);
+      }
+      if (completePresetTimerRef.current) {
+        clearTimeout(completePresetTimerRef.current);
+      }
+    };
+  }, []);
   
   return {
     presetSelected,

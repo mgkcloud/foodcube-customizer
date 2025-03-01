@@ -8,6 +8,12 @@ import { visualizeFlow } from '@/utils/core/flowVisualizer';
 import { CompassDirection } from './types';
 import { debug } from '@/utils/shared/debugUtils';
 
+// Define connector colors to match the key
+const CONNECTOR_COLORS = {
+  corner: '#FF9800', // Orange/Amber
+  straight: '#4B5563' // Gray
+};
+
 interface PipelineVisualizerProps {
   cell: GridCell;
   row: number;
@@ -213,32 +219,82 @@ export const PipelineVisualizer: React.FC<PipelineVisualizerProps> = ({
     flowClasses.push('connector-straight');
   }
 
+  // Completely revised arrow display logic to ensure one arrow between connected cubes
+  
+  // For entry arrows: show only if NOT the start cube, and only for corners
+  // This ensures corners get proper visualization
+  const shouldShowEntryArrow = cell.connections.entry && isCorner && !isStartCube;
+  
+  // For exit arrows: complete rewrite of logic to ensure end cube arrows are never shown
+  // Use multiple checks to be extremely defensive
+  const shouldShowExitArrow = (() => {
+    // Never show on the end cube - use multiple checks to be safe
+    if (isEndCube) return false;
+    if (pathPosition === connectedCubes.length - 1) return false;
+    // Only show if there's an exit direction
+    if (!cell.connections.exit) return false;
+    
+    // Debug logs to help understand rendering logic
+    if (showDebug) {
+      debug.debug(`Arrow logic for [${row},${col}]`, {
+        showExitArrow: true,
+        isEndCube,
+        pathPosition,
+        totalCubes: connectedCubes.length,
+        connections: cell.connections
+      });
+    }
+    
+    return true;
+  })();
+
+  // Add additional logging specific to exit arrows
+  useEffect(() => {
+    if (showDebug && isEndCube && cell.connections.exit) {
+      debug.warn(`End cube detected at [${row},${col}] - exit arrows should be hidden`, {
+        isEndCube,
+        pathPosition,
+        totalCubes: connectedCubes.length,
+        shouldShowExitArrow
+      });
+    }
+  }, [showDebug, isEndCube, row, col, pathPosition, connectedCubes.length, cell.connections.exit, shouldShowExitArrow]);
+
   return (
     <div className={`pipe-container ${flowClasses.join(' ')}`}>
       <PipeRenderer subgrid={subgrid} />
       
-      {/* Flow direction arrows - always visible */}
-      {cell.connections.entry && (
+      {/* Entry arrows for corners only */}
+      {shouldShowEntryArrow && (
         <div 
-          className={`flow-arrow entry entry-${cell.connections.entry.toLowerCase()} z-15`}
+          className={`flow-arrow entry entry-${cell.connections.entry.toLowerCase()} z-20`}
           style={{ 
             transform: `rotate(${getArrowRotation(cell.connections.entry)}deg)`,
-            backgroundColor: isStartCube ? '#4CAF50' : isCorner ? '#FF9800' : '#2196F3'
+            backgroundColor: CONNECTOR_COLORS.corner, // Orange for corners
+            width: '20px',
+            height: '20px',
+            fontSize: '14px'
           }}
-          title={`Entry: ${cell.connections.entry}`}
+          title={`Corner Connector (${cell.connections.entry} to ${cell.connections.exit})`}
         >
           ↑
         </div>
       )}
       
-      {cell.connections.exit && (
+      {/* Exit arrows for both straight and corner connectors */}
+      {shouldShowExitArrow && (
         <div 
-          className={`flow-arrow exit exit-${cell.connections.exit.toLowerCase()} z-15`}
+          className={`flow-arrow exit exit-${cell.connections.exit.toLowerCase()} z-20`}
           style={{ 
             transform: `rotate(${getArrowRotation(cell.connections.exit)}deg)`,
-            backgroundColor: isEndCube ? '#F44336' : isCorner ? '#FF9800' : '#2196F3'
+            backgroundColor: isCorner ? CONNECTOR_COLORS.corner : CONNECTOR_COLORS.straight, // Orange for corners, Gray for straight
+            width: '20px',
+            height: '20px',
+            fontSize: '14px'
           }}
-          title={`Exit: ${cell.connections.exit}`}
+          title={isCorner ? 
+            `Corner Connector: ${cell.connections.entry} to ${cell.connections.exit}` : 
+            `Straight Connector: ${cell.connections.entry} to ${cell.connections.exit}`}
         >
           ↑
         </div>
