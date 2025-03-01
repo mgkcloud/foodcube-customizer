@@ -39,6 +39,29 @@ interface PathCube {
   [key: string]: any;
 }
 
+// Helper functions for grid operations
+const getOppositeDirection = (direction: CompassDirection): CompassDirection => {
+  switch(direction) {
+    case 'N': return 'S';
+    case 'E': return 'W';
+    case 'S': return 'N';
+    case 'W': return 'E';
+  }
+};
+
+const getNextPosition = (row: number, col: number, direction: CompassDirection): [number, number] => {
+  switch(direction) {
+    case 'N': return [row - 1, col];
+    case 'E': return [row, col + 1];
+    case 'S': return [row + 1, col];
+    case 'W': return [row, col - 1];
+  }
+};
+
+const isValidPosition = (grid: GridCell[][], row: number, col: number): boolean => {
+  return row >= 0 && row < grid.length && col >= 0 && col < grid[0].length;
+};
+
 const useGridState = () => {
   const [grid, setGrid] = useState<GridCell[][]>(initializeGrid);
   const [error, setError] = useState<string | null>(null);
@@ -183,6 +206,18 @@ const useGridState = () => {
         targetCell.connections = { entry: null, exit: null };
         console.log(`Removed cube at [${row}, ${col}]`);
         
+        // Recalculate cladding for adjacent cells since removing a cube may expose new edges
+        const directions: CompassDirection[] = ['N', 'E', 'S', 'W'];
+        directions.forEach(dir => {
+          const [adjRow, adjCol] = getNextPosition(row, col, dir);
+          // Check if position is valid and has a cube
+          if (isValidPosition(newGrid, adjRow, adjCol) && newGrid[adjRow][adjCol].hasCube) {
+            // The opposite edge of this adjacent cube is now exposed
+            const oppositeDir = getOppositeDirection(dir);
+            newGrid[adjRow][adjCol].claddingEdges.add(oppositeDir);
+          }
+        });
+        
         // For cube removal, no validation needed - just return the updated grid
         return newGrid;
       }
@@ -220,37 +255,21 @@ const useGridState = () => {
       return newGrid;
     });
     
-    // Recalculate requirements after grid update
-    setRequirements(prevReqs => {
-      // Get updated grid with any cladding changes
-      const updatedGrid = grid.map(row => row.map(cell => ({ ...cell, claddingEdges: new Set([...cell.claddingEdges]) })));
-      updatedGrid[row][col].hasCube = !grid[row][col].hasCube;
-      
-      // Add cladding to all exposed edges automatically
-      for (let r = 0; r < updatedGrid.length; r++) {
-        for (let c = 0; c < updatedGrid[0].length; c++) {
-          if (updatedGrid[r][c].hasCube) {
-            const edges: CompassDirection[] = ['N', 'E', 'S', 'W'];
-            edges.forEach(edge => {
-              if (!hasAdjacentCube(updatedGrid, r, c, edge)) {
-                updatedGrid[r][c].claddingEdges.add(edge);
-              } else {
-                updatedGrid[r][c].claddingEdges.delete(edge);
-              }
-            });
-          }
-        }
-      }
-      
-      // Calculate new requirements based on updated grid
-      const newRequirements = calculateRequirements(updatedGrid);
-      
-      // Update the grid state visualization
-      logGridState(updatedGrid, newRequirements);
-      
-      return newRequirements;
-    });
-  }, [grid, calculateRequirements, validateAndUpdateGrid]);
+    // Use setTimeout to ensure we're using the updated grid state for requirements calculation
+    setTimeout(() => {
+      // Recalculate requirements after grid update using the current grid state
+      setRequirements(prevReqs => {
+        // Calculate new requirements based on the current grid (after update)
+        const newRequirements = calculateRequirements(grid);
+        
+        // Update the grid state visualization
+        logGridState(grid, newRequirements);
+        
+        return newRequirements;
+      });
+    }, 0);
+    
+  }, [grid, validateAndUpdateGrid, calculateRequirements, logGridState]);
 
   // Toggle cladding at a specific edge
   const toggleCladding = useCallback((row: number, col: number, edge: CompassDirection) => {

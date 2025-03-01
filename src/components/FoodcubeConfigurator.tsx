@@ -11,6 +11,8 @@ import { Label } from "@/components/ui/label";
 import { debugConfiguration } from '@/utils/validation/configDebugger';
 import { createPortal } from 'react-dom';
 import { GridCell } from './types';
+import { getUserFriendlyErrorMessage } from '@/utils/validation/presetConstraintsValidator';
+import { usePresetConstraints } from '@/hooks/usePresetConstraints';
 
 // Floating Action Button component that will be rendered in a portal
 const FloatingActionButtons = ({ 
@@ -65,34 +67,37 @@ const ErrorOverlay = ({
   isVisible: boolean;
   onDismiss: () => void;
 }) => {
+  // Don't show if no message or not visible
   if (!message || !isVisible) return null;
   
   return (
     <div 
-      className="absolute inset-0 flex items-center justify-center z-30 bg-black/40 backdrop-blur-sm rounded-xl"
+      className="absolute top-0 left-0 right-0 z-[9999] flex justify-center transition-all duration-300"
+      style={{ 
+        opacity: isVisible ? 1 : 0,
+        transform: isVisible ? 'translateY(0)' : 'translateY(-10px)'
+      }}
+      data-testid="in-grid-guide"
     >
-      <div 
-        className="bg-white m-4 p-4 rounded-xl shadow-lg border border-gray-200 max-w-md"
-      >
-        <div className="flex items-start">
-          <div className="flex-shrink-0 mr-3">
-            <svg className="h-6 w-6 text-red-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
-          </div>
-          <div>
-            <h3 className="text-md font-medium text-gray-800 mb-2">Can't do that</h3>
-            <p className="text-sm text-gray-600">{message}</p>
-          </div>
+      <div className="inline-flex items-center bg-white/95 rounded-b-lg shadow-md border border-blue-100 py-1.5 px-3 animate-fade-in">
+        {/* Simple circular avatar */}
+        <div className="flex-shrink-0 bg-blue-500 rounded-full w-6 h-6 flex items-center justify-center text-white text-xs font-bold mr-2 animate-pulse">
+          i
         </div>
-        <div className="mt-4 flex justify-end">
-          <button
-            onClick={onDismiss}
-            className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm font-medium rounded-md"
-          >
-            Got it
-          </button>
-        </div>
+        
+        {/* Bold message with variable width */}
+        <p className="text-xs font-bold text-gray-700 flex-grow">{message}</p>
+        
+        {/* Dismiss button */}
+        <button
+          onClick={onDismiss}
+          className="ml-2 flex-shrink-0 inline-flex text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full w-5 h-5 flex items-center justify-center transition-colors"
+          aria-label="Dismiss"
+        >
+          <svg className="h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
       </div>
     </div>
   );
@@ -110,105 +115,24 @@ export const FoodcubeConfigurator: React.FC<FoodcubeConfiguratorProps> = ({ vari
   const { grid, requirements, toggleCell, toggleCladding, applyPreset, error, clearGrid } = useGridState();
   const [hasInteracted, setHasInteracted] = useState(false);
   const [debugMode, setDebugMode] = useState(false); // Default to false for production
-  const [presetSelected, setPresetSelected] = useState(false);
-  const [localError, setLocalError] = useState<string | null>(null);
-  const [showErrorOverlay, setShowErrorOverlay] = useState(false);
-  const [isApplyingPreset, setIsApplyingPreset] = useState(false); // State to track preset application
-  const lastPresetTimestampRef = useRef<number>(0); // Ref to track when preset was last applied
   
-  // Track the original preset configuration and removed cube count
-  const [originalPresetGrid, setOriginalPresetGrid] = useState<GridCell[][] | null>(null);
-  const [removedCubesCount, setRemovedCubesCount] = useState(0);
-  
-  // Add a new ref to track when the last user interaction happened
-  const lastInteractionRef = useRef<number>(Date.now());
-  // Add a ref to track if validation is scheduled
-  const validationScheduledRef = useRef<NodeJS.Timeout | null>(null);
-  // Add a ref to track if we're in a stable state (no pending updates)
-  const isStableRef = useRef<boolean>(true);
-
-  // Function to update the last interaction timestamp
-  const updateLastInteraction = useCallback(() => {
-    lastInteractionRef.current = Date.now();
-    isStableRef.current = false;
-    
-    // Clear any pending validation
-    if (validationScheduledRef.current) {
-      clearTimeout(validationScheduledRef.current);
-      validationScheduledRef.current = null;
-    }
-    
-    // Schedule state to be considered stable after 500ms of no interactions
-    validationScheduledRef.current = setTimeout(() => {
-      console.log("State considered stable - validation can proceed");
-      isStableRef.current = true;
-      validationScheduledRef.current = null;
-    }, 500);
-  }, []);
-
-  // Show error overlay when an error is present, but only after state has settled
-  useEffect(() => {
-    // Don't show errors during or shortly after preset application
-    const now = Date.now();
-    const timeSinceLastPreset = now - lastPresetTimestampRef.current;
-    const timeSinceLastInteraction = now - lastInteractionRef.current;
-    
-    // Only show errors if:
-    // 1. We have an error to show
-    // 2. We're not in the middle of applying a preset
-    // 3. It's been at least 500ms since the last preset was applied
-    // 4. It's been at least 300ms since the last user interaction
-    // 5. The state is considered stable (no pending updates)
-    if ((localError || error) && 
-        !isApplyingPreset && 
-        timeSinceLastPreset > 500 && 
-        timeSinceLastInteraction > 300 &&
-        isStableRef.current) {
-      
-      console.log("Showing error overlay - state has settled", { 
-        error: error || localError,
-        timeSinceLastPreset,
-        timeSinceLastInteraction
-      });
-      
-      setShowErrorOverlay(true);
-    }
-  }, [localError, error, isApplyingPreset]);
-
-  // Reset error states when changing presets
-  useEffect(() => {
-    if (isApplyingPreset) {
-      setLocalError(null);
-      setShowErrorOverlay(false);
-    }
-  }, [isApplyingPreset]);
-
-  // Function to dismiss the error overlay
-  const dismissErrorOverlay = () => {
-    setShowErrorOverlay(false);
-  };
-
-  // Make error messages more user-friendly
-  const getUserFriendlyErrorMessage = (errorMessage: string | null): string | null => {
-    if (!errorMessage) return null;
-    
-    // Map technical error messages to more user-friendly ones
-    const errorMap: Record<string, string> = {
-      "Preset configurations cannot be modified with new cubes.": 
-        "You can only use the cubes that came with the preset. Adding new cubes isn't allowed.",
-      
-      "Preset limit reached: Only 2 cubes can be removed from any preset.": 
-        "You've already removed 2 cubes from this preset, which is the maximum allowed.",
-      
-      "Invalid configuration. Cubes must form a continuous path.": 
-        "All food cubes need to connect to each other in a continuous line.",
-      
-      "No cubes detected. Please add at least one cube.": 
-        "Please add at least one food cube to create a configuration."
-    };
-    
-    return errorMap[errorMessage] || errorMessage;
-  };
+  // Use our new preset constraints hook
+  const {
+    presetSelected,
+    isApplyingPreset,
+    originalPresetGrid,
+    removedCubesCount,
+    localError,
+    showErrorOverlay,
+    dismissErrorOverlay,
+    updateLastInteraction,
+    handlePresetApply: handlePresetConstraintApply,
+    handleToggleCubeInPreset,
+    resetPresetState
+  } = usePresetConstraints({
+    grid,
+    error
+  });
 
   // Debug the current configuration when in debug mode
   useEffect(() => {
@@ -218,97 +142,6 @@ export const FoodcubeConfigurator: React.FC<FoodcubeConfiguratorProps> = ({ vari
       debugConfiguration(grid, requirements);
     }
   }, [grid, requirements, debugMode]);
-
-  // Count filled cells in a grid
-  const countFilledCells = (grid: GridCell[][]) => {
-    let count = 0;
-    for (let row = 0; row < grid.length; row++) {
-      for (let col = 0; col < grid[row].length; col++) {
-        if (grid[row][col].hasCube) count++;
-      }
-    }
-    return count;
-  };
-
-  // Deep clone grid for comparison
-  const cloneGrid = (grid: GridCell[][]) => {
-    return JSON.parse(JSON.stringify(grid));
-  };
-
-  // Track changes after preset is applied - improve to wait for stable state
-  useEffect(() => {
-    // Skip validation in these cases:
-    // 1. No original preset grid to compare against
-    // 2. Not in preset mode
-    // 3. Currently applying a preset
-    // 4. Less than 500ms since preset application (debounce period)
-    // 5. Less than 300ms since last user interaction
-    // 6. State is not considered stable yet
-    const now = Date.now();
-    const timeSinceLastPreset = now - lastPresetTimestampRef.current;
-    const timeSinceLastInteraction = now - lastInteractionRef.current;
-    
-    if (!originalPresetGrid || 
-        !presetSelected || 
-        isApplyingPreset || 
-        timeSinceLastPreset < 500 ||
-        timeSinceLastInteraction < 300 ||
-        !isStableRef.current) {
-      
-      console.log("Skipping validation - state not settled", {
-        hasOriginalGrid: !!originalPresetGrid,
-        presetSelected,
-        isApplyingPreset,
-        timeSinceLastPreset,
-        timeSinceLastInteraction,
-        isStable: isStableRef.current
-      });
-      return;
-    }
-    
-    console.log("Running validation - state has settled");
-    
-    const originalCount = countFilledCells(originalPresetGrid);
-    const currentCount = countFilledCells(grid);
-    
-    // Calculate how many cubes were removed
-    const removed = originalCount - currentCount;
-    setRemovedCubesCount(removed);
-    
-    console.log(`Validating grid: ${removed} cubes removed from preset`);
-    
-    // Check if more than 2 cubes were removed
-    if (removed > 2) {
-      setLocalError("Preset limit reached: Only 2 cubes can be removed from any preset.");
-      setShowErrorOverlay(true);
-    } else {
-      setLocalError(null);
-      
-      // Check for any additions that weren't in the original preset
-      let hasInvalidAdditions = false;
-      for (let row = 0; row < grid.length; row++) {
-        for (let col = 0; col < grid[row].length; col++) {
-          // If a cube exists now but wasn't in the original preset, that's not allowed
-          if (grid[row][col].hasCube && !originalPresetGrid[row][col].hasCube) {
-            hasInvalidAdditions = true;
-            console.log(`Invalid addition detected at [${row}, ${col}]`);
-            break;
-          }
-        }
-        if (hasInvalidAdditions) break;
-      }
-      
-      if (hasInvalidAdditions) {
-        setLocalError("Preset configurations cannot be modified with new cubes.");
-        setShowErrorOverlay(true);
-      } else {
-        // Only explicitly hide the overlay if there's no other error
-        if (!error) {
-          setShowErrorOverlay(false);
-        }
-      }
-    }
-  }, [grid, originalPresetGrid, presetSelected, isApplyingPreset, error]);
 
   // Update the parent component with the current requirements
   React.useEffect(() => {
@@ -336,100 +169,35 @@ export const FoodcubeConfigurator: React.FC<FoodcubeConfiguratorProps> = ({ vari
 
   // Handle toggling a cell in the grid with improved debounce protection
   const handleToggleCell = useCallback((rowIndex: number, colIndex: number) => {
-    // Mark this as a user interaction
-    updateLastInteraction();
-    
-    // Don't validate during or just after preset application
-    const now = Date.now();
-    const timeSinceLastPreset = now - lastPresetTimestampRef.current;
-    const isInPresetCooldown = isApplyingPreset || timeSinceLastPreset < 500;
-    
-    if (presetSelected && !isInPresetCooldown) {
-      // If a preset is selected, verify whether the action is allowed
-      const originalCount = countFilledCells(originalPresetGrid!);
-      const currentCount = countFilledCells(grid);
-      const removed = originalCount - currentCount;
-      
-      // Case 1: Adding a cube
-      if (!grid[rowIndex][colIndex].hasCube) {
-        // Allow adding ONLY if it was part of the original preset (adding back a removed cube)
-        if (originalPresetGrid![rowIndex][colIndex].hasCube) {
-          // This is fine - we're adding back an original cube
-          console.log(`Adding back original cube at [${rowIndex}, ${colIndex}]`);
-        } else {
-          // Not allowed - trying to add a cube that wasn't in the original preset
-          console.log(`Preventing addition of new cube at [${rowIndex}, ${colIndex}]`);
-          setLocalError("Preset configurations cannot be modified with new cubes.");
-          // Don't show error overlay immediately - let the state settle first
-          return;
-        }
-      } 
-      // Case 2: Removing a cube
-      else if (grid[rowIndex][colIndex].hasCube && removed >= 2) {
-        // Not allowed - already reached the limit of removing 2 cubes
-        console.log(`Preventing removal of cube at [${rowIndex}, ${colIndex}] - limit reached`);
-        setLocalError("Preset limit reached: Only 2 cubes can be removed from any preset.");
-        // Don't show error overlay immediately - let the state settle first
-        return;
-      }
-    }
-    
-    toggleCell(rowIndex, colIndex);
-    setLocalError(null);
-    // Don't hide the error overlay immediately - wait for state to settle
-  }, [grid, originalPresetGrid, presetSelected, toggleCell, error, isApplyingPreset, updateLastInteraction]);
+    // Use our preset constraint handler for toggle cell operations
+    handleToggleCubeInPreset(rowIndex, colIndex, toggleCell);
+  }, [handleToggleCubeInPreset, toggleCell]);
 
-  // Enhanced preset application function with better state management
+  // Handle preset application function
   const handlePresetApply = (preset: string) => {
-    console.log(`Applying preset type: ${preset}`);
+    console.log(`Requesting preset application: ${preset}`);
     
-    // Mark this as a user interaction
-    updateLastInteraction();
+    // Reset any previous error state
+    clearGrid();
     
-    // Clear any existing errors and flags
-    setLocalError(null);
-    setShowErrorOverlay(false);
-    setIsApplyingPreset(true); // Set flag to indicate we're applying a preset
-    lastPresetTimestampRef.current = Date.now(); // Record timestamp of preset application
-    
-    // Apply the preset
-    applyPreset(preset);
+    // Mark this as a user interaction and set has interacted
     setHasInteracted(true);
-    setPresetSelected(true);
     
-    // Multi-stage preset application process to ensure state settles properly
-    // Stage 1: Apply preset and wait for initial state updates (200ms)
-    setTimeout(() => {
-      console.log("Stage 1: Storing original preset grid for comparison");
-      
-      try {
-        // Store a copy of the original preset grid for future comparison
-        const gridCopy = cloneGrid(grid);
-        setOriginalPresetGrid(gridCopy);
-        setRemovedCubesCount(0);
-        
-        console.log("Original cube count:", countFilledCells(gridCopy));
-      } catch (err) {
-        console.error("Error during preset grid storage:", err);
-      }
-      
-      // Stage 2: After another delay, mark preset application as complete (300ms more)
-      setTimeout(() => {
-        setIsApplyingPreset(false);
-        console.log("Stage 2: Preset application fully complete, validation enabled");
-      }, 300);
-      
-    }, 200);
+    // Use our preset constraint handler to apply the preset
+    handlePresetConstraintApply(preset, applyPreset);
     
     // Debug the configuration after applying preset
     if (debugMode) {
       console.group(`Applied Preset: ${preset}`);
       console.log(`Preset applied: ${preset}`);
+      
+      // Use longer timeout to ensure grid has fully settled
       setTimeout(() => {
+        console.log("Debugging preset configuration after full settlement");
         debugConfiguration(grid, requirements);
         // Log for Playwright tests
         console.log("TEST_INFO: Preset applied and requirements calculated");
-      }, 500); // Adjusted to run after the full process is complete
+      }, 1500); // Extended timeout to ensure everything is settled
       console.groupEnd();
     }
   };
@@ -479,14 +247,11 @@ export const FoodcubeConfigurator: React.FC<FoodcubeConfiguratorProps> = ({ vari
     updateLastInteraction();
     
     console.log("Clearing grid configuration");
-    setLocalError(null);
-    setShowErrorOverlay(false);
     clearGrid();
+    
     // Reset state
     setHasInteracted(false);
-    setPresetSelected(false);
-    setOriginalPresetGrid(null);
-    setRemovedCubesCount(0);
+    resetPresetState();
   };
 
   // Calculate total packs for the floating action button

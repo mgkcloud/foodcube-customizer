@@ -70,14 +70,14 @@ export const PresetConfigs: React.FC<PresetConfigsProps> = ({ onApply }) => {
       >
         <span className="flex flex-col items-center gap-1">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="opacity-80">
-            <rect x="2" y="4" width="6" height="6" rx="1" fill="#3B82F6" />
-            <rect x="9" y="4" width="6" height="6" rx="1" fill="#3B82F6" />
-            <rect x="16" y="4" width="6" height="6" rx="1" fill="#3B82F6" />
-            <rect x="2" y="14" width="6" height="6" rx="1" fill="#3B82F6" />
-            <rect x="9" y="14" width="6" height="6" rx="1" fill="#3B82F6" />
-            <rect x="16" y="14" width="6" height="6" rx="1" fill="#3B82F6" />
+            <rect x="2" y="6" width="6" height="5" rx="1" fill="#3B82F6" />
+            <rect x="9" y="6" width="6" height="5" rx="1" fill="#3B82F6" />
+            <rect x="16" y="6" width="6" height="5" rx="1" fill="#3B82F6" />
+            <rect x="2" y="13" width="6" height="5" rx="1" fill="#3B82F6" />
+            <rect x="9" y="13" width="6" height="5" rx="1" fill="#3B82F6" />
+            <rect x="16" y="13" width="6" height="5" rx="1" fill="#3B82F6" />
           </svg>
-          <span>Dual Lines</span>
+          <span>Two Rows</span>
         </span>
       </Button>
     </div>
