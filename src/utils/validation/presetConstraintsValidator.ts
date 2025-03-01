@@ -27,13 +27,13 @@ export interface ValidationResult {
  */
 export const VALIDATION_TIMING = {
   // Time to wait after a preset is applied before validating
-  PRESET_DEBOUNCE_MS: 1200,
+  PRESET_DEBOUNCE_MS: 800,
   // Time to wait after any user interaction before validating
-  INTERACTION_DEBOUNCE_MS: 700,
+  INTERACTION_DEBOUNCE_MS: 300,
   // Time to wait after applying a preset to capture the original grid
-  GRID_CAPTURE_DELAY_MS: 500,
+  GRID_CAPTURE_DELAY_MS: 300,
   // Time to wait after capturing the grid to mark preset application as complete
-  PRESET_COMPLETION_DELAY_MS: 800,
+  PRESET_COMPLETION_DELAY_MS: 500,
 };
 
 /**
@@ -194,13 +194,13 @@ export const canToggleCubeInPreset = (
   
   // Case 1: Adding a cube
   if (!grid[rowIndex][colIndex].hasCube) {
-    // Allow adding ONLY if it was part of the original preset (adding back a removed cube)
+    // Check if this cube was part of the original preset
     if (originalPresetGrid[rowIndex][colIndex].hasCube) {
       // This is fine - we're adding back an original cube
       console.log(`Adding back original cube at [${rowIndex}, ${colIndex}]`);
       return { allowed: true, error: null };
     } else {
-      // Not allowed - trying to add a cube that wasn't in the original preset
+      // Not allowed - we don't allow adding new cubes that weren't in the original preset
       console.log(`Preventing addition of new cube at [${rowIndex}, ${colIndex}]`);
       return { 
         allowed: false, 

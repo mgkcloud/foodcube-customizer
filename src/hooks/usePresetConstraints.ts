@@ -204,7 +204,7 @@ export function usePresetConstraints({
     setIsApplyingPreset(true);
     lastPresetTimestampRef.current = Date.now();
     
-    // Apply the preset
+    // Apply the preset first
     applyPresetFn(preset);
     setPresetSelected(true);
     
@@ -217,6 +217,12 @@ export function usePresetConstraints({
       try {
         // Store a copy of the original preset grid for future comparison
         const gridCopy = cloneGrid(grid);
+        
+        // Log the captured grid state for debugging
+        console.log("Captured original preset grid:");
+        console.log(gridCopy.map(row => row.map(cell => cell.hasCube ? "■" : "□").join(" ")).join("\n"));
+        
+        // Store the grid state after preset application
         setOriginalPresetGrid(gridCopy);
         setRemovedCubesCount(0);
         
@@ -246,27 +252,42 @@ export function usePresetConstraints({
     // Mark this as a user interaction
     updateLastInteraction();
     
+    // Log more details about the action being attempted
+    console.log(`Toggle cube at [${rowIndex}, ${colIndex}] requested. Current state: hasCube=${grid[rowIndex][colIndex]?.hasCube}, presetSelected=${presetSelected}, isApplyingPreset=${isApplyingPreset}`);
+    
     // Don't validate during or just after preset application
     const now = Date.now();
     const timeSinceLastPreset = now - lastPresetTimestampRef.current;
     const isInPresetCooldown = isApplyingPreset || timeSinceLastPreset < VALIDATION_TIMING.PRESET_DEBOUNCE_MS;
     
+    // If we're trying to add a cube in preset mode (even during cooldown),
+    // we need to check if it was in the original preset
+    if (presetSelected && originalPresetGrid && 
+        !grid[rowIndex][colIndex].hasCube && 
+        !originalPresetGrid[rowIndex][colIndex].hasCube) {
+      console.log(`Blocking addition attempt - cube at [${rowIndex}, ${colIndex}] was not in original preset`);
+      setLocalError("You can only use the cubes that came with the preset. Adding new cubes isn't allowed.");
+      setShowErrorOverlay(true);
+      return false;
+    }
+    
     // If we're in preset cooldown or not in preset mode, allow the toggle
     if (isInPresetCooldown || !presetSelected) {
+      console.log(`Toggle allowed - ${isInPresetCooldown ? 'in preset cooldown' : 'not in preset mode'}`);
       toggleCellFn(rowIndex, colIndex);
       return true;
     }
     
-    // Only apply suggestions if we're in preset mode and outside the cooldown period
+    // Only apply constraints if we're in preset mode and outside the cooldown period
     if (presetSelected) {
       // Calculate how many cubes have been removed so far
       const originalCount = originalPresetGrid ? countFilledCells(originalPresetGrid) : 0;
       const currentCount = countFilledCells(grid);
       const removed = originalCount - currentCount;
       
-      console.log(`Toggle request at [${rowIndex}, ${colIndex}], removed: ${removed}`);
+      console.log(`Preset constraint check at [${rowIndex}, ${colIndex}], removed: ${removed}, original count: ${originalCount}, current count: ${currentCount}`);
       
-      // Check if this toggle operation is recommended
+      // Check if this toggle operation is allowed according to preset constraints
       const { allowed, error } = canToggleCubeInPreset(
         grid, 
         originalPresetGrid, 
@@ -276,31 +297,27 @@ export function usePresetConstraints({
       );
       
       if (!allowed) {
-        // Only block and show guidance for important issues
+        // For all constraint violations, show error and block the action
         const isAddingCubeError = error?.includes("Adding new cubes isn't allowed") || 
                                  error?.includes("original cubes");
         const isRemovingTooManyError = error?.includes("Only 2 cubes can be removed") || 
                                       error?.includes("remove up to 2");
         
-        if (isRemovingTooManyError) {
-          // Always provide guidance on the cube removal limit
-          setLocalError(error);
-          setShowErrorOverlay(true);
-          console.log(`Toggle suggestion provided: ${error}`);
-          return false;
-        }
+        // For all errors, set the error message
+        setLocalError(error);
+        
+        // Always show error overlay for constraint violations
+        setShowErrorOverlay(true);
         
         if (isAddingCubeError) {
-          // Just log the suggestion but don't necessarily block the action
-          console.log(`Suggestion about adding cube outside preset: ${error}`);
-          // We'll still set the message, but validation will decide whether to show it
-          setLocalError(error);
-          return false;
+          console.log(`Blocking addition of cube outside preset: ${error}`);
+        } else if (isRemovingTooManyError) {
+          console.log(`Blocking removal beyond limit: ${error}`);
+        } else {
+          console.log(`Blocking operation due to constraint: ${error}`);
         }
         
-        // For any other suggestions, provide guidance
-        setLocalError(error);
-        setShowErrorOverlay(true);
+        // Return false to prevent the action
         return false;
       }
     }

@@ -63,63 +63,56 @@ export const isStraightFlow = (entry: CompassDirection | null, exit: CompassDire
 };
 
 /**
- * Counts corner connectors by analyzing adjacent cubes in the path
- * A corner connector is needed when there's a change in flow direction
- * L-shape has one corner, U-shape has two corners
+ * Counts the number of corner connectors needed for the path.
+ * A corner connector is needed when a cube changes flow direction.
  */
 export const countCornerConnectors = (path: PathCube[]): number => {
-  console.log("Analyzing path for corner connectors:", path.map(c => `[${c.row},${c.col}]${c.entry}→${c.exit}`).join(', '));
+  console.log(`Analyzing path for corner connectors: ${path.map(cube => 
+    `[${cube.row},${cube.col}]${cube.entry}→${cube.exit}`).join(', ')}`);
   
-  // We need at least 2 cubes to have any connections
-  if (path.length < 2) {
-    console.log("Path too short for corner detection");
-    return 0;
-  }
-
-  // For U-shape configurations, return 2 corners
-  if (isUShape(path)) {
-    console.log("U-shape detected - 2 corner connectors");
-    return 2;
-  }
-  
-  // Next check if it's an L-shape by looking for a 90-degree turn
-  if (isLShape(path)) {
-    console.log("L-shape detected - 1 corner connector");
-    return 1;
-  }
-  
-  // For straight line paths, there are no corners
-  if (isAllStraightFlow(path)) {
-    console.log("Straight line detected - no corners");
+  if (path.length <= 1) {
     return 0;
   }
   
-  // For other configurations, count the actual direction changes
+  // Count corner connectors based on flow direction changes
   let cornerCount = 0;
-  let lastDirection: string | null = null;
   
-  for (let i = 0; i < path.length - 1; i++) {
-    const current = path[i];
-    const next = path[i + 1];
-    
-    let currentDirection: string;
-    if (next.row < current.row) currentDirection = 'N';
-    else if (next.row > current.row) currentDirection = 'S';
-    else if (next.col < current.col) currentDirection = 'W';
-    else if (next.col > current.col) currentDirection = 'E';
-    else continue; // Skip if no direction change
-    
-    if (lastDirection && lastDirection !== currentDirection) {
+  // Check each cube for direction changes (turns)
+  for (const cube of path) {
+    // Straight-through connections don't require corner connectors
+    if (!isFlowStraightThrough(cube.entry, cube.exit)) {
       cornerCount++;
-      console.log(`Corner detected between [${current.row},${current.col}] and [${next.row},${next.col}]`);
+      console.log(`Corner connector detected at [${cube.row},${cube.col}] with ${cube.entry}→${cube.exit} turn`);
     }
-    
-    lastDirection = currentDirection;
   }
   
-  console.log(`Default case - ${cornerCount} corner connectors`);
+  // For backward compatibility, provide descriptive logging
+  if (isUShape(path)) {
+    console.log(`U-shape detected - ${cornerCount} corner connectors`);
+  } else if (isLShape(path)) {
+    console.log(`L-shape detected - ${cornerCount} corner connectors`);
+  } else if (isStraightLine(path)) {
+    console.log(`Straight line detected - ${cornerCount} corner connectors`);
+  } else {
+    console.log(`Custom configuration - ${cornerCount} corner connectors`);
+  }
+  
   return cornerCount;
 };
+
+/**
+ * Determines if the flow goes straight through the cube (N-S or E-W)
+ */
+function isFlowStraightThrough(entry: CompassDirection | null, exit: CompassDirection | null): boolean {
+  if (!entry || !exit) return false;
+  
+  return (
+    (entry === 'N' && exit === 'S') || 
+    (entry === 'S' && exit === 'N') || 
+    (entry === 'E' && exit === 'W') || 
+    (entry === 'W' && exit === 'E')
+  );
+}
 
 /**
  * Checks if the path forms a U-shape
@@ -179,6 +172,13 @@ function isUShape(path: PathCube[]): boolean {
  * Checks if the path forms an L-shape
  */
 function isLShape(path: PathCube[]): boolean {
+  // Check for both the 5-cube and 3-cube variants of L-shape
+  // The preset defined in useGridState.ts uses a 5-cube L-shape
+  // While tests and some validation logic use a 3-cube L-shape
+  
+  // If we have fewer than 3 cubes, it cannot be an L-shape
+  if (path.length < 3) return false;
+  
   // L-shape needs to have at least one direction change
   let hasDirectionChange = false;
   
@@ -210,26 +210,61 @@ function isLShape(path: PathCube[]): boolean {
     }
   }
   
+  // Special case for the 5-cube L-shape as defined in the preset
+  if (path.length >= 5) {
+    // Extract the rows and columns to analyze the shape
+    const rows = path.map(cube => cube.row);
+    const cols = path.map(cube => cube.col);
+    
+    // Check if there's a continuous vertical section and a continuous horizontal section
+    // which is the characteristic of an L-shape
+    const uniqueRows = [...new Set(rows)];
+    const uniqueCols = [...new Set(cols)];
+    
+    // Get counts of cubes in each row and column
+    const rowCounts = uniqueRows.map(row => 
+      rows.filter(r => r === row).length
+    );
+    
+    const colCounts = uniqueCols.map(col => 
+      cols.filter(c => c === col).length
+    );
+    
+    // For a 5-cube L-shape preset, we expect to see:
+    // - One column with 3 cubes (the vertical part)
+    // - One row with 3 cubes (the horizontal part)
+    const hasVerticalSection = colCounts.some(count => count >= 3);
+    const hasHorizontalSection = rowCounts.some(count => count >= 3);
+    
+    console.log(`L-shape analysis (preset): vertical section=${hasVerticalSection}, horizontal section=${hasHorizontalSection}`);
+    
+    if (hasVerticalSection && hasHorizontalSection) {
+      return true;
+    }
+  }
+  
+  // Standard check for the 3-cube L-shape
   // An L-shape should have both row and column changes and a direction change
-  return hasRowChange && hasColChange;
+  return hasRowChange && hasColChange && (hasDirectionChange || path.length <= 3);
 }
 
 /**
- * Checks if all cubes in a path have straight flow
+ * Determines if the path forms a straight line
  */
-function isAllStraightFlow(path: PathCube[]): boolean {
-  // Check if all cubes are in the same row or all in the same column
-  let allSameRow = true;
-  let allSameCol = true;
-  const firstRow = path[0].row;
-  const firstCol = path[0].col;
+function isStraightLine(path: PathCube[]): boolean {
+  if (path.length < 2) return false;
   
-  for (let i = 1; i < path.length; i++) {
-    if (path[i].row !== firstRow) allSameRow = false;
-    if (path[i].col !== firstCol) allSameCol = false;
+  // Check if all flows are straight through
+  for (const cube of path) {
+    if (!isFlowStraightThrough(cube.entry, cube.exit)) {
+      return false;
+    }
   }
   
-  // If all cubes are in the same row or column, it's a straight line
+  // Additional check: all cubes must be in a single row or a single column
+  const allSameRow = path.every(cube => cube.row === path[0].row);
+  const allSameCol = path.every(cube => cube.col === path[0].col);
+  
   return allSameRow || allSameCol;
 }
 
@@ -275,6 +310,67 @@ export const countStraightConnectors = (path: PathCube[]): number => {
   console.log(`Total connections: ${totalConnections}, Corner connectors: ${cornerCount}, Straight connectors: ${straightCount}`);
   return straightCount;
 };
+
+/**
+ * Checks if the cubes form an L-shaped configuration
+ * Supports both 3-cube L-shapes used in tests and 5-cube L-shapes from presets
+ */
+export const isLShapedConfiguration = (path: { cubes: PathCube[] }): boolean => {
+  if (path.cubes.length < 3) return false;
+  
+  // First check for preset-defined 5-cube L-shape
+  if (path.cubes.length >= 5) {
+    // Extract the rows and columns to analyze the shape
+    const rows = path.cubes.map(cube => cube.row);
+    const cols = path.cubes.map(cube => cube.col);
+    
+    // Check if there's a continuous vertical section and a continuous horizontal section
+    // which is the characteristic of an L-shape
+    const uniqueRows = [...new Set(rows)];
+    const uniqueCols = [...new Set(cols)];
+    
+    // Get counts of cubes in each row and column
+    const rowCounts = uniqueRows.map(row => 
+      rows.filter(r => r === row).length
+    );
+    
+    const colCounts = uniqueCols.map(col => 
+      cols.filter(c => c === col).length
+    );
+    
+    // For a 5-cube L-shape preset, we expect to see:
+    // - One column with 3 cubes (the vertical part)
+    // - One row with 3 cubes (the horizontal part)
+    const hasVerticalSection = colCounts.some(count => count >= 3);
+    const hasHorizontalSection = rowCounts.some(count => count >= 3);
+    
+    console.log(`L-shape analysis (preset): vertical section=${hasVerticalSection}, horizontal section=${hasHorizontalSection}`);
+    
+    if (hasVerticalSection && hasHorizontalSection) {
+      console.log("Detected 5-cube L-shape from preset");
+      return true;
+    }
+  }
+  
+  // Standard 3-cube L-shape check
+  // Count corner turns
+  let cornerCount = countCornerConnectors(path.cubes);
+  console.log(`Standard L-shape check: cornerCount=${cornerCount}`);
+  
+  // L-shape must have exactly 1 corner
+  if (cornerCount !== 1) return false;
+  
+  // Validate L-shape geometry
+  const startCube = path.cubes[0];
+  const endCube = path.cubes[path.cubes.length - 1];
+  
+  // Start and end cubes should be perpendicular (not in same row/col)
+  return (startCube.row !== endCube.row && startCube.col !== endCube.col);
+};
+
+/**
+ * Helper to get angle between directions (similar to PipelineVisualizer)
+ */
 
 
 
