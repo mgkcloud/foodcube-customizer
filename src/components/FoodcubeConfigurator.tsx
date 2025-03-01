@@ -333,9 +333,9 @@ export const FoodcubeConfigurator: React.FC<FoodcubeConfiguratorProps> = ({ vari
             </div>
           </div>
           
-          <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
             {/* Grid takes up more space */}
-            <div className="lg:col-span-3 bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100 relative" data-testid="grid-wrapper">
+            <div className="lg:col-span-7 bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100 relative" data-testid="grid-wrapper">
               {/* Error message overlay */}
               <ErrorOverlay 
                 message={friendlyErrorMessage} 
@@ -376,7 +376,7 @@ export const FoodcubeConfigurator: React.FC<FoodcubeConfiguratorProps> = ({ vari
             </div>
             
             {/* Requirements panel */}
-            <div className="lg:col-span-2 space-y-3" data-testid="requirements-panel">
+            <div className="lg:col-span-5 space-y-3" data-testid="requirements-panel">
               {/* Desktop order (hidden on mobile) */}
               <div className="hidden lg:block space-y-3">
                 {/* Cladding Key */}
