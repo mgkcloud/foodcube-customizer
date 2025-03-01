@@ -180,6 +180,12 @@ const useGridState = () => {
     // Clear caches to ensure fresh calculation
     clearConnectedCubesCache();
     
+    // Check if we're removing a cube (for debugging purposes)
+    const isRemoving = grid[row][col].hasCube;
+    if (isRemoving) {
+      console.log(`REMOVING cube at [${row}, ${col}] - expecting connector counts to update`);
+    }
+    
     setGrid(prevGrid => {
       // Create a deep copy of the grid that preserves the GridCell structure
       const newGrid = prevGrid.map((gridRow, rowIndex) => 
@@ -218,6 +224,17 @@ const useGridState = () => {
           }
         });
         
+        // Calculate requirements immediately with the new grid for removal operations
+        const updatedRequirements = calculateRequirements(newGrid);
+        
+        // Schedule the requirements update after the grid update is complete
+        requestAnimationFrame(() => {
+          setRequirements(updatedRequirements);
+          // Log the updated state for debugging
+          console.log("After removal - updated requirements:", updatedRequirements);
+          logGridState(newGrid, updatedRequirements);
+        });
+        
         // For cube removal, no validation needed - just return the updated grid
         return newGrid;
       }
@@ -252,23 +269,19 @@ const useGridState = () => {
         }
       }
       
+      // Calculate requirements immediately with the new grid for add operations
+      const updatedRequirements = calculateRequirements(newGrid);
+      
+      // Schedule the requirements update after the grid update is complete
+      requestAnimationFrame(() => {
+        setRequirements(updatedRequirements);
+        // Log the updated state for debugging
+        console.log("After cube addition - updated requirements:", updatedRequirements);
+        logGridState(newGrid, updatedRequirements);
+      });
+      
       return newGrid;
     });
-    
-    // Use setTimeout to ensure we're using the updated grid state for requirements calculation
-    setTimeout(() => {
-      // Recalculate requirements after grid update using the current grid state
-      setRequirements(prevReqs => {
-        // Calculate new requirements based on the current grid (after update)
-        const newRequirements = calculateRequirements(grid);
-        
-        // Update the grid state visualization
-        logGridState(grid, newRequirements);
-        
-        return newRequirements;
-      });
-    }, 0);
-    
   }, [grid, validateAndUpdateGrid, calculateRequirements, logGridState]);
 
   // Toggle cladding at a specific edge
