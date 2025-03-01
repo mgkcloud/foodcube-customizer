@@ -31,10 +31,10 @@ const FloatingActionButtons = ({
         onClick={onApply}
         className="flex items-center justify-center w-16 h-16 rounded-full bg-blue-600 text-white font-bold shadow-2xl border-2 border-white hover:bg-blue-700 transition-all transform hover:scale-105"
         data-testid="mobile-apply-button"
-        aria-label="Apply configuration"
+        aria-label="Select products"
       >
         <div className="flex flex-col items-center justify-center leading-none">
-          <span className="text-xs font-normal">Apply</span>
+          <span className="text-xs font-normal">Select Products</span>
           <span className="text-base font-bold">{requirementsSum}</span>
           <span className="text-[8px] mt-0.5">packs</span>
         </div>
@@ -309,22 +309,6 @@ export const FoodcubeConfigurator: React.FC<FoodcubeConfiguratorProps> = ({ vari
                     <div className="mb-4 sm:mb-6">
                       <PresetConfigs onApply={handlePresetApply} />
                     </div>
-                    
-                    <div className="mt-4 sm:mt-6 pt-4 border-t border-gray-200">
-                      <h4 className="font-medium text-gray-800 mb-3">Manual Configuration</h4>
-                      <button 
-                        onClick={handleStartManualConfig}
-                        className="w-full flex items-center justify-center gap-2 bg-white px-4 py-2 sm:py-3 rounded-lg shadow-sm border border-gray-200 hover:bg-gray-50 transition-all hover:shadow-md"
-                        data-testid="manual-config-button"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-600">
-                          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                          <line x1="8" y1="12" x2="16" y2="12"></line>
-                          <line x1="12" y1="8" x2="12" y2="16"></line>
-                        </svg>
-                        <span className="font-medium">Tap to place foodcubes one by one</span>
-                      </button>
-                    </div>
                   </div>
                 </div>
               )}
@@ -395,7 +379,7 @@ export const FoodcubeConfigurator: React.FC<FoodcubeConfiguratorProps> = ({ vari
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M20 6L9 17l-5-5"></path>
                     </svg>
-                    <span className="font-medium">Apply</span>
+                    <span className="font-medium">Select Products</span>
                   </button>
                 </div>
               )}
