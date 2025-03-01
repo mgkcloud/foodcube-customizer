@@ -13,6 +13,7 @@ import { createPortal } from 'react-dom';
 import { GridCell } from './types';
 import { getUserFriendlyErrorMessage } from '@/utils/validation/presetConstraintsValidator';
 import { usePresetConstraints } from '@/hooks/usePresetConstraints';
+import { PANEL_COLORS } from '@/constants/colors';
 
 // Floating Action Button component that will be rendered in a portal
 const FloatingActionButtons = ({ 
@@ -25,29 +26,49 @@ const FloatingActionButtons = ({
   onClear: () => void 
 }) => {
   return createPortal(
-    <div className="lg:hidden fixed z-[9999] bottom-6 right-6 flex flex-col items-end gap-4" style={{ position: 'fixed', pointerEvents: 'auto' }}>
+    <div className="fixed z-[9999] bottom-6 right-6 flex flex-col items-end gap-4" style={{ position: 'fixed', pointerEvents: 'auto' }}>
       {/* Apply button */}
       <button
         onClick={onApply}
-        className="flex items-center justify-center w-16 h-16 rounded-full bg-blue-600 text-white font-bold shadow-2xl border-2 border-white hover:bg-blue-700 transition-all transform hover:scale-105"
+        className="flex flex-col items-center justify-center w-44 h-80 rounded-full bg-gradient-to-br from-blue-400 via-blue-600 to-blue-700 text-white font-bold shadow-2xl border-4 border-white hover:bg-blue-700 transition-all transform hover:scale-105 relative"
+        style={{ 
+          background: `linear-gradient(135deg, ${PANEL_COLORS.side}DD, ${PANEL_COLORS.side}, ${PANEL_COLORS.side}99)`, 
+          boxShadow: '0 10px 35px -5px rgba(18, 159, 206, 0.6), 0 10px 20px -6px rgba(18, 159, 206, 0.4)'
+        }}
         data-testid="mobile-apply-button"
         aria-label="Select products"
       >
+        {/* Arrow indicator */}
+        <div className="absolute -top-7 left-1/2 transform -translate-x-1/2 bg-yellow-400 text-blue-900 px-4 py-1.5 rounded-full text-sm font-bold shadow-md animate-pulse flex items-center gap-1">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <polyline points="19 12 12 19 5 12"></polyline>
+          </svg>
+          TAP HERE
+        </div>
+        
         <div className="flex flex-col items-center justify-center leading-none">
-          <span className="text-xs font-normal">Select Products</span>
-          <span className="text-base font-bold">{requirementsSum}</span>
-          <span className="text-[8px] mt-0.5">packs</span>
+          <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mb-2">
+            <path d="M20 6L9 17l-5-5"></path>
+          </svg>
+          <span className="text-lg font-extrabold mb-2 uppercase tracking-wide">SELECT PRODUCTS</span>
+          <div className="bg-white/30 px-4 py-2 rounded-full">
+            <span className="text-2xl font-black">{requirementsSum}</span>
+            <span className="text-base ml-1">packs</span>
+          </div>
+          <span className="text-sm mt-3 opacity-90 font-medium">Tap to complete</span>
         </div>
       </button>
       
       {/* Clear button */}
       <button
         onClick={onClear}
-        className="flex items-center justify-center w-16 h-16 rounded-full bg-white shadow-2xl border-2 border-gray-200 text-gray-500 hover:text-red-500 transition-all transform hover:scale-105"
+        className="flex items-center justify-center w-24 h-24 rounded-full bg-white shadow-2xl border-2 border-gray-200 text-gray-500 hover:text-red-500 transition-all transform hover:scale-105"
+        style={{ boxShadow: '0 10px 25px -3px rgba(0, 0, 0, 0.15), 0 6px 10px -2px rgba(0, 0, 0, 0.1)' }}
         data-testid="mobile-clear-button"
         aria-label="Clear configuration"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <svg xmlns="http://www.w3.org/2000/svg" width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M18 6L6 18"></path>
           <path d="M6 6l12 12"></path>
         </svg>
@@ -283,9 +304,34 @@ export const FoodcubeConfigurator: React.FC<FoodcubeConfiguratorProps> = ({ vari
       
       <div className="bg-white/95 backdrop-blur-md rounded-xl shadow-lg overflow-hidden border border-gray-100">
         <div className="p-4 sm:p-6">
-          <h2 className="text-xl sm:text-2xl font-bold text-center text-gray-800 mb-4 sm:mb-6" data-testid="configurator-title">
-            Cladding Configurator
-          </h2>
+          <div className="flex flex-col items-center justify-center mb-4 sm:mb-5" data-testid="configurator-title">
+            {/* Header with Foodcube logo and specified font color */}
+            <div className="flex items-center justify-center">
+              {/* Foodcube logo */}
+              <img 
+                src="https://foodcube.com.au/cdn/shop/files/Foodcube_Logo_2024_Trans_BG.png?v=1705369454&width=500" 
+                alt="Foodcube Logo" 
+                className="h-8 sm:h-10 mr-2"
+              />
+              
+              {/* Main title with specified color and Montserrat font */}
+              <h2 className="text-xl sm:text-2xl font-bold tracking-tight" 
+                  style={{ fontFamily: 'Montserrat, sans-serif', color: '#374151 !important' }}>
+                Garden Designer
+              </h2>
+            </div>
+            
+            {/* Smaller subtitle with Montserrat font and specified color */}
+            <p className="text-xs font-medium mt-1"
+               style={{ fontFamily: 'Montserrat, sans-serif', color: '#374151 !important' }}>
+              Create your perfect garden configuration
+            </p>
+            
+            {/* Simple solid color bar */}
+            <div className="mt-2">
+              <div className="h-0.5 w-40 sm:w-48 rounded-full bg-gray-700"></div>
+            </div>
+          </div>
           
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 sm:gap-6">
             {/* Grid takes up more space */}
@@ -304,8 +350,8 @@ export const FoodcubeConfigurator: React.FC<FoodcubeConfiguratorProps> = ({ vari
                   <div className="absolute inset-0 bg-gray-800/50 backdrop-blur-sm animate-pulse rounded-xl"></div>
                   
                   {/* Content card with full opacity */}
-                  <div className="relative bg-white p-4 sm:p-6 rounded-xl shadow-md border border-gray-200 max-w-md w-full mx-auto text-center transition-transform hover:scale-[1.01] duration-200 z-10">
-                    <h3 className="text-lg font-semibold text-gray-800 mb-4">Select a Configuration</h3>
+                  <div className="relative bg-white p-4 sm:p-6 rounded-xl shadow-md border border-gray-200 max-w-md w-full sm:w-4/5 mx-auto text-center transition-transform hover:scale-[1.01] duration-200 z-10">
+                    <h3 className="text-lg md:text-xl font-semibold text-gray-800 mb-4">Select a Configuration</h3>
                     <div className="mb-4 sm:mb-6">
                       <PresetConfigs onApply={handlePresetApply} />
                     </div>
@@ -331,58 +377,63 @@ export const FoodcubeConfigurator: React.FC<FoodcubeConfiguratorProps> = ({ vari
             
             {/* Requirements panel */}
             <div className="lg:col-span-2 space-y-3" data-testid="requirements-panel">
-              {/* Cladding Key */}
-              <div className="transition-all duration-300 ease-in-out">
-                <CladdingKey requirements={requirements} showDebug={debugMode} />
+              {/* Desktop order (hidden on mobile) */}
+              <div className="hidden lg:block space-y-3">
+                {/* Cladding Key */}
+                <div className="transition-all duration-300 ease-in-out">
+                  <CladdingKey requirements={requirements} showDebug={debugMode} />
+                </div>
+                
+                {/* Preset configurations */}
+                {hasInteracted && (
+                  <div className="bg-white p-3 sm:p-4 rounded-xl shadow-sm border border-gray-100" data-testid="side-presets-desktop">
+                    <div className="mb-1 sm:mb-2">
+                      <h3 className="text-sm sm:text-base md:text-lg font-bold text-gray-700 flex items-center" data-testid="presets-heading">
+                        <span className="bg-gray-100 w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center mr-1.5">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" className="sm:w-3.5 sm:h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="8" y1="12" x2="16" y2="12"></line>
+                            <line x1="12" y1="8" x2="12" y2="16"></line>
+                          </svg>
+                        </span>
+                        Preset Configurations
+                      </h3>
+                    </div>
+                    <div className="bg-gray-50/70 rounded-lg p-1.5 sm:p-2.5 flex flex-col gap-1.5 sm:gap-2.5">
+                      <PresetConfigs onApply={handlePresetApply} />
+                    </div>
+                  </div>
+                )}
               </div>
               
-              {/* Preset configurations - moved here */}
-              {hasInteracted && (
-                <div className="bg-white p-3 rounded-xl shadow-sm border border-gray-100" data-testid="side-presets">
-                  <div className="mb-1">
-                    <h3 className="text-sm font-bold text-gray-700 flex items-center" data-testid="presets-heading">
-                      <span className="bg-gray-100 w-5 h-5 rounded-full flex items-center justify-center mr-1.5">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                          <line x1="8" y1="12" x2="16" y2="12"></line>
-                          <line x1="12" y1="8" x2="12" y2="16"></line>
-                        </svg>
-                      </span>
-                      Preset Configurations
-                    </h3>
+              {/* Mobile order (hidden on desktop) - Preset configs above Cladding Key */}
+              <div className="block lg:hidden space-y-3">
+                {/* Preset configurations first */}
+                {hasInteracted && (
+                  <div className="bg-white p-3 sm:p-4 rounded-xl shadow-sm border border-gray-100" data-testid="side-presets-mobile">
+                    <div className="mb-1 sm:mb-2">
+                      <h3 className="text-sm sm:text-base md:text-lg font-bold text-gray-700 flex items-center" data-testid="presets-heading-mobile">
+                        <span className="bg-gray-100 w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center mr-1.5">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" className="sm:w-3.5 sm:h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="8" y1="12" x2="16" y2="12"></line>
+                            <line x1="12" y1="8" x2="12" y2="16"></line>
+                          </svg>
+                        </span>
+                        Preset Configurations
+                      </h3>
+                    </div>
+                    <div className="bg-gray-50/70 rounded-lg p-1.5 sm:p-2.5 flex flex-col gap-1.5 sm:gap-2.5">
+                      <PresetConfigs onApply={handlePresetApply} />
+                    </div>
                   </div>
-                  <div className="bg-gray-50/70 rounded-lg p-1.5 flex flex-col gap-1.5">
-                    <PresetConfigs onApply={handlePresetApply} />
-                  </div>
+                )}
+                
+                {/* Cladding Key second */}
+                <div className="transition-all duration-300 ease-in-out">
+                  <CladdingKey requirements={requirements} showDebug={debugMode} />
                 </div>
-              )}
-              
-              {/* Action buttons for desktop view */}
-              {hasInteracted && (
-                <div className="hidden lg:flex gap-2 mt-4">
-                  <button
-                    onClick={handleClearGrid}
-                    className="flex-1 flex items-center justify-center gap-2 bg-white px-4 py-2 rounded-lg shadow-sm border border-gray-200 hover:bg-gray-50 transition-all hover:text-red-500"
-                    data-testid="clear-grid-button"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M18 6L6 18"></path>
-                      <path d="M6 6l12 12"></path>
-                    </svg>
-                    <span className="font-medium">Clear</span>
-                  </button>
-                  <button
-                    onClick={handleApplyConfiguration}
-                    className="flex-1 flex items-center justify-center gap-2 bg-blue-600 px-4 py-2 rounded-lg shadow-sm border border-blue-500 text-white hover:bg-blue-700 transition-all"
-                    data-testid="apply-config-button"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M20 6L9 17l-5-5"></path>
-                    </svg>
-                    <span className="font-medium">Select Products</span>
-                  </button>
-                </div>
-              )}
+              </div>
             </div>
           </div>
           

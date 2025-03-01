@@ -19,25 +19,25 @@ const KeyItem: React.FC<KeyItemProps> = ({ color, label, count, icon, descriptio
   <div className="flex items-center gap-2 py-1 px-2 rounded-md hover:bg-gray-50/80 transition-colors group relative" data-testid={testId || `key-item-${label.toLowerCase()}`}>
     {color ? (
       <div 
-        className="w-3 h-3 rounded-md flex-shrink-0 shadow-sm border border-gray-100" 
+        className="w-3 h-3 sm:w-4 sm:h-4 rounded-md flex-shrink-0 shadow-sm border border-gray-100" 
         style={{ backgroundColor: color }}
         data-testid={`color-indicator-${label.toLowerCase()}`}
       />
     ) : icon ? (
       <div 
-        className="w-3 h-3 flex items-center justify-center font-mono flex-shrink-0"
+        className="w-3 h-3 sm:w-4 sm:h-4 flex items-center justify-center font-mono flex-shrink-0"
         data-testid={`icon-indicator-${label.toLowerCase()}`}
       >
         {icon}
       </div>
     ) : null}
-    <span className="text-gray-800 font-medium text-sm" data-testid={`label-${label.toLowerCase()}`}>{label}</span>
+    <span className="text-gray-800 font-medium text-sm sm:text-base" data-testid={`label-${label.toLowerCase()}`}>{label}</span>
     {count !== undefined && (
-      <span className="ml-auto text-xs font-medium px-2 py-0.5 bg-gray-100 rounded-full text-gray-700" data-testid={`count-${label.toLowerCase()}`}>{count}</span>
+      <span className="ml-auto text-xs sm:text-sm font-medium px-2 py-0.5 bg-gray-100 rounded-full text-gray-700" data-testid={`count-${label.toLowerCase()}`}>{count}</span>
     )}
     {description && (
       <div 
-        className="hidden group-hover:block absolute left-0 sm:left-full top-full sm:top-auto sm:ml-2 bg-gray-800 text-white text-xs p-2 rounded-md whitespace-nowrap z-10 max-w-[200px] shadow-lg"
+        className="hidden group-hover:block absolute left-0 sm:left-full top-full sm:top-auto sm:ml-2 bg-gray-800 text-white text-xs sm:text-sm p-2 rounded-md whitespace-nowrap z-10 max-w-[200px] sm:max-w-[250px] shadow-lg"
         data-testid={`description-${label.toLowerCase()}`}
       >
         {description}
@@ -61,22 +61,22 @@ const ProductItem: React.FC<ProductItemProps> = ({ label, count, description, co
   >
     {color && (
       <div 
-        className="w-3 h-3 rounded-md flex-shrink-0 shadow-sm border border-gray-100 mr-2" 
+        className="w-3 h-3 sm:w-4 sm:h-4 rounded-md flex-shrink-0 shadow-sm border border-gray-100 mr-2" 
         style={{ backgroundColor: color }}
       />
     )}
     <div className="flex flex-col">
-      <span className="text-gray-800 font-semibold text-sm" data-testid={`product-label-${label.toLowerCase().replace(/\s+/g, '-')}`}>{label}</span>
+      <span className="text-gray-800 font-semibold text-sm sm:text-base" data-testid={`product-label-${label.toLowerCase().replace(/\s+/g, '-')}`}>{label}</span>
       {description && (
-        <span className="text-xs text-gray-500 leading-tight" data-testid={`product-description-${label.toLowerCase().replace(/\s+/g, '-')}`}>{description}</span>
+        <span className="text-xs sm:text-sm text-gray-500 leading-tight" data-testid={`product-description-${label.toLowerCase().replace(/\s+/g, '-')}`}>{description}</span>
       )}
     </div>
-    <span className="ml-auto text-sm font-semibold px-2 py-0.5 bg-blue-50 rounded-full text-blue-700 min-w-[2.5rem] text-center" data-testid={`product-count-${label.toLowerCase().replace(/\s+/g, '-')}`}>
+    <span className="ml-auto text-sm sm:text-base font-semibold px-2 py-0.5 bg-blue-50 rounded-full text-blue-700 min-w-[2.5rem] sm:min-w-[3rem] text-center" data-testid={`product-count-${label.toLowerCase().replace(/\s+/g, '-')}`}>
       {count > 0 ? count + 'x' : '0'}
     </span>
     {description && (
       <div 
-        className="hidden group-hover:block absolute left-0 sm:left-full top-full sm:top-auto sm:ml-2 bg-gray-800 text-white text-xs p-2 rounded-md z-10 max-w-[200px] shadow-lg"
+        className="hidden group-hover:block absolute left-0 sm:left-full top-full sm:top-auto sm:ml-2 bg-gray-800 text-white text-xs sm:text-sm p-2 rounded-md z-10 max-w-[200px] sm:max-w-[250px] shadow-lg"
       >
         {description}
       </div>
@@ -280,15 +280,15 @@ export const CladdingKey: React.FC<CladdingKeyProps> = ({ requirements, showDebu
   const totalPanelsTooltip = `Total panels needed: ${totalSidePanels} side, ${totalLeftPanels} left, ${totalRightPanels} right`;
   
   return (
-    <div className="bg-white p-2 rounded-xl shadow-sm" data-testid="cladding-key">
+    <div className="bg-white p-2 sm:p-3 md:p-4 rounded-xl shadow-sm" data-testid="cladding-key">
       {/* Header with title and status badge */}
-      <div className="flex items-center justify-between mb-1">
+      <div className="flex items-center justify-between mb-1 sm:mb-2">
         <div className="flex items-center">
-          <h3 className="text-base font-bold text-gray-800" data-testid="products-heading">Required Products</h3>
+          <h3 className="text-base sm:text-lg md:text-xl font-bold text-gray-800" data-testid="products-heading">Required Products</h3>
           {hasRequirements && (
             <div className="ml-2 inline-flex items-center">
-              <span className="w-2 h-2 bg-green-500 rounded-full mr-1"></span>
-              <span className="text-xs text-blue-700">Ready</span>
+              <span className="w-2 h-2 sm:w-2.5 sm:h-2.5 bg-green-500 rounded-full mr-1"></span>
+              <span className="text-xs sm:text-sm text-blue-700">Ready</span>
             </div>
           )}
         </div>
@@ -296,18 +296,18 @@ export const CladdingKey: React.FC<CladdingKeyProps> = ({ requirements, showDebu
         {/* Total panel counts info button with tooltip */}
         <div className="relative group">
           <button 
-            className="p-1 text-gray-400 hover:text-gray-600 transition-colors rounded-full"
+            className="p-1 sm:p-1.5 text-gray-400 hover:text-gray-600 transition-colors rounded-full"
             title="View total panel counts"
             data-testid="total-panels-info"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 sm:w-5 sm:h-5">
               <circle cx="12" cy="12" r="10"></circle>
               <line x1="12" y1="16" x2="12" y2="12"></line>
               <line x1="12" y1="8" x2="12.01" y2="8"></line>
             </svg>
           </button>
           <div 
-            className="hidden group-hover:block absolute right-0 top-full mt-1 bg-gray-800 text-white text-xs p-2 rounded-md z-10 w-[220px] shadow-lg"
+            className="hidden group-hover:block absolute right-0 top-full mt-1 bg-gray-800 text-white text-xs sm:text-sm p-2 rounded-md z-10 w-[220px] sm:w-[250px] shadow-lg"
             data-testid="total-panels-tooltip"
           >
             <p className="mb-1 font-semibold">Total Panel Requirements</p>
@@ -330,35 +330,35 @@ export const CladdingKey: React.FC<CladdingKeyProps> = ({ requirements, showDebu
       </div>
       
       {/* Improved product list with clear categorization - optimized for mobile */}
-      <div className="space-y-2 bg-gray-50/70 rounded-lg p-1.5" data-testid="all-products-container">
+      <div className="space-y-2 sm:space-y-3 bg-gray-50/70 rounded-lg p-1.5 sm:p-2.5" data-testid="all-products-container">
         {allProducts.length > 0 ? (
           <>
             {/* Panel Packs Section - more compact */}
             {(requirements.fourPackRegular > 0 || requirements.twoPackRegular > 0) && (
-              <div className="space-y-1">
+              <div className="space-y-1 sm:space-y-2">
                 {/* 4-Pack with color indicators - more compact */}
                 {requirements.fourPackRegular > 0 && (
-                  <div className="bg-white rounded-md p-1.5 shadow-sm">
-                    <div className="flex items-center justify-between mb-0.5">
-                      <span className="text-sm font-semibold text-gray-800">4-Pack</span>
-                      <span className="text-sm font-semibold px-2 py-0.5 bg-blue-50 rounded-full text-blue-700 min-w-[2.5rem] text-center">
+                  <div className="bg-white rounded-md p-1.5 sm:p-2.5 shadow-sm">
+                    <div className="flex items-center justify-between mb-0.5 sm:mb-1">
+                      <span className="text-sm sm:text-base font-semibold text-gray-800">4-Pack</span>
+                      <span className="text-sm sm:text-base font-semibold px-2 py-0.5 bg-blue-50 rounded-full text-blue-700 min-w-[2.5rem] sm:min-w-[3rem] text-center">
                         {requirements.fourPackRegular}x
                       </span>
                     </div>
-                    <div className="flex flex-wrap gap-1 items-center">
-                      <span className="text-xs text-gray-500">Contains:</span>
-                      <div className="flex flex-wrap gap-1.5">
+                    <div className="flex flex-wrap gap-1 sm:gap-2 items-center">
+                      <span className="text-xs sm:text-sm text-gray-500">Contains:</span>
+                      <div className="flex flex-wrap gap-1.5 sm:gap-2">
                         <div className="flex items-center gap-1">
-                          <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: PANEL_COLORS.side }}></div>
-                          <span className="text-xs">2 side</span>
+                          <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-sm" style={{ backgroundColor: PANEL_COLORS.side }}></div>
+                          <span className="text-xs sm:text-sm">2 side</span>
                         </div>
                         <div className="flex items-center gap-1">
-                          <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: PANEL_COLORS.left }}></div>
-                          <span className="text-xs">1 left</span>
+                          <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-sm" style={{ backgroundColor: PANEL_COLORS.left }}></div>
+                          <span className="text-xs sm:text-sm">1 left</span>
                         </div>
                         <div className="flex items-center gap-1">
-                          <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: PANEL_COLORS.right }}></div>
-                          <span className="text-xs">1 right</span>
+                          <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-sm" style={{ backgroundColor: PANEL_COLORS.right }}></div>
+                          <span className="text-xs sm:text-sm">1 right</span>
                         </div>
                       </div>
                     </div>
@@ -367,18 +367,18 @@ export const CladdingKey: React.FC<CladdingKeyProps> = ({ requirements, showDebu
                 
                 {/* 2-Pack with color indicators - more compact */}
                 {requirements.twoPackRegular > 0 && (
-                  <div className="bg-white rounded-md p-1.5 shadow-sm">
-                    <div className="flex items-center justify-between mb-0.5">
-                      <span className="text-sm font-semibold text-gray-800">2-Pack</span>
-                      <span className="text-sm font-semibold px-2 py-0.5 bg-blue-50 rounded-full text-blue-700 min-w-[2.5rem] text-center">
+                  <div className="bg-white rounded-md p-1.5 sm:p-2.5 shadow-sm">
+                    <div className="flex items-center justify-between mb-0.5 sm:mb-1">
+                      <span className="text-sm sm:text-base font-semibold text-gray-800">2-Pack</span>
+                      <span className="text-sm sm:text-base font-semibold px-2 py-0.5 bg-blue-50 rounded-full text-blue-700 min-w-[2.5rem] sm:min-w-[3rem] text-center">
                         {requirements.twoPackRegular}x
                       </span>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <span className="text-xs text-gray-500">Contains:</span>
-                      <div className="flex items-center gap-1">
-                        <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: PANEL_COLORS.side }}></div>
-                        <span className="text-xs">2 side panels</span>
+                    <div className="flex items-center gap-1 sm:gap-2">
+                      <span className="text-xs sm:text-sm text-gray-500">Contains:</span>
+                      <div className="flex items-center gap-1 sm:gap-2">
+                        <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-sm" style={{ backgroundColor: PANEL_COLORS.side }}></div>
+                        <span className="text-xs sm:text-sm">2 side panels</span>
                       </div>
                     </div>
                   </div>

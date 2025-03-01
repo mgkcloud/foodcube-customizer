@@ -66,7 +66,15 @@ export const Grid: React.FC<GridProps> = ({
   };
 
   return (
-    <div className="relative grid grid-cols-3 gap-1 bg-gray-100 p-4 rounded-lg">
+    <div className="relative grid grid-cols-3 gap-1.5 sm:gap-3 md:gap-4 bg-gray-100 p-4 sm:p-5 md:p-6 rounded-xl shadow-md">
+      {!hasInteractedLocal && (
+        <div className="absolute inset-0 flex items-center justify-center z-10 bg-black/5 backdrop-blur-[1px] rounded-xl">
+          <div className="bg-blue-600/90 px-5 py-3 rounded-lg text-white text-center font-medium shadow-lg animate-pulse">
+            <span className="text-sm sm:text-base">Tap grid to place foodcube</span>
+          </div>
+        </div>
+      )}
+      
       {grid.map((row, rowIndex) => (
         row.map((cell, colIndex) => (
           <div 
@@ -76,11 +84,12 @@ export const Grid: React.FC<GridProps> = ({
             className={`
               relative aspect-square cursor-pointer
               ${cell.hasCube 
-                ? 'bg-cover bg-center bg-no-repeat hover:brightness-90 z-1' 
-                : 'bg-white hover:bg-gray-200'
+                ? 'bg-cover bg-center bg-no-repeat hover:brightness-95 active:brightness-90 z-1' 
+                : 'bg-white hover:bg-gray-100 active:bg-gray-200'
               }
-              border-2 border-gray-300 rounded
-              transition-all duration-200
+              border-2 sm:border-3 border-gray-300 sm:border-gray-200 rounded-lg
+              transition-all duration-200 shadow-sm hover:shadow-md
+              transform active:scale-[0.98]
             `}
             style={{
               backgroundImage: cell.hasCube 
@@ -100,6 +109,7 @@ export const Grid: React.FC<GridProps> = ({
                   debug={debug}
                 />
                 */}
+                
                 <CladdingVisualizer
                   cell={cell}
                   row={rowIndex}
@@ -113,6 +123,15 @@ export const Grid: React.FC<GridProps> = ({
                     W: !hasAdjacentCube(grid, rowIndex, colIndex, 'W')
                   }}
                 />
+                
+                {/* Debug info */}
+                {debug && (
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <div className="bg-black/70 text-white text-[8px] sm:text-xs p-1 rounded">
+                      [{rowIndex},{colIndex}]
+                    </div>
+                  </div>
+                )}
               </>
             )}
           </div>
