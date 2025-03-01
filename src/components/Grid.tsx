@@ -38,13 +38,6 @@ export const Grid: React.FC<GridProps> = ({
     onToggleCell(rowIndex, colIndex);
   };
 
-  const handleOverlayClick = () => {
-    setHasInteractedLocal(true);
-    if (setHasInteracted) setHasInteracted(true);
-    // Place a cube in the middle cell (1,1) of the 3x3 grid
-    onToggleCell(1, 1);
-  };
-
   const handleCladdingToggle = (row: number, col: number, edge: 'N' | 'E' | 'S' | 'W') => {
     onToggleCladding(row, col, edge);
   };
@@ -73,14 +66,6 @@ export const Grid: React.FC<GridProps> = ({
 
   return (
     <div className="relative grid grid-cols-3 gap-1 bg-gray-100 p-4 rounded-lg">
-      {!hasInteractedLocal && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 z-30 rounded-lg cursor-pointer"
-             onClick={handleOverlayClick}>
-          <div className="bg-white px-6 py-3 rounded-full shadow-lg text-sm font-semibold">
-            Tap grid to place Foodcube
-          </div>
-        </div>
-      )}
       {grid.map((row, rowIndex) => (
         row.map((cell, colIndex) => (
           <div 

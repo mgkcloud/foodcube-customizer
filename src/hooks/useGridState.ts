@@ -405,13 +405,37 @@ const useGridState = () => {
     logGridState(grid, newRequirements);
   }, [grid, calculateRequirements]);
 
+  // Function to clear the grid and reset to initial state
+  const clearGrid = useCallback(() => {
+    console.log("Clearing grid configuration");
+    // Clear error state
+    setError(null);
+    // Reset grid to empty state
+    setGrid(initializeGrid());
+    // Reset requirements
+    setRequirements({
+      fourPackRegular: 0,
+      fourPackExtraTall: 0,
+      twoPackRegular: 0,
+      twoPackExtraTall: 0,
+      leftPanels: 0,
+      rightPanels: 0,
+      sidePanels: 0,
+      cornerConnectors: 0,
+      straightCouplings: 0
+    });
+    // Clear any cached data
+    clearConnectedCubesCache();
+  }, []);
+
   return {
     grid,
     requirements,
     toggleCell,
     toggleCladding,
     applyPreset,
-    error
+    error,
+    clearGrid
   };
 };
 
