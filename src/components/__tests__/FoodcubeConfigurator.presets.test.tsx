@@ -100,4 +100,28 @@ describe('FoodcubeConfigurator Preset Configurations', () => {
       cornerConnectors: 0
     }));
   });
+
+  test('dual-lines preset gives correct requirements', () => {
+    render(<FoodcubeConfigurator variants={mockVariants} onUpdate={mockOnUpdate} />);
+    
+    // Apply dual-lines preset
+    fireEvent.click(screen.getByText('Dual Lines'));
+
+    // Verify against ground truth:
+    // 2 four-packs (4 side + 2 left + 2 right)
+    // 2 2-packs (4 sides)
+    // 2 straight couplings
+    // 0 corner connectors (this was the key issue)
+    expect(mockOnUpdate).toHaveBeenLastCalledWith(expect.objectContaining({
+      fourPackRegular: 2,
+      fourPackExtraTall: 0,
+      twoPackRegular: 2,
+      twoPackExtraTall: 0,
+      sidePanels: 4,
+      leftPanels: 0,
+      rightPanels: 0,
+      straightCouplings: 2,
+      cornerConnectors: 0
+    }));
+  });
 });

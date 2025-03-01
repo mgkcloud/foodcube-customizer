@@ -5,7 +5,8 @@ import { calculateFlowPathPanels } from '@/utils/calculation/panelCalculator';
 import { validateIrrigationPath, findConnectedCubes } from '@/utils/validation/flowValidator';
 import { hasAdjacentCube } from '@/utils/shared/gridUtils';
 import { clearConnectedCubesCache } from '@/utils/validation/flowValidator';
-import { debug } from '@/utils/shared/debugUtils';
+import { debug, setCompactMode, setUltraCompactMode, debugFlags } from '@/utils/shared/debugUtils';
+import { logConfigurationDebug } from '@/utils/validation/configDebugger';
 
 // Constant for the grid size
 const GRID_SIZE = 3;
@@ -54,6 +55,9 @@ const useGridState = () => {
   });
 
   const logGridState = (grid: GridCell[][], requirements: Requirements) => {
+    // Clear console before logging new state
+    console.clear();
+    
     const gridState = grid.map(row => row.map(cell => {
       return {
         hasCube: cell.hasCube,
@@ -95,6 +99,9 @@ const useGridState = () => {
   // Calculate panel requirements based on the current grid
   const calculateRequirements = useCallback((grid: GridCell[][]) => {
     try {
+      // Clear console before calculating new requirements
+      console.clear();
+      
       // Clear caches to ensure fresh calculation
       clearConnectedCubesCache();
       
@@ -144,6 +151,9 @@ const useGridState = () => {
 
   // Toggle a cell's cube state
   const toggleCell = useCallback((row: number, col: number) => {
+    // Clear console before toggling cell
+    console.clear();
+    
     // Clear caches to ensure fresh calculation
     clearConnectedCubesCache();
     
@@ -244,31 +254,42 @@ const useGridState = () => {
 
   // Toggle cladding at a specific edge
   const toggleCladding = useCallback((row: number, col: number, edge: CompassDirection) => {
-    setGrid(prevGrid => {
-      const newGrid = prevGrid.map(gridRow => 
-        gridRow.map(cell => ({
-          ...cell,
-          claddingEdges: new Set([...cell.claddingEdges])
-        }))
-      );
-      
-      const targetCell = newGrid[row][col];
-      
-      // Toggle cladding edge
-      if (targetCell.claddingEdges.has(edge)) {
-        targetCell.claddingEdges.delete(edge);
-      } else {
-        targetCell.claddingEdges.add(edge);
-      }
-      
-      return newGrid;
-    });
+    // Clear console before toggling cladding
+    console.clear();
     
-    // No need to recalculate requirements as cladding doesn't affect them
-  }, []);
+    // First create a deep copy of the current grid with the toggle applied
+    const updatedGrid = grid.map(gridRow => 
+      gridRow.map(cell => ({
+        ...cell,
+        claddingEdges: new Set([...cell.claddingEdges])
+      }))
+    );
+    
+    // Apply the toggle to our copy
+    if (updatedGrid[row][col].claddingEdges.has(edge)) {
+      updatedGrid[row][col].claddingEdges.delete(edge);
+    } else {
+      updatedGrid[row][col].claddingEdges.add(edge);
+    }
+    
+    // Update the grid
+    setGrid(updatedGrid);
+    
+    // Immediately recalculate requirements with the same updated grid
+    const newRequirements = calculateRequirements(updatedGrid);
+    setRequirements(newRequirements);
+    
+    // Log the changes
+    console.log(`Toggled cladding at [${row},${col}], edge: ${edge}`);
+    console.log("Updated requirements:", newRequirements);
+    logGridState(updatedGrid, newRequirements);
+  }, [grid, calculateRequirements]);
 
   // Apply a preset configuration
   const applyPreset = useCallback((preset: string) => {
+    // Clear console before applying preset
+    console.clear();
+    
     console.log(`Applying preset: ${preset}`);
     // Initialize a fresh grid with no cubes
     const newGrid = initializeGrid();
@@ -289,18 +310,45 @@ const useGridState = () => {
       case 'l-shape':
         // L-shaped configuration
         console.log("Applying L-shape preset");
+        newGrid[0][0].hasCube = true;
         newGrid[1][0].hasCube = true;
-        newGrid[1][1].hasCube = true;
+        newGrid[2][0].hasCube = true;
         newGrid[2][1].hasCube = true;
+        newGrid[2][2].hasCube = true;
         break;
       case 'u-shape':
         // U-shaped configuration
         console.log("Applying U-shape preset");
-        newGrid[2][0].hasCube = true;
+        newGrid[0][0].hasCube = true;
         newGrid[1][0].hasCube = true;
-        newGrid[1][1].hasCube = true;
-        newGrid[1][2].hasCube = true;
+        newGrid[2][0].hasCube = true;
+        newGrid[2][1].hasCube = true;
         newGrid[2][2].hasCube = true;
+        newGrid[1][2].hasCube = true;
+        newGrid[0][2].hasCube = true;
+        break;
+      case 'dual-lines':
+        // Two separate lines configuration
+        console.log("Applying dual lines preset");
+        // Top row - flow from left to right
+        newGrid[0][0].hasCube = true;
+        newGrid[0][0].connections = { entry: 'W', exit: 'E' };
+        
+        newGrid[0][1].hasCube = true;
+        newGrid[0][1].connections = { entry: 'W', exit: 'E' };
+        
+        newGrid[0][2].hasCube = true;
+        newGrid[0][2].connections = { entry: 'W', exit: 'E' };
+        
+        // Bottom row - flow from left to right
+        newGrid[2][0].hasCube = true;
+        newGrid[2][0].connections = { entry: 'W', exit: 'E' };
+        
+        newGrid[2][1].hasCube = true;
+        newGrid[2][1].connections = { entry: 'W', exit: 'E' };
+        
+        newGrid[2][2].hasCube = true;
+        newGrid[2][2].connections = { entry: 'W', exit: 'E' };
         break;
       default:
         // Do nothing for unknown presets
@@ -349,6 +397,9 @@ const useGridState = () => {
 
   // Update requirements whenever the grid changes
   useEffect(() => {
+    // Clear console before updating requirements on grid change
+    console.clear();
+    
     const newRequirements = calculateRequirements(grid);
     setRequirements(newRequirements);
     logGridState(grid, newRequirements);

@@ -1,4 +1,4 @@
-import { GridCell, Requirements } from '@/components/types';
+import { GridCell, Requirements } from '../../components/types';
 import { findConnectedCubes } from './flowValidator';
 import { countCornerConnectors } from '../calculation/configurationDetector';
 import { CONFIGURATION_RULES } from '../core/rules';
@@ -151,4 +151,56 @@ const countCubes = (grid: GridCell[][]): number => {
     }
   }
   return count;
-} 
+}
+
+/**
+ * Log configuration debug information in ultra-compact format
+ */
+export const logConfigurationDebug = (
+  grid: GridCell[][] | null,
+  requirements: Requirements | null,
+  configurationType: string = 'unknown'
+) => {
+  if (!grid || !requirements) {
+    console.log(`CFG:NO_DATA`);
+    return;
+  }
+
+  // Count cubes in grid
+  let cubeCount = 0;
+  for (let row = 0; row < grid.length; row++) {
+    for (let col = 0; col < grid[0].length; col++) {
+      if (grid[row][col].hasCube) {
+        cubeCount++;
+      }
+    }
+  }
+
+  // Ultra-compact grid info
+  console.log(`GRID:${grid.length}×${grid[0].length}|${cubeCount}□`);
+  
+  // Ultra-compact requirements
+  const { fourPackRegular, twoPackRegular, leftPanels, rightPanels, sidePanels, 
+          straightCouplings, cornerConnectors } = requirements;
+  
+  console.log(`REQS:4p=${fourPackRegular} 2p=${twoPackRegular} L=${leftPanels} R=${rightPanels} S=${sidePanels} ⊥=${straightCouplings} ∟=${cornerConnectors}`);
+  
+  // Configuration type
+  console.log(`CFG:${configurationType}`);
+
+  // Show more detailed debug for the panel calculations if enabled
+  if (debugFlags.SHOW_REQUIREMENTS_CALC) {
+    // Calculate total panels from packages
+    const sidePanelsFromFourPack = fourPackRegular * 2;
+    const leftPanelsFromFourPack = fourPackRegular;
+    const rightPanelsFromFourPack = fourPackRegular;
+    const sidePanelsFromTwoPack = twoPackRegular * 2;
+
+    const totalSidePanels = sidePanels + sidePanelsFromFourPack + sidePanelsFromTwoPack;
+    const totalLeftPanels = leftPanels + leftPanelsFromFourPack;
+    const totalRightPanels = rightPanels + rightPanelsFromFourPack;
+
+    console.log(`PKG_PANEL:4p→${sidePanelsFromFourPack}S+${leftPanelsFromFourPack}L+${rightPanelsFromFourPack}R 2p→${sidePanelsFromTwoPack}S`);
+    console.log(`TOTAL:${totalSidePanels}S+${totalLeftPanels}L+${totalRightPanels}R`);
+  }
+}; 

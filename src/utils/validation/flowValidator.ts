@@ -4,6 +4,34 @@ import { STRAIGHT_PATHS, VALID_TURNS } from '../core/irrigationRules';
 import { getOppositeDirection } from '../shared/gridUtils';
 
 /**
+ * Compact path logging to reduce verbosity
+ */
+const logPath = (pathCubes: any[], message: string = 'Path') => {
+  if (!pathCubes || pathCubes.length === 0) return;
+  
+  // Extract row/col info based on whether we have simple [row,col] pairs or PathCube objects
+  const formatCube = (cube: any) => {
+    if (Array.isArray(cube)) return debug.pos(cube[0], cube[1]);
+    if (typeof cube === 'object' && 'row' in cube && 'col' in cube) {
+      let dirInfo = '';
+      if (cube.entry || cube.exit) {
+        dirInfo = `(${cube.entry || '-'}→${cube.exit || '-'})`;
+      }
+      return debug.pos(cube.row, cube.col, dirInfo);
+    }
+    return 'unknown';
+  };
+  
+  // Show max 3 items with count
+  const prefix = message.length > 0 ? `${message}: ` : '';
+  const count = pathCubes.length;
+  const truncated = pathCubes.slice(0, 3).map(formatCube).join('→');
+  const suffix = count > 3 ? `...+${count-3}` : '';
+  
+  console.log(`${prefix}${truncated}${suffix}`);
+};
+
+/**
  * Checks if a cube has a valid number of connections (0, 1, or 2)
  * For a valid irrigation path, each cube should have at most 2 connections
  */
@@ -37,6 +65,7 @@ const connectedCubesCache = new Map<string, [number, number][]>();
 
 /**
  * Finds all connected cubes in a path starting from a given cube
+ * Uses ultra-compact logging
  */
 export const findConnectedCubes = (
   grid: GridCell[][],
@@ -47,8 +76,14 @@ export const findConnectedCubes = (
     return [];
   }
 
-  // Log the starting point
-  console.log(`Finding connected cubes from starting point [${startRow},${startCol}]`);
+  // Check cache first
+  const cacheKey = `${startRow},${startCol}`;
+  if (connectedCubesCache.has(cacheKey)) {
+    return connectedCubesCache.get(cacheKey)!;
+  }
+
+  // Ultra-compact logging of starting point
+  console.log(`FC:${startRow},${startCol}`);
 
   const connectedCubes: [number, number][] = [];
   const visited = new Set<string>();
@@ -63,8 +98,7 @@ export const findConnectedCubes = (
 
     if (grid[row][col].hasCube) {
       connectedCubes.push([row, col]);
-      console.log(`Found cube at [${row},${col}]`);
-
+      
       // Check adjacent cells (N, S, E, W)
       const directions = [
         [-1, 0, 'N'], // North
@@ -91,7 +125,6 @@ export const findConnectedCubes = (
         if (grid[newRow][newCol].hasCube) {
           const newKey = `${newRow},${newCol}`;
           if (!visited.has(newKey)) {
-            console.log(`Adding adjacent cube at [${newRow},${newCol}] (${dir} of [${row},${col}]) to queue`);
             queue.push([newRow, newCol]);
           }
         }
@@ -99,10 +132,19 @@ export const findConnectedCubes = (
     }
   }
 
-  console.log(`Found ${connectedCubes.length} connected cubes in total`);
-
-  // Now trace the path through the connected cubes and set entry/exit points
-  return tracePathAndSetConnections(grid, connectedCubes);
+  // Ultra-compact result logging
+  console.log(`FC:${connectedCubes.length}□`);
+  
+  if (connectedCubes.length <= 5) {
+    console.log(`FC:{${connectedCubes.map(([r,c]) => `${r},${c}`).join('|')}}`);
+  } else {
+    console.log(`FC:{${connectedCubes.slice(0,3).map(([r,c]) => `${r},${c}`).join('|')}...+${connectedCubes.length-3}}`);
+  }
+  
+  // Cache the result
+  connectedCubesCache.set(cacheKey, connectedCubes);
+  
+  return connectedCubes;
 };
 
 /**
@@ -113,7 +155,7 @@ export const clearConnectedCubesCache = () => {
 };
 
 /**
- * Traces a path through connected cubes and sets entry/exit points
+ * Traces a path through connected cubes and sets entry/exit points with ultra-compact logging
  */
 const tracePathAndSetConnections = (
   grid: GridCell[][],
@@ -125,23 +167,36 @@ const tracePathAndSetConnections = (
   const endpoints = findEndpointCubes(grid, connectedCubes);
   
   if (endpoints.length !== 2) {
-    debug.warn(`Expected 2 endpoints, found ${endpoints.length}`);
+    console.log(`EP:${endpoints.length}≠2`);
     return connectedCubes;
   }
   
-  // Start from one endpoint
-  const [startRow, startCol] = endpoints[0];
+  // Ultra-compact endpoint logging
+  console.log(`EP:${endpoints.map(([r,c]) => `${r},${c}`).join('|')}`);
   
-  // Enhanced logging for endpoint analysis
-  debug.info(`ENDPOINT ANALYSIS: Found ${endpoints.length} endpoints:`);
-  endpoints.forEach(([r, c], i) => {
-    debug.info(`Endpoint #${i+1}: [${r},${c}]`);
+  // Check if connections are already defined for all cubes in this component
+  const allConnectionsDefined = connectedCubes.every(([row, col]) => {
+    const cube = grid[row][col];
+    return cube.connections.entry !== null || cube.connections.exit !== null;
   });
+  
+  // If all connections are already defined, respect them and skip automatic tracing
+  if (allConnectionsDefined) {
+    console.log("Flow path already defined, respecting existing connections");
+    
+    // Validate the existing connections for consistency
+    for (const [row, col] of connectedCubes) {
+      const cube = grid[row][col];
+      console.log(`Analyzing path cube: [${row}, ${col}] entry: ${cube.connections.entry}, exit: ${cube.connections.exit}`);
+    }
+    
+    return connectedCubes;
+  }
   
   // Find a path through all cubes
   const visited = new Set<string>();
   const path: [number, number][] = [];
-  const queue: [number, number][] = [[startRow, startCol]];
+  const queue: [number, number][] = [[endpoints[0][0], endpoints[0][1]]];
   
   while (queue.length > 0) {
     const [row, col] = queue.shift()!;
@@ -177,75 +232,53 @@ const tracePathAndSetConnections = (
     }
   }
   
-  debug.info(`FLOW PATH: Traced path through ${path.length} cubes: ${path.map(([r, c]) => `[${r},${c}]`).join(' → ')}`);
+  // Ultra-compact path logging
+  const pathStr = path.length <= 4 
+    ? path.map(([r,c]) => `${r},${c}`).join('→')
+    : `${path.length}□:${path[0][0]},${path[0][1]}→${path[1][0]},${path[1][1]}→...→${path[path.length-1][0]},${path[path.length-1][1]}`;
+  console.log(`FLOW:${pathStr}`);
   
-  // Analysis for detecting U-shaped configuration
-  if (path.length >= 5) {
-    debug.info(`SHAPE ANALYSIS: Checking for U-shape configuration with ${path.length} cubes`);
-    
-    // Check for potential U-shape by analyzing endpoint locations
-    const [startEndpoint, endEndpoint] = endpoints;
-    const [startRow, startCol] = startEndpoint;
-    const [endRow, endCol] = endEndpoint;
-    
-    // Potential U-shape if endpoints are in the same row and separated by cols
-    const sameRow = startRow === endRow;
-    const colSeparation = Math.abs(startCol - endCol);
-    // Potential U-shape if endpoints are in the same col and separated by rows
-    const sameCol = startCol === endCol;
-    const rowSeparation = Math.abs(startRow - endRow);
-    
-    if ((sameRow && colSeparation >= 2) || (sameCol && rowSeparation >= 2)) {
-      debug.info(`POTENTIAL U-SHAPE: Endpoints at [${startRow},${startCol}] and [${endRow},${endCol}]`);
-      debug.info(`  Same row: ${sameRow}, Column separation: ${colSeparation}`);
-      debug.info(`  Same column: ${sameCol}, Row separation: ${rowSeparation}`);
-    }
+  // Detect if this is a U-shape configuration based on path analysis
+  const isUShape = isLikelyUShape(path);
+  if (isUShape) {
+    console.log(`U-SHAPE DETECTED with ${path.length} cubes from [${path[0][0]},${path[0][1]}] to [${path[path.length-1][0]},${path[path.length-1][1]}]`);
   }
   
-  // Set entry and exit points for each cube in the path
+  // Create a mapping for each cube in the path to know its position within the path
+  const positionMap = new Map<string, number>();
+  path.forEach(([r, c], idx) => {
+    positionMap.set(`${r},${c}`, idx);
+  });
+  
+  // Set entry and exit points for each cube in the path - enforcing straight through flow
   for (let i = 0; i < path.length; i++) {
     const [row, col] = path[i];
     const cube = grid[row][col];
     
     if (i === 0) {
-      // First cube (endpoint) - determine where the next cube is
+      // First cube (endpoint) - should have one connecting cube
       const [nextRow, nextCol] = path[i + 1];
       
       // Determine direction toward the next cube
-      let naturalDir: CompassDirection | null = null;
+      let exitDir: CompassDirection | null = null;
       
-      if (nextRow < row) naturalDir = 'N';
-      else if (nextRow > row) naturalDir = 'S';
-      else if (nextCol < col) naturalDir = 'W';
-      else if (nextCol > col) naturalDir = 'E';
+      if (nextRow < row) exitDir = 'N';
+      else if (nextRow > row) exitDir = 'S';
+      else if (nextCol < col) exitDir = 'W';
+      else if (nextCol > col) exitDir = 'E';
       
-      // For the first endpoint, set entry to face outward where no cube exists
-      const availableDirections = getAvailableDirections(grid, row, col);
-      let entryDir: CompassDirection | null = null;
-      
-      // Find a direction with no cube - preferring the opposite of exit for straight through
-      const oppositeDir = getOppositeDirection(naturalDir);
-      
-      // Check if the opposite direction has no cube (ideal for straight through)
-      if (oppositeDir && !availableDirections.includes(oppositeDir)) {
-        entryDir = oppositeDir;
-      } else {
-        // Find any direction with no cube
-        ['N', 'S', 'E', 'W'].forEach(dir => {
-          if (!availableDirections.includes(dir as CompassDirection) && dir !== naturalDir) {
-            entryDir = dir as CompassDirection;
-          }
-        });
-      }
+      // For the first cube, we need to pick an entry that creates a straight-through flow
+      // This means the entry should be opposite to the exit
+      let entryDir = getOppositeDirection(exitDir);
       
       cube.connections = {
         entry: entryDir,
-        exit: naturalDir
+        exit: exitDir
       };
       
-      debug.info(`First cube [${row},${col}]: entry=${entryDir}, exit=${naturalDir} - flows towards [${nextRow},${nextCol}]`);
+      console.log(`FIRST CUBE [${row},${col}]: Entry=${entryDir}, Exit=${exitDir} (Enforcing straight-through)`);
     } else if (i === path.length - 1) {
-      // Last cube (endpoint) - determine where the previous cube is
+      // Last cube (endpoint) - should have one connecting cube
       const [prevRow, prevCol] = path[i - 1];
       
       // Determine entry direction from the previous cube
@@ -256,37 +289,22 @@ const tracePathAndSetConnections = (
       else if (prevCol < col) entryDir = 'W';
       else if (prevCol > col) entryDir = 'E';
       
-      // For the last endpoint, set exit to face outward where no cube exists
-      const availableDirections = getAvailableDirections(grid, row, col);
-      let exitDir: CompassDirection | null = null;
-      
-      // For straight through flow, prefer the opposite of entry
-      const oppositeDir = getOppositeDirection(entryDir);
-      
-      // Check if the opposite direction has no cube (ideal for straight through)
-      if (oppositeDir && !availableDirections.includes(oppositeDir)) {
-        exitDir = oppositeDir;
-      } else {
-        // Find any direction with no cube
-        ['N', 'S', 'E', 'W'].forEach(dir => {
-          if (!availableDirections.includes(dir as CompassDirection) && dir !== entryDir) {
-            exitDir = dir as CompassDirection;
-          }
-        });
-      }
+      // For the last cube, we need to pick an exit that creates a straight-through flow
+      // This means the exit should be opposite to the entry
+      let exitDir = getOppositeDirection(entryDir);
       
       cube.connections = {
         entry: entryDir,
         exit: exitDir
       };
       
-      debug.info(`Last cube [${row},${col}]: entry=${entryDir}, exit=${exitDir} - flows from [${prevRow},${prevCol}]`);
+      console.log(`LAST CUBE [${row},${col}]: Entry=${entryDir}, Exit=${exitDir} (Enforcing straight-through)`);
     } else {
-      // Middle cube - has both entry and exit
+      // Middle cube - must have exactly two connecting cubes
       const [prevRow, prevCol] = path[i - 1];
       const [nextRow, nextCol] = path[i + 1];
       
-      // Determine entry direction from previous cube
+      // Determine entry direction from the previous cube
       let entryDir: CompassDirection | null = null;
       
       if (prevRow < row) entryDir = 'N';
@@ -294,166 +312,39 @@ const tracePathAndSetConnections = (
       else if (prevCol < col) entryDir = 'W';
       else if (prevCol > col) entryDir = 'E';
       
-      // Calculate where the next cube is naturally positioned
-      let naturalExitDir: CompassDirection | null = null;
+      // Determine exit direction to the next cube
+      let exitDir: CompassDirection | null = null;
       
-      if (nextRow < row) naturalExitDir = 'N';
-      else if (nextRow > row) naturalExitDir = 'S';
-      else if (nextCol < col) naturalExitDir = 'W';
-      else if (nextCol > col) naturalExitDir = 'E';
+      if (nextRow < row) exitDir = 'N';
+      else if (nextRow > row) exitDir = 'S';
+      else if (nextCol < col) exitDir = 'W';
+      else if (nextCol > col) exitDir = 'E';
       
-      debug.info(`MIDDLE CUBE ANALYSIS - Cube [${row},${col}]:`);
-      debug.info(`  Previous cube: [${prevRow},${prevCol}], Next cube: [${nextRow},${nextCol}]`);
-      debug.info(`  Entry direction (from prev): ${entryDir}`);
-      debug.info(`  Natural direction to next cube: ${naturalExitDir}`);
+      // Check if this is a turn (non-straight through flow)
+      const isStraightThrough = (
+        (entryDir === 'N' && exitDir === 'S') ||
+        (entryDir === 'S' && exitDir === 'N') ||
+        (entryDir === 'E' && exitDir === 'W') ||
+        (entryDir === 'W' && exitDir === 'E')
+      );
       
-      // DEBUG: Log special information for potential N-turns in L-shape
-      if (naturalExitDir === 'N' || entryDir === 'N') {
-        debug.info(`**N-TURN DETECTION** - Potential N-turn for cube [${row},${col}]`);
-        debug.info(`  Flow path: ${entryDir} → ${getOppositeDirection(entryDir)} (straight default)`);
-        debug.info(`  Natural path needed: ${entryDir} → ${naturalExitDir}`);
-        debug.info(`  Is L-shape with upward turn: ${path.length === 3 && naturalExitDir === 'N'}`);
-      }
+      // If it's not a straight through, we need to determine if this is a corner
+      const isCorner = !isStraightThrough;
       
-      // Check for U-shape pattern - special case for middle segment cubes
-      const isPartOfUShape = isLikelyUShape(path);
-      
-      // For a true U-shape with 5 cubes, we can identify each position
-      // [0] = start endpoint, [1] = first corner, [2] = middle, [3] = second corner, [4] = end endpoint
-      const isFirstCornerOfU = isPartOfUShape && i === 1;  // First corner after start
-      const isMiddleOfU = isPartOfUShape && i === Math.floor(path.length / 2);  // Middle segment
-      const isSecondCornerOfU = isPartOfUShape && i === path.length - 2;  // Second corner before end
-      
-      // For a U-shape, different cubes need different handling:
-      let exitDir: CompassDirection | null;
-      
-      // Special handling for the second corner in a U (typically [1,2] in our example)
-      if (isSecondCornerOfU && row === 1 && col === 2) {
-        // For the second corner, we need to route from North to South
-        // to properly connect with a corner connector going East
-        debug.info(`  SPECIAL U-SHAPE CORNER: Cube [${row},${col}] - setting flow North->South to force corner connector`);
-        entryDir = 'N';  // Override entry direction
-        exitDir = 'S';   // Set exit direction
-      }
-      // Special handling for the first corner in a U (typically [1,0] in our example)
-      else if (isFirstCornerOfU && row === 1 && col === 0) {
-        // For the first corner, we specifically want to route from South to North
-        // This will force a corner connector to be used between [1,0] and [0,0]
-        debug.info(`  SPECIAL U-SHAPE CORNER: Cube [${row},${col}] - setting entry to South, exit to North to force corner connector`);
-        entryDir = 'S';  // Override entry from South
-        exitDir = 'N';   // Exit to North
-      }
-      // Special handling for middle cube in U-shape (typically [1,1])
-      else if (isMiddleOfU && row === 1 && col === 1 && isPartOfUShape) {
-        // For the middle of U, we need to ensure the flow goes around the outside
-        // This means routing along the top side of the cube
-        debug.info(`  SPECIAL U-SHAPE MIDDLE: Cube [${row},${col}] - setting flow West->East along top side`);
-        entryDir = 'W';  // Entry from West
-        exitDir = 'E';   // Exit to East
-      }
-      // Special handling for L-shape with N-turn
-      else if (path.length === 3 && naturalExitDir === 'N') {
-        // For L-shapes with north turns, we need to ensure panels are mirrored correctly
-        debug.info(`  SPECIAL L-SHAPE N-TURN: Cube [${row},${col}] - overriding flow for proper panel mirroring`);
-        
-        // Force horizontal flow for the corner cube to ensure proper panel assignment
-        if (entryDir === 'N') {
-          // If entry is from North, route East-West
-          debug.info(`  Forcing horizontal flow E->W instead of N->S for proper corner turning`);
-          entryDir = 'E';  // Override entry to East
-          exitDir = 'W';   // Exit to West
-        } else if (entryDir === 'S') {
-          // If entry is from South, route West-East
-          debug.info(`  Forcing horizontal flow W->E instead of S->N for proper corner turning`);
-          entryDir = 'W';  // Override entry to West
-          exitDir = 'E';   // Exit to East
-        } else {
-          // Use standard opposite direction
-          exitDir = getOppositeDirection(entryDir);
-          debug.info(`  Using standard flow ${entryDir}→${exitDir} for L-shape N-turn`);
-        }
-      }
-      // Normal straight-through flow for other cubes
-      else {
-        exitDir = getOppositeDirection(entryDir);
-        
-        if (isPartOfUShape) {
-          debug.info(`  U-SHAPE DETECTED: Using straight-through exit ${exitDir} for cube [${row},${col}]`);
-        } else {
-          debug.info(`  Standard flow: Straight-through exit ${exitDir}`);
-        }
-      }
-      
-      // Log information about turns
-      if (naturalExitDir !== exitDir) {
-        debug.info(`CORNER DETECTED between [${row},${col}] and [${nextRow},${nextCol}]:`);
-        debug.info(`  Cube [${row},${col}] has exit ${exitDir}`);
-        debug.info(`  But next cube [${nextRow},${nextCol}] is in direction ${naturalExitDir}`);
-        debug.info(`  This requires a corner connector: ${exitDir} → ${naturalExitDir}`);
-        
-        // Add more detailed turn analysis
-        const turnDirection = determineTurnDirection(exitDir, naturalExitDir);
-        debug.info(`TURN ANALYSIS for cube [${row},${col}]:`);
-        debug.info(`  Previous: [${prevRow},${prevCol}], Next: [${nextRow},${nextCol}]`);
-        debug.info(`  TURN DETECTED at [${row},${col}]: ${entryDir} → ${exitDir} (natural: ${naturalExitDir})`);
-        debug.info(`  Turn direction: ${turnDirection}`);
-        debug.info(`  Turn mapping: ${exitDir}→${naturalExitDir} (defined in VALID_TURNS: ${VALID_TURNS.has(`${exitDir}→${naturalExitDir}`)})`);
-        
-        // Special case for N-turns
-        if (naturalExitDir === 'N') {
-          debug.info(`  N-TURN SPECIAL CASE: Checking if this turn needs special handling`);
-          debug.info(`  Current flow setup might cause panel mirroring issues for N-turns`);
-        }
+      if (isCorner) {
+        console.log(`CORNER CUBE [${row},${col}]: Entry=${entryDir}, Exit=${exitDir}`);
       } else {
-        debug.info(`STRAIGHT CONNECTION between [${row},${col}] and [${nextRow},${nextCol}]`);
+        console.log(`STRAIGHT CUBE [${row},${col}]: Entry=${entryDir}, Exit=${exitDir}`);
       }
       
       cube.connections = {
         entry: entryDir,
         exit: exitDir
       };
-      
-      // For middle cubes, log information about turns
-      if (i > 0 && i < path.length - 1) {
-        debug.info(`TURN ANALYSIS for cube [${row},${col}]:`);
-        debug.info(`  Previous: [${prevRow},${prevCol}], Next: [${nextRow},${nextCol}]`);
-        
-        // Determine if this cube is part of a double turn (potential U-shape component)
-        // A double turn exists if this cube has a turn AND an adjacent cube also has a turn
-        let hasTurn = naturalExitDir !== exitDir;
-        
-        if (hasTurn) {
-          debug.info(`  TURN DETECTED at [${row},${col}]: ${entryDir} → ${exitDir} (natural: ${naturalExitDir})`);
-          debug.info(`  Turn direction: ${determineTurnDirection(entryDir, exitDir)}`);
-          
-          // Check adjacent cubes for turns to detect U-shape
-          if (i > 1) {
-            const prevPrevCube = grid[path[i-2][0]][path[i-2][1]];
-            const prevCube = grid[prevRow][prevCol];
-            const prevHasTurn = prevCube.connections?.exit !== getOppositeDirection(prevCube.connections?.entry);
-            
-            if (prevHasTurn) {
-              debug.info(`  DOUBLE TURN DETECTED - Previous cube [${prevRow},${prevCol}] also has a turn`);
-              debug.info(`  This indicates a potential U-shape component`);
-            }
-          }
-          
-          if (i < path.length - 2) {
-            const nextCube = grid[nextRow][nextCol];
-            const nextNextCube = grid[path[i+2][0]][path[i+2][1]];
-            const nextHasTurn = nextCube.connections?.exit !== getOppositeDirection(nextCube.connections?.entry);
-            
-            if (nextHasTurn) {
-              debug.info(`  DOUBLE TURN DETECTED - Next cube [${nextRow},${nextCol}] also has a turn`);
-              debug.info(`  This indicates a potential U-shape component`);
-            }
-          }
-        }
-      }
     }
   }
   
-  // Debug output of entire path
+  // Debug output of entire path with connections
   if (debugFlags.SHOW_FLOW_PATHS) {
     const pathWithConnections = path.map(([r, c]) => ({
       row: r,
@@ -461,43 +352,23 @@ const tracePathAndSetConnections = (
       entry: grid[r][c].connections?.entry,
       exit: grid[r][c].connections?.exit
     }));
-    debug.flowPath(`Analyzing path:`, pathWithConnections);
     
-    // Add a summary of the detected corner connections
-    const cornerConnections = [];
-    for (let i = 0; i < path.length - 1; i++) {
-      const [currentRow, currentCol] = path[i];
-      const [nextRow, nextCol] = path[i + 1];
-      const currentCube = grid[currentRow][currentCol];
-      const nextCube = grid[nextRow][nextCol];
-      
-      if (!currentCube.connections.exit) continue;
-      
-      // Determine natural direction to next cube
-      let naturalDir: CompassDirection | null = null;
-      if (nextRow < currentRow) naturalDir = 'N';
-      else if (nextRow > currentRow) naturalDir = 'S';
-      else if (nextCol < currentCol) naturalDir = 'W';
-      else if (nextCol > currentCol) naturalDir = 'E';
-      
-      if (currentCube.connections.exit !== naturalDir) {
-        cornerConnections.push({
-          from: `[${currentRow},${currentCol}]`,
-          to: `[${nextRow},${nextCol}]`,
-          exitDir: currentCube.connections.exit,
-          naturalDir: naturalDir,
-          entryDir: nextCube.connections.entry
-        });
+    console.log(`Analyzing path:`, pathWithConnections);
+    
+    // Count corners for verification
+    let cornerCount = 0;
+    for (let i = 1; i < path.length - 1; i++) {
+      const [row, col] = path[i];
+      const cube = grid[row][col];
+      const flow = `${cube.connections.entry}→${cube.connections.exit}`;
+      if (!STRAIGHT_PATHS.has(flow)) {
+        cornerCount++;
       }
     }
     
-    if (cornerConnections.length > 0) {
-      debug.info(`SUMMARY: ${cornerConnections.length} corner connections needed:`);
-      cornerConnections.forEach((corner, idx) => {
-        debug.info(`Corner #${idx + 1}: ${corner.from} (exit: ${corner.exitDir}) → ${corner.to} (entry: ${corner.entryDir}), natural direction: ${corner.naturalDir}`);
-      });
-    } else {
-      debug.info(`SUMMARY: No corner connections detected in path`);
+    // Report corner count for verification
+    if (cornerCount > 0) {
+      console.log(`CORNERS:${cornerCount}`);
     }
   }
   
@@ -526,7 +397,7 @@ const findEndpointCubes = (grid: GridCell[][], cubes: [number, number][]): [numb
 };
 
 /**
- * Validates the irrigation path through the grid
+ * Validates the irrigation path through the grid with ultra-compact logging
  */
 export const validateIrrigationPath = (grid: GridCell[][]): boolean => {
   // Clear the cache to ensure fresh validation
@@ -547,7 +418,7 @@ export const validateIrrigationPath = (grid: GridCell[][]): boolean => {
     return true; // Empty grid is valid
   }
   
-  // Find all connected components
+  // Find all connected components - ultra-compact logging
   const visited = new Set<string>();
   const components: [number, number][][] = [];
   
@@ -564,45 +435,87 @@ export const validateIrrigationPath = (grid: GridCell[][]): boolean => {
     }
   }
   
-  // If there are multiple disconnected components, the path is invalid
-  if (components.length > 1) {
-    debug.warn(`Invalid path: Found ${components.length} disconnected components`);
-    return false;
-  }
+  // Allow multiple disconnected components as separate valid irrigation paths
+  console.log(`PATH: ${components.length} irrigation path(s) found`);
   
   // Validate each cube has at most 2 connections
   for (const [row, col] of allCubes) {
     if (!hasValidConnectionCount(grid, row, col)) {
-      debug.warn(`Invalid path: Cube at [${row},${col}] has more than 2 connections`);
+      console.log(`INV:${debug.pos(row,col)}>2conn`);
       return false;
     }
   }
   
-  // Trace the path and set entry/exit points
-  tracePathAndSetConnections(grid, allCubes);
+  // Process each component separately
+  for (const component of components) {
+    // Trace the path and set entry/exit points for this component
+    tracePathAndSetConnections(grid, component);
+  }
   
-  // Validate connections between cubes
+  // Validate connections between cubes - ultra-compact validation
+  let isValid = true;
   for (let row = 0; row < grid.length; row++) {
     for (let col = 0; col < grid[0].length; col++) {
       if (grid[row][col].hasCube) {
         const cube = grid[row][col];
         
+        // Debug: Check if this cube follows the straight-through flow constraint
+        if (cube.connections.entry && cube.connections.exit) {
+          const flow = `${cube.connections.entry}→${cube.connections.exit}`;
+          const isStraightThrough = STRAIGHT_PATHS.has(flow);
+          console.log(`FLOW CHECK [${row},${col}]: ${flow} - Straight Through: ${isStraightThrough}`);
+          
+          // Check adjacent cubes for flow continuity
+          let nextRow = row;
+          let nextCol = col;
+          
+          switch (cube.connections.exit) {
+            case 'N': nextRow--; break;
+            case 'S': nextRow++; break;
+            case 'E': nextCol++; break;
+            case 'W': nextCol--; break;
+          }
+          
+          // If next position is within grid and has a cube
+          if (nextRow >= 0 && nextRow < grid.length && 
+              nextCol >= 0 && nextCol < grid[0].length && 
+              grid[nextRow][nextCol].hasCube) {
+            
+            const nextCube = grid[nextRow][nextCol];
+            const oppositeExit = getOppositeDirection(cube.connections.exit);
+            
+            console.log(`CONTINUITY CHECK: [${row},${col}]→[${nextRow},${nextCol}] | Exit: ${cube.connections.exit}, Next Entry: ${nextCube.connections.entry}`);
+            
+            if (nextCube.connections.entry !== oppositeExit) {
+              console.log(`FLOW MISMATCH: [${row},${col}]→[${nextRow},${nextCol}] | Exit: ${cube.connections.exit}, Expected Entry: ${oppositeExit}, Actual: ${nextCube.connections.entry}`);
+              
+              // Automatically fix the flow mismatch
+              if (debugFlags.AUTO_FIX_FLOW_MISMATCHES) {
+                nextCube.connections.entry = oppositeExit;
+                console.log(`AUTO-FIXED: Set [${nextRow},${nextCol}] entry to ${oppositeExit}`);
+              } else {
+                isValid = false;
+              }
+            }
+          }
+        }
+        
         // Validate entry connection
         if (cube.connections.entry && !validateConnection(grid, row, col, cube.connections.entry)) {
-          debug.warn(`Invalid path: Cube at [${row},${col}] has invalid entry connection: ${cube.connections.entry}`);
-          return false;
+          console.log(`INV:${debug.pos(row,col)}|entry:${cube.connections.entry}`);
+          isValid = false;
         }
         
         // Validate exit connection
         if (cube.connections.exit && !validateConnection(grid, row, col, cube.connections.exit)) {
-          debug.warn(`Invalid path: Cube at [${row},${col}] has invalid exit connection: ${cube.connections.exit}`);
-          return false;
+          console.log(`INV:${debug.pos(row,col)}|exit:${cube.connections.exit}`);
+          isValid = false;
         }
       }
     }
   }
   
-  return true;
+  return isValid;
 };
 
 /**
@@ -663,7 +576,7 @@ const validateConnection = (grid: GridCell[][], row: number, col: number, direct
       // Check if this forms a valid turn
       const turn = `${adjacentExit}→${oppositeDir}`; // The flow from adjacent to this cube
       if (VALID_TURNS.has(turn)) {
-        debug.debug(`Valid corner connection detected: ${adjacentExit} → ${oppositeDir}`);
+        console.log(`Valid corner connection detected: ${adjacentExit} → ${oppositeDir}`);
         return true;
       }
     }
@@ -679,7 +592,7 @@ const validateConnection = (grid: GridCell[][], row: number, col: number, direct
       // Check if this forms a valid turn
       const turn = `${direction}→${adjacentEntry}`; // The flow from this to adjacent cube
       if (VALID_TURNS.has(turn)) {
-        debug.debug(`Valid corner connection detected: ${direction} → ${adjacentEntry}`);
+        console.log(`Valid corner connection detected: ${direction} → ${adjacentEntry}`);
         return true;
       }
     }
@@ -689,25 +602,14 @@ const validateConnection = (grid: GridCell[][], row: number, col: number, direct
 };
 
 /**
- * Determine the turn direction when there is a change in flow direction
- */
-const determineTurnDirection = (fromDir: CompassDirection, toDir: CompassDirection): 'clockwise' | 'counterclockwise' | 'invalid' => {
-  const turns = {
-    'N': { 'E': 'clockwise', 'W': 'counterclockwise' },
-    'E': { 'S': 'clockwise', 'N': 'counterclockwise' },
-    'S': { 'W': 'clockwise', 'E': 'counterclockwise' },
-    'W': { 'N': 'clockwise', 'S': 'counterclockwise' }
-  };
-  
-  return turns[fromDir]?.[toDir] || 'invalid';
-};
-
-/**
- * Check if a path likely forms a U-shape
+ * Check if a path likely forms a U-shape based on path topology
  */
 const isLikelyUShape = (path: [number, number][]): boolean => {
   // Need at least 5 cubes for a U-shape
-  if (path.length < 5) return false;
+  if (path.length < 5) {
+    console.log(`U-SHAPE DETECTION: Path length ${path.length} < 5, not a U-shape`);
+    return false;
+  }
   
   // Get first and last cube (endpoints)
   const [startRow, startCol] = path[0];
@@ -722,14 +624,48 @@ const isLikelyUShape = (path: [number, number][]): boolean => {
   const rowDistance = Math.abs(startRow - endRow);
   const colDistance = Math.abs(startCol - endCol);
   
+  // For a true U-shape, we need:
+  // 1. Endpoints in same row or same column
+  // 2. Sufficient distance between endpoints
+  // 3. Path length should be at least 5 (to have enough cubes for a U)
   const endpointsSuggestUShape = 
-    (sameRow && colDistance >= 2) || 
-    (sameCol && rowDistance >= 2);
+    ((sameRow && colDistance >= 2) || (sameCol && rowDistance >= 2));
   
-  debug.info(`U-SHAPE CHECK: Endpoints at [${startRow},${startCol}] and [${endRow},${endCol}]`);
-  debug.info(`  Same row: ${sameRow}, Same column: ${sameCol}`);
-  debug.info(`  Row distance: ${rowDistance}, Column distance: ${colDistance}`);
-  debug.info(`  Likely U-shape based on endpoints: ${endpointsSuggestUShape}`);
+  // Additional check: For a U-shape, we should have exactly 2 turns (corners)
+  // Count the number of direction changes in the path
+  let directionChanges = 0;
+  let prevDirection = '';
   
-  return endpointsSuggestUShape;
+  for (let i = 1; i < path.length; i++) {
+    const [prevRow, prevCol] = path[i-1];
+    const [currRow, currCol] = path[i];
+    
+    let currentDirection = '';
+    if (currRow < prevRow) currentDirection = 'N';
+    else if (currRow > prevRow) currentDirection = 'S';
+    else if (currCol < prevCol) currentDirection = 'W';
+    else if (currCol > prevCol) currentDirection = 'E';
+    
+    if (prevDirection && currentDirection !== prevDirection) {
+      directionChanges++;
+    }
+    
+    prevDirection = currentDirection;
+  }
+  
+  // A U-shape should have exactly 2 direction changes
+  const hasCorrectTurns = directionChanges === 2;
+  
+  console.log(`U-SHAPE DETECTION: Endpoints at [${startRow},${startCol}] and [${endRow},${endCol}]`);
+  console.log(`  Same row: ${sameRow}, Same column: ${sameCol}`);
+  console.log(`  Row distance: ${rowDistance}, Column distance: ${colDistance}`);
+  console.log(`  Direction changes: ${directionChanges}`);
+  console.log(`  Endpoints suggest U-shape: ${endpointsSuggestUShape}`);
+  console.log(`  Has correct turns: ${hasCorrectTurns}`);
+  
+  // Combine all criteria for final decision
+  const isUShape = endpointsSuggestUShape && hasCorrectTurns;
+  console.log(`  FINAL U-SHAPE DECISION: ${isUShape}`);
+  
+  return isUShape;
 };

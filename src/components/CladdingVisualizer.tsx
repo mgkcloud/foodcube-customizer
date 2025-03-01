@@ -89,7 +89,7 @@ export const CladdingVisualizer = ({ cell, row, col, grid, onToggle, isEdgeExpos
   const getEdgeStyle = (edge: EdgeType): React.CSSProperties => {
     const isSelected = cell.claddingEdges.has(edge);
     // Use the subgrid-based panel type determination
-    const panelType = getPanelType(edge as CompassDirection, entry, exit, subgrid);
+    const panelType = getPanelType(edge as CompassDirection, entry, exit, subgrid.map(row => row.map(cell => Boolean(cell))));
     const baseColor = PANEL_COLORS[panelType];
     
     // Enhanced panel logging
@@ -117,10 +117,10 @@ export const CladdingVisualizer = ({ cell, row, col, grid, onToggle, isEdgeExpos
 
   // Log all edges' panel types with a special note for right panels
   console.log(`VISUALIZATION: All panels for cube [${row},${col}]:`, JSON.stringify({
-    north: getPanelType('N', entry, exit, subgrid) + (getPanelType('N', entry, exit, subgrid) === 'right' ? ' (RIGHT PANEL)' : ''),
-    east: getPanelType('E', entry, exit, subgrid) + (getPanelType('E', entry, exit, subgrid) === 'right' ? ' (RIGHT PANEL)' : ''),
-    south: getPanelType('S', entry, exit, subgrid) + (getPanelType('S', entry, exit, subgrid) === 'right' ? ' (RIGHT PANEL)' : ''),
-    west: getPanelType('W', entry, exit, subgrid) + (getPanelType('W', entry, exit, subgrid) === 'right' ? ' (RIGHT PANEL)' : '')
+    north: getPanelType('N', entry, exit, subgrid.map(row => row.map(cell => Boolean(cell)))) + (getPanelType('N', entry, exit, subgrid.map(row => row.map(cell => Boolean(cell)))) === 'right' ? ' (RIGHT PANEL)' : ''),
+    east: getPanelType('E', entry, exit, subgrid.map(row => row.map(cell => Boolean(cell)))) + (getPanelType('E', entry, exit, subgrid.map(row => row.map(cell => Boolean(cell)))) === 'right' ? ' (RIGHT PANEL)' : ''),
+    south: getPanelType('S', entry, exit, subgrid.map(row => row.map(cell => Boolean(cell)))) + (getPanelType('S', entry, exit, subgrid.map(row => row.map(cell => Boolean(cell)))) === 'right' ? ' (RIGHT PANEL)' : ''),
+    west: getPanelType('W', entry, exit, subgrid.map(row => row.map(cell => Boolean(cell)))) + (getPanelType('W', entry, exit, subgrid.map(row => row.map(cell => Boolean(cell)))) === 'right' ? ' (RIGHT PANEL)' : '')
   }, null, 2));
 
   console.groupEnd();
@@ -150,7 +150,7 @@ export const CladdingVisualizer = ({ cell, row, col, grid, onToggle, isEdgeExpos
               // Log panel toggle
               console.log(`Toggling panel [${row},${col}] ${edge}:`, JSON.stringify({
                 wasSelected: cell.claddingEdges.has(edge),
-                type: getPanelType(edge as CompassDirection, entry, exit, subgrid)
+                type: getPanelType(edge as CompassDirection, entry, exit, subgrid.map(row => row.map(cell => Boolean(cell))))
               }, null, 2));
               onToggle(edge);
             }}

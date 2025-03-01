@@ -35,6 +35,15 @@ export const PresetConfigs: React.FC<PresetConfigsProps> = ({ onApply }) => {
       >
         U-Shape
       </Button>
+      <Button 
+        variant="outline"
+        className='text-xs md:text-sm font-semibold bg-white'
+        onClick={() => onApply('dual-lines')}
+        data-testid="preset-dual-lines"
+        aria-label="Apply dual horizontal lines configuration"
+      >
+        Dual Lines
+      </Button>
     </div>
   );
 };

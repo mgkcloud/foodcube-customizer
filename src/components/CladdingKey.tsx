@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { PANEL_COLORS } from '@/constants/colors';
 
 const CONNECTOR_COLORS = {
@@ -80,6 +80,46 @@ interface CladdingKeyProps {
 export const CladdingKey: React.FC<CladdingKeyProps> = ({ requirements }) => {
   console.log("CladdingKey received requirements:", JSON.stringify(requirements, null, 2));
   
+  // Enhanced logging to track requirements updates
+  useEffect(() => {
+    const timestamp = new Date().toISOString();
+    console.log(`[${timestamp}] CladdingKey requirements UPDATED:`, JSON.stringify(requirements, null, 2));
+    
+    // Store the previous requirements in a data attribute for debugging
+    if (typeof document !== 'undefined') {
+      const prevReqs = document.getElementById('cladding-key-requirements-history');
+      if (!prevReqs) {
+        const historyElement = document.createElement('div');
+        historyElement.id = 'cladding-key-requirements-history';
+        historyElement.style.display = 'none';
+        document.body.appendChild(historyElement);
+      }
+      
+      // Add the current requirements to the history
+      const historyElement = document.getElementById('cladding-key-requirements-history');
+      if (historyElement) {
+        const history = historyElement.getAttribute('data-history') || '[]';
+        try {
+          const historyArray = JSON.parse(history);
+          historyArray.push({ timestamp, requirements });
+          // Keep only the last 10 updates
+          const trimmedHistory = historyArray.slice(-10);
+          historyElement.setAttribute('data-history', JSON.stringify(trimmedHistory));
+        } catch (e) {
+          console.error('Error updating requirements history:', e);
+        }
+      }
+    }
+  }, [
+    requirements.fourPackRegular,
+    requirements.twoPackRegular,
+    requirements.sidePanels,
+    requirements.leftPanels,
+    requirements.rightPanels,
+    requirements.straightCouplings,
+    requirements.cornerConnectors
+  ]);
+  
   // Calculate total panels of each type (including those in packages)
   const totalSidePanels = requirements.sidePanels + (requirements.fourPackRegular * 2) + (requirements.twoPackRegular * 2);
   const totalLeftPanels = requirements.leftPanels + requirements.fourPackRegular;
@@ -107,9 +147,40 @@ export const CladdingKey: React.FC<CladdingKeyProps> = ({ requirements }) => {
     totalRightPanels
   });
   
-  // If this is an L-shape, add special debugging
-  if (requirements.cornerConnectors === 1 && requirements.straightCouplings === 1) {
+  // Determine the configuration type based on the requirements
+  let configurationType = "unknown";
+  
+  // Single cube (4 edges): 1 four-pack (2 side + 1 left + 1 right)
+  if (requirements.fourPackRegular === 1 && 
+      requirements.twoPackRegular === 0 && 
+      requirements.straightCouplings === 0 && 
+      requirements.cornerConnectors === 0) {
+    configurationType = "single";
+  }
+  // Three cubes in line (8 edges): 1 four-pack, 2 two-packs, 2 straight couplings
+  else if (requirements.fourPackRegular === 1 && 
+      requirements.twoPackRegular === 2 && 
+      requirements.straightCouplings === 2 && 
+      requirements.cornerConnectors === 0) {
+    configurationType = "line";
+  }
+  // L-shaped (8 edges): 1 four-pack, 1 left, 2 two-packs, 1 corner connector, 1 straight coupling
+  else if (requirements.cornerConnectors === 1 && 
+      requirements.straightCouplings === 1) {
+    configurationType = "l-shape";
     console.log("L-SHAPE CONFIGURATION DETECTED - Special panel distribution may apply");
+  }
+  // U-shaped (12 edges): 1 four-pack, 2 two-packs, 2 corner connectors, 2 straight couplings
+  else if (requirements.cornerConnectors === 2 && 
+      requirements.straightCouplings === 2) {
+    configurationType = "u-shape";
+  }
+  // Dual-lines: 2 four-packs, 2 two-packs, 0 corner connectors, 2 straight couplings
+  else if (requirements.straightCouplings === 2 && 
+      requirements.cornerConnectors === 0 && 
+      requirements.fourPackRegular === 2) {
+    configurationType = "dual-lines";
+    console.log("DUAL-LINES CONFIGURATION DETECTED - Multiple independent irrigation paths");
   }
   
   // Create a debug element with all the requirements values
@@ -124,6 +195,7 @@ export const CladdingKey: React.FC<CladdingKeyProps> = ({ requirements }) => {
         left: totalLeftPanels,
         right: totalRightPanels
       }));
+      debugElement.setAttribute('data-configuration-type', configurationType);
       
       // Remove any existing debug element
       const existingDebug = document.getElementById('debug-requirements');
@@ -133,7 +205,7 @@ export const CladdingKey: React.FC<CladdingKeyProps> = ({ requirements }) => {
       
       document.body.appendChild(debugElement);
     }
-  }, [requirements, totalSidePanels, totalLeftPanels, totalRightPanels]);
+  }, [requirements, totalSidePanels, totalLeftPanels, totalRightPanels, configurationType]);
   
   return (
     <div className="bg-white p-2 sm:p-4 rounded-lg shadow-sm text-xs sm:text-sm" data-testid="cladding-key">
@@ -209,6 +281,11 @@ export const CladdingKey: React.FC<CladdingKeyProps> = ({ requirements }) => {
           <h4 className="font-bold mb-1">Raw Requirements (Packages)</h4>
           <pre className="mb-3">
             {JSON.stringify(requirements, null, 2)}
+          </pre>
+          
+          <h4 className="font-bold mb-1">Configuration Type</h4>
+          <pre className="mb-3">
+            {configurationType}
           </pre>
           
           <h4 className="font-bold mb-1">Total Panel Counts</h4>

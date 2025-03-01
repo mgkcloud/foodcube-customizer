@@ -117,87 +117,83 @@ export const CONFIGURATION_RULES = {
 } as const;
 
 /**
- * Determines the type of panel needed for a given edge based on pipe position
- * 
- * The key rules are:
- * 1. If a red block is on the left side of the face (when looking at the cube from that direction), it's a RIGHT panel
- * 2. If a red block is on the right side of the face (when looking at the cube from that direction), it's a LEFT panel
- * 3. If both or neither subgrid cells touching the edge have red blocks, it's a SIDE panel
- * 
- * This is consistent regardless of the overall configuration shape
+ * Determine the panel type (side, left, right) for a given edge based on
+ * irrigation flow through the cube.
+ * Uses ultra-compact logging to reduce verbosity.
  */
-export function getPanelType(
+export const getPanelType = (
   edge: CompassDirection,
   entry: CompassDirection | null,
   exit: CompassDirection | null,
   subgrid?: boolean[][]
-): 'side' | 'left' | 'right' {
-  // Special case for single cube without flow - maintain 1 left, 1 right, 2 side panels
+): 'side' | 'left' | 'right' => {
+  // For a single cube (no entry or exit), assign specific panels based on known configuration
   if (!entry && !exit) {
-    console.log(`No flow for edge ${edge}, using standard single cube panel assignment`);
-    // Default assignment for a single cube: N=side, E=right, S=side, W=left
-    switch (edge) {
-      case 'N': return 'side';
-      case 'E': return 'right';
-      case 'S': return 'side';
-      case 'W': return 'left';
+    // Use the single cube panel assignment from ground truth
+    // In a single cube, N and S are side panels, W is left, E is right
+    if (edge === 'N' || edge === 'S') {
+      return 'side';
+    } else if (edge === 'W') {
+      return 'left';
+    } else if (edge === 'E') {
+      return 'right';
     }
   }
-
-  // If no subgrid information, default to side panel
-  if (!subgrid) {
-    console.log(`No subgrid for edge ${edge}, defaulting to SIDE panel`);
-    return 'side';
+  
+  // If we have subgrid data, use it for more accurate panel type determination
+  if (subgrid) {
+    return determineTypeBySugrid(edge, subgrid);
   }
+  
+  // Ultra-compact version of determining panel types for connected cubes
+  // The irrigation pathway creates a virtual subgrid that determines the panel type
+  const isLeftPanel = (edge === entry && ['N', 'E'].includes(exit!)) ||
+                     (edge === exit && ['S', 'W'].includes(entry!));
+  
+  const isRightPanel = (edge === entry && ['S', 'W'].includes(exit!)) ||
+                      (edge === exit && ['N', 'E'].includes(entry!));
+  
+  // Ultra-compact logging
+  if (edge === entry || edge === exit) {
+    console.log(`P[${edge}:${entry}→${exit}]:${isLeftPanel ? 'L' : isRightPanel ? 'R' : 'S'}`);
+  }
+  
+  if (isLeftPanel) return 'left';
+  if (isRightPanel) return 'right';
+  return 'side';
+};
 
-  // Based on the edge direction, determine which subgrid cells to check
-  let leftCell: [number, number] | null = null;
-  let rightCell: [number, number] | null = null;
-
+/**
+ * Helper function to determine panel type based on subgrid
+ */
+function determineTypeBySugrid(edge: CompassDirection, subgrid: boolean[][]): 'side' | 'left' | 'right' {
+  // Determine left and right cells for this edge's subgrid
+  let leftCell = false;
+  let rightCell = false;
+  
   switch (edge) {
     case 'N':
-      leftCell = [0, 0];  // Top-left
-      rightCell = [0, 1]; // Top-right
+      leftCell = subgrid[0][0];
+      rightCell = subgrid[0][1];
       break;
     case 'E':
-      leftCell = [0, 1];  // Top-right
-      rightCell = [1, 1]; // Bottom-right
+      leftCell = subgrid[0][1];
+      rightCell = subgrid[1][1];
       break;
     case 'S':
-      leftCell = [1, 1];  // Bottom-right
-      rightCell = [1, 0]; // Bottom-left
+      leftCell = subgrid[1][1];
+      rightCell = subgrid[1][0];
       break;
     case 'W':
-      leftCell = [1, 0];  // Bottom-left
-      rightCell = [0, 0]; // Top-left
+      leftCell = subgrid[1][0];
+      rightCell = subgrid[0][0];
       break;
   }
-
-  if (!leftCell || !rightCell) {
-    console.log(`Could not determine subgrid cells for edge ${edge}, defaulting to SIDE panel`);
-    return 'side';
-  }
-
-  const [leftRow, leftCol] = leftCell;
-  const [rightRow, rightCol] = rightCell;
-
-  const leftHasRedBlock = subgrid[leftRow][leftCol];
-  const rightHasRedBlock = subgrid[rightRow][rightCol];
-
-  console.log(`Edge ${edge} subgrid analysis:
-    - Left cell [${leftRow},${leftCol}]: ${leftHasRedBlock ? 'RED' : 'EMPTY'}
-    - Right cell [${rightRow},${rightCol}]: ${rightHasRedBlock ? 'RED' : 'EMPTY'}`);
-
-  if (leftHasRedBlock && !rightHasRedBlock) {
-    console.log(`Edge ${edge} has RED block on LEFT side, assigning RIGHT panel`);
-    return 'right';
-  } else if (!leftHasRedBlock && rightHasRedBlock) {
-    console.log(`Edge ${edge} has RED block on RIGHT side, assigning LEFT panel`);
-    return 'left';
-  } else {
-    console.log(`Edge ${edge} has ${leftHasRedBlock && rightHasRedBlock ? 'BOTH' : 'NO'} red blocks, assigning SIDE panel`);
-    return 'side';
-  }
+  
+  if (leftCell && rightCell) return 'side';
+  if (leftCell) return 'right';
+  if (rightCell) return 'left';
+  return 'side';
 }
 
 /**

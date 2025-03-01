@@ -68,12 +68,13 @@ export const isStraightFlow = (entry: CompassDirection | null, exit: CompassDire
  * the natural direction to the next cube
  */
 export const countCornerConnectors = (path: PathCube[]): number => {
-  console.log("Analyzing path for corner connectors:", path);
+  console.log("Analyzing path for corner connectors:", path.map(c => `[${c.row},${c.col}]${c.entry}→${c.exit}`).join(', '));
   
   let cornerCount = 0;
   
   // We need at least 2 cubes to have any connections
   if (path.length < 2) {
+    console.log("Path too short for corner detection");
     return 0;
   }
   
