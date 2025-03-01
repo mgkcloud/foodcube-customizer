@@ -12,6 +12,7 @@ export interface GridCell {
   hasCube: boolean;
   type: string;
   claddingEdges: Set<CompassDirection>;
+  excludedCladdingEdges: Set<CompassDirection>;
   connections: CubeConnection;
   rotation: 0 | 90 | 180 | 270;
   subgrid?: { subgridRow: number; subgridCol: number }[];

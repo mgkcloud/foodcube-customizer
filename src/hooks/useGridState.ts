@@ -19,6 +19,7 @@ const initializeGrid = (): GridCell[][] => {
       row: rowIndex,
       col: colIndex,
       claddingEdges: new Set<CompassDirection>(),
+      excludedCladdingEdges: new Set<CompassDirection>(),
       connections: { entry: null, exit: null },
       id: `cell-${rowIndex}-${colIndex}`,
       type: 'standard',
@@ -192,9 +193,12 @@ const useGridState = () => {
         gridRow.map((cell, colIndex) => {
           // Convert Set to array and back to handle JSON serialization
           const claddingEdges = new Set([...cell.claddingEdges]);
+          // Also preserve the excludedCladdingEdges set
+          const excludedCladdingEdges = new Set([...cell.excludedCladdingEdges || []]);
           return {
             ...cell,
             claddingEdges, // Use the converted Set
+            excludedCladdingEdges, // Include the excludedCladdingEdges
             row: rowIndex,
             col: colIndex
           };
@@ -259,10 +263,14 @@ const useGridState = () => {
           if (newGrid[r][c].hasCube) {
             const edges: CompassDirection[] = ['N', 'E', 'S', 'W'];
             edges.forEach(edge => {
-              if (!hasAdjacentCube(newGrid, r, c, edge)) {
+              // Only add cladding if the edge is exposed AND not in the excluded list
+              if (!hasAdjacentCube(newGrid, r, c, edge) && !newGrid[r][c].excludedCladdingEdges?.has(edge)) {
                 newGrid[r][c].claddingEdges.add(edge);
               } else {
-                newGrid[r][c].claddingEdges.delete(edge);
+                // Only delete if not excluded, to avoid removing manually toggled edges
+                if (!newGrid[r][c].excludedCladdingEdges?.has(edge)) {
+                  newGrid[r][c].claddingEdges.delete(edge);
+                }
               }
             });
           }
@@ -289,20 +297,51 @@ const useGridState = () => {
     // Clear console before toggling cladding
     console.clear();
     
+    console.log(`Starting toggleCladding at [${row},${col}], edge: ${edge}`);
+    console.log(`Initial cell state:`, {
+      hasCube: grid[row][col].hasCube,
+      claddingEdges: [...grid[row][col].claddingEdges],
+      excludedCladdingEdges: [...(grid[row][col].excludedCladdingEdges || [])]
+    });
+    
     // First create a deep copy of the current grid with the toggle applied
     const updatedGrid = grid.map(gridRow => 
       gridRow.map(cell => ({
         ...cell,
-        claddingEdges: new Set([...cell.claddingEdges])
+        claddingEdges: new Set([...cell.claddingEdges]),
+        excludedCladdingEdges: new Set([...cell.excludedCladdingEdges || []])
       }))
     );
     
     // Apply the toggle to our copy
     if (updatedGrid[row][col].claddingEdges.has(edge)) {
+      console.log(`Removing cladding at edge ${edge}`);
       updatedGrid[row][col].claddingEdges.delete(edge);
+      
+      // If this is an exposed edge, add it to excluded edges to prevent auto-cladding
+      if (!hasAdjacentCube(updatedGrid, row, col, edge)) {
+        console.log(`This is an exposed edge with no adjacent cube`);
+        updatedGrid[row][col].excludedCladdingEdges.add(edge);
+        console.log(`Added edge ${edge} to excludedCladdingEdges to prevent auto-cladding`);
+      } else {
+        console.log(`This edge has an adjacent cube, not adding to excludedCladdingEdges`);
+      }
     } else {
+      console.log(`Adding cladding at edge ${edge}`);
       updatedGrid[row][col].claddingEdges.add(edge);
+      
+      // If this was a previously excluded edge, remove it from excluded list
+      if (updatedGrid[row][col].excludedCladdingEdges.has(edge)) {
+        updatedGrid[row][col].excludedCladdingEdges.delete(edge);
+        console.log(`Removed edge ${edge} from excludedCladdingEdges`);
+      }
     }
+    
+    console.log(`Updated cell state:`, {
+      hasCube: updatedGrid[row][col].hasCube,
+      claddingEdges: [...updatedGrid[row][col].claddingEdges],
+      excludedCladdingEdges: [...updatedGrid[row][col].excludedCladdingEdges]
+    });
     
     // Update the grid
     setGrid(updatedGrid);
@@ -312,10 +351,10 @@ const useGridState = () => {
     setRequirements(newRequirements);
     
     // Log the changes
-    console.log(`Toggled cladding at [${row},${col}], edge: ${edge}`);
+    console.log(`Completed toggleCladding at [${row},${col}], edge: ${edge}`);
     console.log("Updated requirements:", newRequirements);
     logGridState(updatedGrid, newRequirements);
-  }, [grid, calculateRequirements]);
+  }, [grid, calculateRequirements, hasAdjacentCube]);
 
   // Apply a preset configuration
   const applyPreset = useCallback((preset: string) => {

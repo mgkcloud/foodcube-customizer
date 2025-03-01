@@ -325,29 +325,12 @@ export const calculateFlowPathPanels = (
           
           // Get exposed edges (panels)
           for (let edge of ['N', 'S', 'E', 'W'] as CompassDirection[]) {
-            // Check if this edge has an adjacent cube
-            let hasAdjacentCube = false;
-            let adjacentRow = row;
-            let adjacentCol = col;
-            
-            switch (edge) {
-              case 'N': adjacentRow--; break;
-              case 'S': adjacentRow++; break;
-              case 'E': adjacentCol++; break;
-              case 'W': adjacentCol--; break;
-            }
-            
-            // Check if adjacent cell is within grid bounds and has a cube
-            if (
-              adjacentRow >= 0 && adjacentRow < grid.length &&
-              adjacentCol >= 0 && adjacentCol < grid[0].length &&
-              grid[adjacentRow][adjacentCol].hasCube
-            ) {
-              hasAdjacentCube = true;
-            }
-            
-            // If no adjacent cube, this is an exposed edge needing a panel
-            if (!hasAdjacentCube) {
+            // Only consider edges that are in the claddingEdges set
+            // This respects when users toggle cladding off on specific edges
+            if (grid[row][col].claddingEdges.has(edge)) {
+              // Log the cladding edge we're processing
+              console.log(`Processing cladding edge [${row},${col}:${edge}] from claddingEdges set`);
+              
               // Determine panel type based on edge and flow direction
               const panelType = analyzeEdgeForPanelType(edge, entry, exit, pipeConfig.subgrid);
               
@@ -362,6 +345,8 @@ export const calculateFlowPathPanels = (
               if (debugFlags.SHOW_REQUIREMENTS_CALC) {
                 console.log(`Panel at [${row},${col}:${edge}] = ${panelType}`);
               }
+            } else {
+              console.log(`Skipping edge [${row},${col}:${edge}] - not in claddingEdges set`);
             }
           }
         }

@@ -11,6 +11,7 @@ export const createEmptyCell = (): GridCell => ({
   type: 'empty',
   connections: { entry: null, exit: null },
   claddingEdges: new Set<CompassDirection>(),
+  excludedCladdingEdges: new Set<CompassDirection>(),
   rotation: 0
 });
 
@@ -35,6 +36,7 @@ export const createCubeCell = (
   type: 'cube',
   connections,
   claddingEdges: new Set(edges),
+  excludedCladdingEdges: new Set<CompassDirection>(),
   rotation: connections.entry ? ROTATION_MAP[connections.entry] : 0
 });
 
@@ -60,6 +62,7 @@ export const createFlowCell = (entry: CompassDirection, exit: CompassDirection):
     type: 'flow-cube',
     connections: { entry, exit },
     claddingEdges,
+    excludedCladdingEdges: new Set<CompassDirection>(),
     rotation
   };
 };

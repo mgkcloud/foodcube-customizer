@@ -20,7 +20,11 @@ describe('calculateRequirements', () => {
   };
   const createEmptyGrid = (): GridCell[][] => {
     return Array(3).fill(null).map(() => 
-      Array(3).fill(null).map(() => ({ hasCube: false, claddingEdges: new Set() }))
+      Array(3).fill(null).map(() => ({ 
+        hasCube: false, 
+        claddingEdges: new Set(),
+        excludedCladdingEdges: new Set() 
+      }))
     );
   };
 

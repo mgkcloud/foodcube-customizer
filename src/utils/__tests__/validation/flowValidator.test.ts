@@ -11,7 +11,8 @@ const createGridCell = (hasCube: boolean = false, row: number = 0, col: number =
   connections: { entry: null, exit: null },
   rotation: 0,
   type: 'standard',
-  claddingEdges: new Set()
+  claddingEdges: new Set(),
+  excludedCladdingEdges: new Set()
 });
 
 // Helper to create an empty test grid
