@@ -330,7 +330,7 @@ export const CladdingKey: React.FC<CladdingKeyProps> = ({ requirements, showDebu
       </div>
       
       {/* Improved product list with clear categorization - optimized for mobile */}
-      <div className="space-y-2 sm:space-y-3 bg-gray-50/70 rounded-lg p-1.5 sm:p-2.5" data-testid="all-products-container">
+      <div className="w-fit space-y-2 sm:space-y-3 bg-gray-50/70 rounded-lg p-1.5 sm:p-2.5" data-testid="all-products-container">
         {allProducts.length > 0 ? (
           <>
             {/* Panel Packs Section - more compact */}
