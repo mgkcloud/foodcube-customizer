@@ -258,6 +258,14 @@ export const FoodcubeConfigurator: React.FC<FoodcubeConfiguratorProps> = ({ vari
       onApply(selections);
     }
     
+    // Clear the grid after applying - similar to handleClearGrid
+    console.log("Clearing grid configuration after apply");
+    clearGrid();
+    
+    // Reset state
+    setHasInteracted(false);
+    resetPresetState();
+    
     // If onClose callback is provided, call it to close the modal
     if (onClose) {
       onClose();
