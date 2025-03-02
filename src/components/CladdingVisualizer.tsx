@@ -137,8 +137,8 @@ export const CladdingVisualizer = ({ cell, row, col, grid, onToggle, isEdgeExpos
             className={cn(
               'absolute pointer-events-auto cursor-pointer',
               {
-                'w-2/3 h-2': ['N', 'S'].includes(edge),
-                'h-2/3 w-2': ['W', 'E'].includes(edge),
+                'w-2/3 h-4': ['N', 'S'].includes(edge),
+                'h-2/3 w-4': ['W', 'E'].includes(edge),
                 'top-0': edge === 'N',
                 'bottom-0': edge === 'S',
                 'left-0': edge === 'W',

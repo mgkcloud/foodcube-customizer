@@ -11,7 +11,7 @@ export const PresetConfigs: React.FC<PresetConfigsProps> = ({ onApply }) => {
     <div className="flex flex-wrap justify-center gap-3 sm:gap-4" data-testid="preset-configs">
       <Button 
         variant="outline"
-        className="text-xs sm:text-xs md:text-sm font-semibold px-3 py-2 sm:px-4 sm:py-3 rounded-xl bg-gradient-to-br from-white to-blue-50 hover:from-blue-50 hover:to-blue-100 transition-all duration-300 border-blue-200 hover:border-blue-400 shadow-md hover:shadow-lg text-blue-900 min-w-[95px] sm:min-w-[120px] md:min-w-[140px] h-[70px] sm:h-[70px] transform hover:scale-105"
+        className="text-xs sm:text-sm md:text-base font-semibold px-3 py-2 sm:px-4 sm:py-3 rounded-xl bg-gradient-to-br from-white to-blue-50 hover:from-blue-50 hover:to-blue-100 transition-all duration-300 border-blue-200 hover:border-blue-400 shadow-md hover:shadow-lg text-blue-900 min-w-[95px] sm:min-w-[120px] md:min-w-[140px] h-[70px] sm:h-[70px] transform hover:scale-105"
         style={{ 
           boxShadow: '0 4px 15px -2px rgba(18, 159, 206, 0.15), 0 2px 8px -2px rgba(18, 159, 206, 0.1)'
         }}
@@ -33,7 +33,7 @@ export const PresetConfigs: React.FC<PresetConfigsProps> = ({ onApply }) => {
       
       <Button 
         variant="outline"
-        className="text-xs sm:text-xs md:text-sm font-semibold px-3 py-2 sm:px-4 sm:py-3 rounded-xl bg-gradient-to-br from-white to-blue-50 hover:from-blue-50 hover:to-blue-100 transition-all duration-300 border-blue-200 hover:border-blue-400 shadow-md hover:shadow-lg text-blue-900 min-w-[95px] sm:min-w-[120px] md:min-w-[140px] h-[70px] sm:h-[70px] transform hover:scale-105"
+        className="text-xs sm:text-sm md:text-base font-semibold px-3 py-2 sm:px-4 sm:py-3 rounded-xl bg-gradient-to-br from-white to-blue-50 hover:from-blue-50 hover:to-blue-100 transition-all duration-300 border-blue-200 hover:border-blue-400 shadow-md hover:shadow-lg text-blue-900 min-w-[95px] sm:min-w-[120px] md:min-w-[140px] h-[70px] sm:h-[70px] transform hover:scale-105"
         style={{ 
           boxShadow: '0 4px 15px -2px rgba(18, 159, 206, 0.15), 0 2px 8px -2px rgba(18, 159, 206, 0.1)'
         }}
@@ -55,7 +55,7 @@ export const PresetConfigs: React.FC<PresetConfigsProps> = ({ onApply }) => {
       
       <Button 
         variant="outline"
-        className="text-xs sm:text-xs md:text-sm font-semibold px-3 py-2 sm:px-4 sm:py-3 rounded-xl bg-gradient-to-br from-white to-blue-50 hover:from-blue-50 hover:to-blue-100 transition-all duration-300 border-blue-200 hover:border-blue-400 shadow-md hover:shadow-lg text-blue-900 min-w-[95px] sm:min-w-[120px] md:min-w-[140px] h-[70px] sm:h-[70px] transform hover:scale-105"
+        className="text-xs sm:text-sm md:text-base font-semibold px-3 py-2 sm:px-4 sm:py-3 rounded-xl bg-gradient-to-br from-white to-blue-50 hover:from-blue-50 hover:to-blue-100 transition-all duration-300 border-blue-200 hover:border-blue-400 shadow-md hover:shadow-lg text-blue-900 min-w-[95px] sm:min-w-[120px] md:min-w-[140px] h-[70px] sm:h-[70px] transform hover:scale-105"
         style={{ 
           boxShadow: '0 4px 15px -2px rgba(18, 159, 206, 0.15), 0 2px 8px -2px rgba(18, 159, 206, 0.1)'
         }}
@@ -79,7 +79,7 @@ export const PresetConfigs: React.FC<PresetConfigsProps> = ({ onApply }) => {
       
       <Button 
         variant="outline"
-        className="text-xs sm:text-xs md:text-sm font-semibold px-3 py-2 sm:px-4 sm:py-3 rounded-xl bg-gradient-to-br from-white to-blue-50 hover:from-blue-50 hover:to-blue-100 transition-all duration-300 border-blue-200 hover:border-blue-400 shadow-md hover:shadow-lg text-blue-900 min-w-[95px] sm:min-w-[120px] md:min-w-[140px] h-[70px] sm:h-[70px] transform hover:scale-105"
+        className="text-xs sm:text-sm md:text-base font-semibold px-3 py-2 sm:px-4 sm:py-3 rounded-xl bg-gradient-to-br from-white to-blue-50 hover:from-blue-50 hover:to-blue-100 transition-all duration-300 border-blue-200 hover:border-blue-400 shadow-md hover:shadow-lg text-blue-900 min-w-[95px] sm:min-w-[120px] md:min-w-[140px] h-[70px] sm:h-[70px] transform hover:scale-105"
         style={{ 
           boxShadow: '0 4px 15px -2px rgba(18, 159, 206, 0.15), 0 2px 8px -2px rgba(18, 159, 206, 0.1)'
         }}

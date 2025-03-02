@@ -68,10 +68,10 @@ const FloatingActionButtons = ({
         data-testid="mobile-clear-button"
         aria-label="Clear configuration"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className='mx-auto'>
+        {/* <svg xmlns="http://www.w3.org/2000/svg" width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className='mx-auto'>
           <path d="M18 6L6 18"></path>
           <path d="M6 6l12 12"></path>
-        </svg>
+        </svg> */}
         <span className="text-lg w-full mx-auto font-extrabold mb-2 uppercase tracking-wide text-gray-500">CLEAR</span>
 
       </button>
@@ -317,14 +317,14 @@ export const FoodcubeConfigurator: React.FC<FoodcubeConfiguratorProps> = ({ vari
               />
               
               {/* Main title with specified color and Montserrat font */}
-              <h2 className="text-xl sm:text-2xl font-bold tracking-tight" 
+              <h2 className="text-2xl sm:text-2xl font-bold tracking-tight" 
                   style={{ fontFamily: 'Montserrat, sans-serif', color: '#374151 !important' }}>
                 Garden Designer
               </h2>
             </div>
             
             {/* Smaller subtitle with Montserrat font and specified color */}
-            <p className="text-xs font-medium mt-1"
+            <p className="text-sm font-medium mt-1"
                style={{ fontFamily: 'Montserrat, sans-serif', color: '#374151 !important' }}>
               Create your perfect garden configuration
             </p>
@@ -380,7 +380,7 @@ export const FoodcubeConfigurator: React.FC<FoodcubeConfiguratorProps> = ({ vari
             {/* Requirements panel */}
             <div className="lg:col-span-5 space-y-3" data-testid="requirements-panel">
               {/* Desktop order (hidden on mobile) */}
-              <div className="hidden lg:block space-y-3">
+              <div className="hidden lg:!block space-y-3">
                 {/* Cladding Key */}
                 <div className="transition-all duration-300 ease-in-out">
                   <CladdingKey requirements={requirements} showDebug={debugMode} />
@@ -390,7 +390,7 @@ export const FoodcubeConfigurator: React.FC<FoodcubeConfiguratorProps> = ({ vari
                 {hasInteracted && (
                   <div className="bg-white p-3 sm:p-4 rounded-xl shadow-sm border border-gray-100" data-testid="side-presets-desktop">
                     <div className="mb-1 sm:mb-2">
-                      <h3 className="text-sm sm:text-base md:text-lg font-bold text-gray-700 flex items-center" data-testid="presets-heading">
+                      <h3 className="text-sm sm:text-lg md:text-xl font-bold text-gray-700 flex items-center" data-testid="presets-heading">
                         <span className="bg-gray-100 w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center mr-1.5">
                           <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" className="sm:w-3.5 sm:h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
@@ -414,7 +414,7 @@ export const FoodcubeConfigurator: React.FC<FoodcubeConfiguratorProps> = ({ vari
                 {hasInteracted && (
                   <div className="bg-white p-3 sm:p-4 rounded-xl shadow-sm border border-gray-100" data-testid="side-presets-mobile">
                     <div className="mb-1 sm:mb-2">
-                      <h3 className="text-sm sm:text-base md:text-lg font-bold text-gray-700 flex items-center" data-testid="presets-heading-mobile">
+                      <h3 className="text-sm sm:text-lg md:text-xl font-bold text-gray-700 flex items-center" data-testid="presets-heading-mobile">
                         <span className="bg-gray-100 w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center mr-1.5">
                           <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" className="sm:w-3.5 sm:h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>

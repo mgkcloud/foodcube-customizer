@@ -33,11 +33,11 @@ const KeyItem: React.FC<KeyItemProps> = ({ color, label, count, icon, descriptio
     ) : null}
     <span className="text-gray-800 font-medium text-sm sm:text-base" data-testid={`label-${label.toLowerCase()}`}>{label}</span>
     {count !== undefined && (
-      <span className="ml-auto text-xs sm:text-sm font-medium px-2 py-0.5 bg-gray-100 rounded-full text-gray-700" data-testid={`count-${label.toLowerCase()}`}>{count}</span>
+      <span className="ml-auto text-sm sm:text-sm font-medium px-2 py-0.5 bg-gray-100 rounded-full text-gray-700" data-testid={`count-${label.toLowerCase()}`}>{count}</span>
     )}
     {description && (
       <div 
-        className="hidden group-hover:block absolute left-0 sm:left-full top-full sm:top-auto sm:ml-2 bg-gray-800 text-white text-xs sm:text-sm p-2 rounded-md whitespace-nowrap z-10 max-w-[200px] sm:max-w-[250px] shadow-lg"
+        className="hidden group-hover:block absolute left-0 sm:left-full top-full sm:top-auto sm:ml-2 bg-gray-800 text-white text-sm sm:text-sm p-2 rounded-md whitespace-nowrap z-10 max-w-[200px] sm:max-w-[250px] shadow-lg"
         data-testid={`description-${label.toLowerCase()}`}
       >
         {description}
@@ -68,7 +68,7 @@ const ProductItem: React.FC<ProductItemProps> = ({ label, count, description, co
     <div className="flex flex-col">
       <span className="text-gray-800 font-semibold text-sm sm:text-base" data-testid={`product-label-${label.toLowerCase().replace(/\s+/g, '-')}`}>{label}</span>
       {description && (
-        <span className="text-xs sm:text-sm text-gray-500 leading-tight" data-testid={`product-description-${label.toLowerCase().replace(/\s+/g, '-')}`}>{description}</span>
+        <span className="text-sm sm:text-sm text-gray-500 leading-tight" data-testid={`product-description-${label.toLowerCase().replace(/\s+/g, '-')}`}>{description}</span>
       )}
     </div>
     <span className="ml-auto text-sm sm:text-base font-semibold px-2 py-0.5 bg-blue-50 rounded-full text-blue-700 min-w-[2.5rem] sm:min-w-[3rem] text-center" data-testid={`product-count-${label.toLowerCase().replace(/\s+/g, '-')}`}>
@@ -76,7 +76,7 @@ const ProductItem: React.FC<ProductItemProps> = ({ label, count, description, co
     </span>
     {description && (
       <div 
-        className="hidden group-hover:block absolute left-0 sm:left-full top-full sm:top-auto sm:ml-2 bg-gray-800 text-white text-xs sm:text-sm p-2 rounded-md z-10 max-w-[200px] sm:max-w-[250px] shadow-lg"
+        className="hidden group-hover:block absolute left-0 sm:left-full top-full sm:top-auto sm:ml-2 bg-gray-800 text-white   sm:text-sm p-2 rounded-md z-10 max-w-[200px] sm:max-w-[250px] shadow-lg"
       >
         {description}
       </div>
@@ -145,27 +145,27 @@ export const CladdingKey: React.FC<CladdingKeyProps> = ({ requirements, showDebu
   const totalLeftPanels = requirements.leftPanels + requirements.fourPackRegular;
   const totalRightPanels = requirements.rightPanels + requirements.fourPackRegular;
   
-  console.log("PANEL COUNT DEBUG:");
-  console.log("- Raw panel counts from requirements:", {
-    sidePanels: requirements.sidePanels,
-    leftPanels: requirements.leftPanels,
-    rightPanels: requirements.rightPanels
-  });
-  console.log("- Package counts:", {
-    fourPackRegular: requirements.fourPackRegular,
-    twoPackRegular: requirements.twoPackRegular
-  });
-  console.log("- Panels contributed by packages:", {
-    sideFromFourPack: requirements.fourPackRegular * 2,
-    sideFromTwoPack: requirements.twoPackRegular * 2,
-    leftFromFourPack: requirements.fourPackRegular,
-    rightFromFourPack: requirements.fourPackRegular
-  });
-  console.log("- Total calculated panel counts:", {
-    totalSidePanels,
-    totalLeftPanels,
-    totalRightPanels
-  });
+  // console.log("PANEL COUNT DEBUG:");
+  // console.log("- Raw panel counts from requirements:", {
+  //   sidePanels: requirements.sidePanels,
+  //   leftPanels: requirements.leftPanels,
+  //   rightPanels: requirements.rightPanels
+  // });
+  // console.log("- Package counts:", {
+  //   fourPackRegular: requirements.fourPackRegular,
+  //   twoPackRegular: requirements.twoPackRegular
+  // });
+  // console.log("- Panels contributed by packages:", {
+  //   sideFromFourPack: requirements.fourPackRegular * 2,
+  //   sideFromTwoPack: requirements.twoPackRegular * 2,
+  //   leftFromFourPack: requirements.fourPackRegular,
+  //   rightFromFourPack: requirements.fourPackRegular
+  // });
+  // console.log("- Total calculated panel counts:", {
+  //   totalSidePanels,
+  //   totalLeftPanels,
+  //   totalRightPanels
+  // });
   
   // Determine the configuration type based on the requirements
   let configurationType = "unknown";
@@ -188,7 +188,7 @@ export const CladdingKey: React.FC<CladdingKeyProps> = ({ requirements, showDebu
   else if (requirements.cornerConnectors === 1 && 
       requirements.straightCouplings === 1) {
     configurationType = "l-shape";
-    console.log("L-SHAPE CONFIGURATION DETECTED - Special panel distribution may apply");
+    // console.log("L-SHAPE CONFIGURATION DETECTED - Special panel distribution may apply");
   }
   // U-shaped (12 edges): 1 four-pack, 2 two-packs, 2 corner connectors, 2 straight couplings
   else if (requirements.cornerConnectors === 2 && 
@@ -200,7 +200,7 @@ export const CladdingKey: React.FC<CladdingKeyProps> = ({ requirements, showDebu
       requirements.cornerConnectors === 0 && 
       requirements.fourPackRegular === 2) {
     configurationType = "dual-lines";
-    console.log("DUAL-LINES CONFIGURATION DETECTED - Multiple independent irrigation paths");
+    // console.log("DUAL-LINES CONFIGURATION DETECTED - Multiple independent irrigation paths");
   }
   
   // Create a debug element with all the requirements values
@@ -284,11 +284,11 @@ export const CladdingKey: React.FC<CladdingKeyProps> = ({ requirements, showDebu
       {/* Header with title and status badge */}
       <div className="flex items-center justify-between mb-1 sm:mb-2">
         <div className="flex items-center">
-          <h3 className="text-base sm:text-lg md:text-xl font-bold text-gray-800" data-testid="products-heading">Required Products</h3>
+          <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-800" data-testid="products-heading">Required Products</h3>
           {hasRequirements && (
             <div className="ml-2 inline-flex items-center">
               <span className="w-2 h-2 sm:w-2.5 sm:h-2.5 bg-green-500 rounded-full mr-1"></span>
-              <span className="text-xs sm:text-sm text-blue-700">Ready</span>
+              <span className="text-sm sm:text-sm text-blue-700">Ready</span>
             </div>
           )}
         </div>
@@ -307,20 +307,20 @@ export const CladdingKey: React.FC<CladdingKeyProps> = ({ requirements, showDebu
             </svg>
           </button>
           <div 
-            className="hidden group-hover:block absolute right-0 top-full mt-1 bg-gray-800 text-white text-xs sm:text-sm p-2 rounded-md z-10 w-[220px] sm:w-[250px] shadow-lg"
+            className="hidden group-hover:block absolute right-0 top-full mt-1 bg-gray-800 text-white text-sm sm:text-md p-2 rounded-md z-10 w-[220px] sm:w-[250px] shadow-lg"
             data-testid="total-panels-tooltip"
           >
-            <p className="mb-1 font-semibold">Total Panel Requirements</p>
+            <p className="mb-1 font-semibold !text-white">Total Panel Requirements</p>
             <ul className="space-y-1">
-              <li className="flex justify-between">
+              <li className="flex justify-between !text-white">
                 <span>Side Panels:</span>
                 <span className="font-medium">{totalSidePanels}</span>
               </li>
-              <li className="flex justify-between">
+              <li className="flex justify-between !text-white">
                 <span>Left Panels:</span>
                 <span className="font-medium">{totalLeftPanels}</span>
               </li>
-              <li className="flex justify-between">
+              <li className="flex justify-between !text-white">
                 <span>Right Panels:</span>
                 <span className="font-medium">{totalRightPanels}</span>
               </li>
@@ -340,25 +340,25 @@ export const CladdingKey: React.FC<CladdingKeyProps> = ({ requirements, showDebu
                 {requirements.fourPackRegular > 0 && (
                   <div className="bg-white rounded-md p-1.5 sm:p-2.5 shadow-sm">
                     <div className="flex items-center justify-between mb-0.5 sm:mb-1">
-                      <span className="text-sm sm:text-base font-semibold text-gray-800">4-Pack</span>
-                      <span className="text-sm sm:text-base font-semibold px-2 py-0.5 bg-blue-50 rounded-full text-blue-700 min-w-[2.5rem] sm:min-w-[3rem] text-center">
+                      <span className="text-sm sm:text-md font-semibold text-gray-800">4-Pack</span>
+                      <span className="text-sm sm:text-md font-semibold px-2 py-0.5 bg-blue-50 rounded-full text-blue-700 min-w-[2.5rem] sm:min-w-[3rem] text-center">
                         {requirements.fourPackRegular}x
                       </span>
                     </div>
                     <div className="flex flex-wrap gap-1 sm:gap-2 items-center">
-                      <span className="text-xs sm:text-sm text-gray-500">Contains:</span>
+                      <span className="text-sm sm:text-md text-gray-500">Contains:</span>
                       <div className="flex flex-wrap gap-1.5 sm:gap-2">
                         <div className="flex items-center gap-1">
                           <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-sm" style={{ backgroundColor: PANEL_COLORS.side }}></div>
-                          <span className="text-xs sm:text-sm">2 side</span>
+                          <span className="text-sm sm:text-md">2 side</span>
                         </div>
                         <div className="flex items-center gap-1">
                           <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-sm" style={{ backgroundColor: PANEL_COLORS.left }}></div>
-                          <span className="text-xs sm:text-sm">1 left</span>
+                          <span className="text-sm sm:text-md">1 left</span>
                         </div>
                         <div className="flex items-center gap-1">
                           <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-sm" style={{ backgroundColor: PANEL_COLORS.right }}></div>
-                          <span className="text-xs sm:text-sm">1 right</span>
+                          <span className="text-sm sm:text-md">1 right</span>
                         </div>
                       </div>
                     </div>
@@ -369,16 +369,16 @@ export const CladdingKey: React.FC<CladdingKeyProps> = ({ requirements, showDebu
                 {requirements.twoPackRegular > 0 && (
                   <div className="bg-white rounded-md p-1.5 sm:p-2.5 shadow-sm">
                     <div className="flex items-center justify-between mb-0.5 sm:mb-1">
-                      <span className="text-sm sm:text-base font-semibold text-gray-800">2-Pack</span>
-                      <span className="text-sm sm:text-base font-semibold px-2 py-0.5 bg-blue-50 rounded-full text-blue-700 min-w-[2.5rem] sm:min-w-[3rem] text-center">
+                      <span className="text-sm sm:text-md font-semibold text-gray-800">2-Pack</span>
+                      <span className="text-sm sm:text-md font-semibold px-2 py-0.5 bg-blue-50 rounded-full text-blue-700 min-w-[2.5rem] sm:min-w-[3rem] text-center">
                         {requirements.twoPackRegular}x
                       </span>
                     </div>
                     <div className="flex items-center gap-1 sm:gap-2">
-                      <span className="text-xs sm:text-sm text-gray-500">Contains:</span>
+                      <span className="text-sm sm:text-sm text-gray-500">Contains:</span>
                       <div className="flex items-center gap-1 sm:gap-2">
                         <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-sm" style={{ backgroundColor: PANEL_COLORS.side }}></div>
-                        <span className="text-xs sm:text-sm">2 side panels</span>
+                        <span className="text-sm sm:text-sm">2 side panels</span>
                       </div>
                     </div>
                   </div>
@@ -389,18 +389,18 @@ export const CladdingKey: React.FC<CladdingKeyProps> = ({ requirements, showDebu
             {/* Additional Individual Panels Section - more compact */}
             {(requirements.sidePanels > 0 || requirements.leftPanels > 0 || requirements.rightPanels > 0) && (
               <div>
-                <div className="text-xs font-medium text-gray-500 px-1 mb-0.5">Additional Panels:</div>
+                <div className="text-sm font-medium text-gray-500 px-1 mb-0.5">Additional Panels:</div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-1">
                   {requirements.sidePanels > 0 && (
                     <div className="bg-white rounded-md p-1.5 shadow-sm flex items-center">
                       <div className="flex items-center gap-1.5 flex-1">
                         <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: PANEL_COLORS.side }}></div>
-                        <div className="text-xs">
+                        <div className="text-sm">
                           <span className="font-medium">Side Panel</span>
                           <span className="text-gray-500 ml-1">({totalSidePanels} total)</span>
                         </div>
                       </div>
-                      <span className="text-xs font-semibold px-2 py-0.5 bg-blue-50 rounded-full text-blue-700 min-w-[2rem] text-center">
+                      <span className="text-sm font-semibold px-2 py-0.5 bg-blue-50 rounded-full text-blue-700 min-w-[2rem] text-center">
                         {requirements.sidePanels}x
                       </span>
                     </div>
@@ -409,12 +409,12 @@ export const CladdingKey: React.FC<CladdingKeyProps> = ({ requirements, showDebu
                     <div className="bg-white rounded-md p-1.5 shadow-sm flex items-center">
                       <div className="flex items-center gap-1.5 flex-1">
                         <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: PANEL_COLORS.left }}></div>
-                        <div className="text-xs">
+                        <div className="text-sm">
                           <span className="font-medium">Left Panel</span>
                           <span className="text-gray-500 ml-1">({totalLeftPanels} total)</span>
                         </div>
                       </div>
-                      <span className="text-xs font-semibold px-2 py-0.5 bg-blue-50 rounded-full text-blue-700 min-w-[2rem] text-center">
+                      <span className="text-sm font-semibold px-2 py-0.5 bg-blue-50 rounded-full text-blue-700 min-w-[2rem] text-center">
                         {requirements.leftPanels}x
                       </span>
                     </div>
@@ -423,12 +423,12 @@ export const CladdingKey: React.FC<CladdingKeyProps> = ({ requirements, showDebu
                     <div className="bg-white rounded-md p-1.5 shadow-sm flex items-center">
                       <div className="flex items-center gap-1.5 flex-1">
                         <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: PANEL_COLORS.right }}></div>
-                        <div className="text-xs">
+                        <div className="text-sm">
                           <span className="font-medium">Right Panel</span>
                           <span className="text-gray-500 ml-1">({totalRightPanels} total)</span>
                         </div>
                       </div>
-                      <span className="text-xs font-semibold px-2 py-0.5 bg-blue-50 rounded-full text-blue-700 min-w-[2rem] text-center">
+                      <span className="text-sm font-semibold px-2 py-0.5 bg-blue-50 rounded-full text-blue-700 min-w-[2rem] text-center">
                         {requirements.rightPanels}x
                       </span>
                     </div>
@@ -440,14 +440,14 @@ export const CladdingKey: React.FC<CladdingKeyProps> = ({ requirements, showDebu
             {/* Connectors Section - more compact, no colors */}
             {(requirements.straightCouplings > 0 || requirements.cornerConnectors > 0) && (
               <div>
-                <div className="text-xs font-medium text-gray-500 px-1 mb-0.5">Connectors:</div>
+                <div className="text-sm font-medium text-gray-500 px-1 mb-0.5">Connectors:</div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-1">
                   {requirements.straightCouplings > 0 && (
                     <div className="bg-white rounded-md p-1.5 shadow-sm flex items-center justify-between">
                       <div className="flex flex-col">
-                        <span className="text-xs font-medium">Straight Connector</span>
+                        <span className="text-sm font-medium">Straight Connector</span>
                       </div>
-                      <span className="text-xs font-semibold px-2 py-0.5 bg-blue-50 rounded-full text-blue-700 min-w-[2rem] text-center">
+                      <span className="text-sm font-semibold px-2 py-0.5 bg-blue-50 rounded-full text-blue-700 min-w-[2rem] text-center">
                         {requirements.straightCouplings}x
                       </span>
                     </div>
@@ -455,9 +455,9 @@ export const CladdingKey: React.FC<CladdingKeyProps> = ({ requirements, showDebu
                   {requirements.cornerConnectors > 0 && (
                     <div className="bg-white rounded-md p-1.5 shadow-sm flex items-center justify-between">
                       <div className="flex flex-col">
-                        <span className="text-xs font-medium">Corner Connector</span>
+                          <span className="text-sm font-medium">Corner Connector</span>
                       </div>
-                      <span className="text-xs font-semibold px-2 py-0.5 bg-blue-50 rounded-full text-blue-700 min-w-[2rem] text-center">
+                      <span className="text-sm font-semibold px-2 py-0.5 bg-blue-50 rounded-full text-blue-700 min-w-[2rem] text-center">
                         {requirements.cornerConnectors}x
                       </span>
                     </div>
@@ -469,14 +469,14 @@ export const CladdingKey: React.FC<CladdingKeyProps> = ({ requirements, showDebu
         ) : (
           <div className="py-4 text-center text-gray-500 text-sm">
             <p>No products needed yet</p>
-            <p className="text-xs mt-1">Place food cubes on the grid</p>
+            <p className="text-sm mt-1">Place food cubes on the grid</p>
           </div>
         )}
       </div>
       
       {/* Debug Info - only shown when explicitly enabled */}
       {showDebug && (
-        <details className="mt-2 text-xs border-t border-gray-100 pt-1">
+        <details className="mt-2 text-sm border-t border-gray-100 pt-1">
           <summary className="font-semibold cursor-pointer flex items-center text-gray-500 hover:text-gray-700">
             <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1">
               <circle cx="12" cy="12" r="10"></circle>
@@ -485,7 +485,7 @@ export const CladdingKey: React.FC<CladdingKeyProps> = ({ requirements, showDebu
             </svg>
             Debug Info
           </summary>
-          <div className="mt-1 bg-gray-50 p-1 rounded-md text-xs overflow-auto">
+          <div className="mt-1 bg-gray-50 p-1 rounded-md text-sm overflow-auto">
             <h4 className="font-bold mb-1 text-gray-700">Raw Requirements</h4>
             <pre className="mb-1 bg-white p-1 rounded border border-gray-200 overflow-auto max-h-[60px]">
               {JSON.stringify(requirements, null, 2)}
@@ -506,7 +506,7 @@ export const CladdingKey: React.FC<CladdingKeyProps> = ({ requirements, showDebu
                 cornerConnectors: requirements.cornerConnectors
               }, null, 2)}
             </pre>
-            <div className="mt-1 text-xs text-gray-500">
+            <div className="mt-1 text-sm text-gray-500">
               <p>4-Pack = 2 side + 1 left + 1 right | 2-Pack = 2 side</p>
             </div>
           </div>
