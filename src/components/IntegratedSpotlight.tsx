@@ -150,13 +150,15 @@ export const IntegratedSpotlight: React.FC<IntegratedSpotlightProps> = ({
     <>
       {/* Spotlight element positioned over the target */}
       <div 
-        className="fixed transition-all duration-300 outline outline-2 outline-blue-500 pointer-events-none"
+        className="fixed transition-all duration-300 outline outline-3 outline-blue-600 pointer-events-none spotlight-border"
         style={{
           ...spotlightStyle,
           position: 'absolute',
           zIndex,
           opacity: isActive && isPositioned ? 1 : 0,
           filter: 'drop-shadow(0 0 15px rgba(59, 130, 246, 0.7))',
+          boxShadow: '0 0 0 3px rgba(59, 130, 246, 0.7), 0 0 0 6px rgba(37, 99, 235, 0.3)',
+          animation: 'pulse 2s infinite',
         }}
         data-testid="integrated-spotlight"
       >
