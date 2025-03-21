@@ -175,7 +175,7 @@ const analyzeEdgeForPanelType = (
   }
   
   // Ultra-compact edge analysis log
-  console.log(`E${edge}:${leftCell[0]}-${rightCell[0]}`);
+  // console.log(`E${edge}:${leftCell[0]}-${rightCell[0]}`);
   
   // Determine panel type
   let panelType = 'S'; // Default to side panel
@@ -212,7 +212,7 @@ const logPanelRequirements = (requirements: Requirements): void => {
   } = requirements;
   
   // Ultra-compact panel summary
-  console.log(`PANELS:${sidePanels}S ${leftPanels}L ${rightPanels}R | PKG:${fourPackRegular}×4p ${twoPackRegular}×2p | CONN:${straightCouplings}× ${cornerConnectors}∟`);
+  // console.log(`PANELS:${sidePanels}S ${leftPanels}L ${rightPanels}R | PKG:${fourPackRegular}×4p ${twoPackRegular}×2p | CONN:${straightCouplings}× ${cornerConnectors}∟`);
 };
 
 /**
@@ -398,12 +398,12 @@ export const calculateFlowPathPanels = (
       });
       
       // Final panel counts for dual-lines
-      console.log("DUAL-LINES PANEL COUNTS:");
-      console.log(`  Side panels: ${sidePanels}`);
-      console.log(`  Left panels: ${leftPanels}`);
-      console.log(`  Right panels: ${rightPanels}`);
-      console.log(`  Corner connectors: ${cornerConnectors}`);
-      console.log(`  Straight couplings: ${straightConnectors}`);
+      // console.log("DUAL-LINES PANEL COUNTS:");
+      // console.log(`  Side panels: ${sidePanels}`);
+      // console.log(`  Left panels: ${leftPanels}`);
+      // console.log(`  Right panels: ${rightPanels}`);
+      // console.log(`  Corner connectors: ${cornerConnectors}`);
+      // console.log(`  Straight couplings: ${straightConnectors}`);
     }
     
     // Pack the panels optimally based on available package sizes

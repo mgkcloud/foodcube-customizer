@@ -175,8 +175,11 @@ const useGridState = () => {
 
   // Toggle a cell's cube state
   const toggleCell = useCallback((row: number, col: number) => {
-    // Clear console before toggling cell
-    console.clear();
+    // Don't clear the console - needed for tutorial debugging
+    // console.clear();
+    
+    // Log the action for debugging the tutorial
+    console.log(`Grid action: ${grid[row][col].hasCube ? 'REMOVING' : 'ADDING'} cube at [${row}, ${col}]`);
     
     // Clear caches to ensure fresh calculation
     clearConnectedCubesCache();
@@ -210,6 +213,9 @@ const useGridState = () => {
       const isAddingCube = !targetCell.hasCube;
       targetCell.hasCube = !targetCell.hasCube;
       
+      // Immediately after toggling, log the data-has-cube update for tutorial
+      console.log(`Cell [${row}, ${col}] - data-has-cube should update to "${!isAddingCube}"`);
+    
       // Clear cladding edges if cube is removed
       if (!targetCell.hasCube) {
         targetCell.claddingEdges.clear();

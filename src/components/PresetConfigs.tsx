@@ -1,21 +1,36 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { PANEL_COLORS } from '@/constants/colors';
+import { useTutorial } from '@/contexts/TutorialContext';
 
 interface PresetConfigsProps {
   onApply: (preset: string) => void;
 }
 
 export const PresetConfigs: React.FC<PresetConfigsProps> = ({ onApply }) => {
+  const { notifyTutorial } = useTutorial();
+  
+  // Wrapped handler to notify the tutorial system
+  const handlePresetApply = (preset: string) => {
+    onApply(preset);
+    
+    // Notify tutorial of the preset application
+    notifyTutorial({
+      type: 'PRESET_APPLIED',
+      payload: {
+        presetName: preset
+      }
+    });
+  };
   return (
-    <div className="flex flex-wrap justify-center gap-3 sm:gap-4" data-testid="preset-configs">
+    <div className=" justify-center gap-3 sm:gap-4 preset-configs grid grid-cols-2 grid-rows-2" data-testid="preset-configs">
       <Button 
         variant="outline"
-        className="text-xs sm:text-sm md:text-base font-semibold px-3 py-2 sm:px-4 sm:py-3 rounded-xl bg-gradient-to-br from-white to-blue-50 hover:from-blue-50 hover:to-blue-100 transition-all duration-300 border-blue-200 hover:border-blue-400 shadow-md hover:shadow-lg text-blue-900 min-w-[95px] sm:min-w-[120px] md:min-w-[140px] h-[70px] sm:h-[70px] transform hover:scale-105"
+        className="text-xs sm:text-sm md:text-base font-semibold px-3 py-2 sm:px-4 sm:py-3 rounded-xl bg-gradient-to-br from-white to-blue-50 hover:from-blue-50 hover:to-blue-100 transition-all duration-300 border-blue-200 hover:border-blue-400 shadow-md hover:shadow-lg text-blue-900 min-w-[95px] sm:min-w-[120px] md:min-w-[140px] h-[80px] sm:h-[80px] transform hover:scale-105"
         style={{ 
           boxShadow: '0 4px 15px -2px rgba(18, 159, 206, 0.15), 0 2px 8px -2px rgba(18, 159, 206, 0.1)'
         }}
-        onClick={() => onApply('line')}
+        onClick={() => handlePresetApply('line')}
         data-testid="preset-straight"
         aria-label="Apply straight 3x1 configuration"
       >
@@ -33,11 +48,11 @@ export const PresetConfigs: React.FC<PresetConfigsProps> = ({ onApply }) => {
       
       <Button 
         variant="outline"
-        className="text-xs sm:text-sm md:text-base font-semibold px-3 py-2 sm:px-4 sm:py-3 rounded-xl bg-gradient-to-br from-white to-blue-50 hover:from-blue-50 hover:to-blue-100 transition-all duration-300 border-blue-200 hover:border-blue-400 shadow-md hover:shadow-lg text-blue-900 min-w-[95px] sm:min-w-[120px] md:min-w-[140px] h-[70px] sm:h-[70px] transform hover:scale-105"
+        className="text-xs sm:text-sm md:text-base font-semibold px-3 py-2 sm:px-4 sm:py-3 rounded-xl bg-gradient-to-br from-white to-blue-50 hover:from-blue-50 hover:to-blue-100 transition-all duration-300 border-blue-200 hover:border-blue-400 shadow-md hover:shadow-lg text-blue-900 min-w-[95px] sm:min-w-[120px] md:min-w-[140px] h-[80px] sm:h-[80px] transform hover:scale-105"
         style={{ 
           boxShadow: '0 4px 15px -2px rgba(18, 159, 206, 0.15), 0 2px 8px -2px rgba(18, 159, 206, 0.1)'
         }}
-        onClick={() => onApply('l-shape')}
+        onClick={() => handlePresetApply('l-shape')}
         data-testid="preset-l-shape"
         aria-label="Apply L-shaped configuration"
       >
@@ -55,11 +70,11 @@ export const PresetConfigs: React.FC<PresetConfigsProps> = ({ onApply }) => {
       
       <Button 
         variant="outline"
-        className="text-xs sm:text-sm md:text-base font-semibold px-3 py-2 sm:px-4 sm:py-3 rounded-xl bg-gradient-to-br from-white to-blue-50 hover:from-blue-50 hover:to-blue-100 transition-all duration-300 border-blue-200 hover:border-blue-400 shadow-md hover:shadow-lg text-blue-900 min-w-[95px] sm:min-w-[120px] md:min-w-[140px] h-[70px] sm:h-[70px] transform hover:scale-105"
+        className="text-xs sm:text-sm md:text-base font-semibold px-3 py-2 sm:px-4 sm:py-3 rounded-xl bg-gradient-to-br from-white to-blue-50 hover:from-blue-50 hover:to-blue-100 transition-all duration-300 border-blue-200 hover:border-blue-400 shadow-md hover:shadow-lg text-blue-900 min-w-[95px] sm:min-w-[120px] md:min-w-[140px] h-[80px] sm:h-[80px] transform hover:scale-105"
         style={{ 
           boxShadow: '0 4px 15px -2px rgba(18, 159, 206, 0.15), 0 2px 8px -2px rgba(18, 159, 206, 0.1)'
         }}
-        onClick={() => onApply('u-shape')}
+        onClick={() => handlePresetApply('u-shape')}
         data-testid="preset-u-shape"
         aria-label="Apply U-shaped configuration"
       >
@@ -79,11 +94,11 @@ export const PresetConfigs: React.FC<PresetConfigsProps> = ({ onApply }) => {
       
       <Button 
         variant="outline"
-        className="text-xs sm:text-sm md:text-base font-semibold px-3 py-2 sm:px-4 sm:py-3 rounded-xl bg-gradient-to-br from-white to-blue-50 hover:from-blue-50 hover:to-blue-100 transition-all duration-300 border-blue-200 hover:border-blue-400 shadow-md hover:shadow-lg text-blue-900 min-w-[95px] sm:min-w-[120px] md:min-w-[140px] h-[70px] sm:h-[70px] transform hover:scale-105"
+        className="text-xs sm:text-sm md:text-base font-semibold px-3 py-2 sm:px-4 sm:py-3 rounded-xl bg-gradient-to-br from-white to-blue-50 hover:from-blue-50 hover:to-blue-100 transition-all duration-300 border-blue-200 hover:border-blue-400 shadow-md hover:shadow-lg text-blue-900 min-w-[95px] sm:min-w-[120px] md:min-w-[140px] h-[80px] sm:h-[80px] transform hover:scale-105"
         style={{ 
           boxShadow: '0 4px 15px -2px rgba(18, 159, 206, 0.15), 0 2px 8px -2px rgba(18, 159, 206, 0.1)'
         }}
-        onClick={() => onApply('dual-lines')}
+        onClick={() => handlePresetApply('dual-lines')}
         data-testid="preset-dual-lines"
         aria-label="Apply dual horizontal lines configuration"
       >

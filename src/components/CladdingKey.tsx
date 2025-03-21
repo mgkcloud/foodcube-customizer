@@ -98,12 +98,12 @@ interface CladdingKeyProps {
 }
 
 export const CladdingKey: React.FC<CladdingKeyProps> = ({ requirements, showDebug = false }) => {
-  console.log("CladdingKey received requirements:", JSON.stringify(requirements, null, 2));
+  // console.log("CladdingKey received requirements:", JSON.stringify(requirements, null, 2));
   
   // Enhanced logging to track requirements updates
   useEffect(() => {
     const timestamp = new Date().toISOString();
-    console.log(`[${timestamp}] CladdingKey requirements UPDATED:`, JSON.stringify(requirements, null, 2));
+    // console.log(`[${timestamp}] CladdingKey requirements UPDATED:`, JSON.stringify(requirements, null, 2));
     
     // Store the previous requirements in a data attribute for debugging
     if (typeof document !== 'undefined') {
@@ -280,7 +280,7 @@ export const CladdingKey: React.FC<CladdingKeyProps> = ({ requirements, showDebu
   const totalPanelsTooltip = `Total panels needed: ${totalSidePanels} side, ${totalLeftPanels} left, ${totalRightPanels} right`;
   
   return (
-    <div className="bg-white p-2 sm:p-3 md:p-4 rounded-xl shadow-sm" data-testid="cladding-key">
+    <div className="bg-white p-2 sm:p-3 md:p-4 rounded-xl shadow-sm cladding-key-container" data-testid="cladding-key">
       {/* Header with title and status badge */}
       <div className="flex items-center justify-between mb-1 sm:mb-2">
         <div className="flex items-center">

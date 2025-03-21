@@ -1,5 +1,7 @@
 import FoodcubeConfigurator from "@/components/FoodcubeConfigurator";
 import '@/utils/debugConfig'; // Import debug configuration
+import { useEffect } from "react";
+import { useTutorial } from "@/contexts/TutorialContext";
 
 const variants = {
   fourPackRegular: {
@@ -35,10 +37,17 @@ const variants = {
 };
 
 const Index = () => {
+  const { showWelcomeModal } = useTutorial();
+  
   const handleUpdate = (selections: Record<string, number>) => {
-    console.log('Selected items:', selections);
+    // console.log('Selected items:', selections);
     // Here you can add logic to handle the selections, e.g., update a shopping cart
   };
+
+  // Ensure the tutorial is triggered properly on page load
+  useEffect(() => {
+    console.log("Index component mounted, welcome modal state:", showWelcomeModal);
+  }, [showWelcomeModal]);
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">

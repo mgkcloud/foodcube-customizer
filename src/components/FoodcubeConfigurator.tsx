@@ -14,6 +14,7 @@ import { GridCell } from './types';
 import { getUserFriendlyErrorMessage } from '@/utils/validation/presetConstraintsValidator';
 import { usePresetConstraints } from '@/hooks/usePresetConstraints';
 import { PANEL_COLORS } from '@/constants/colors';
+import { useTutorial } from '@/contexts/TutorialContext';
 
 // Floating Action Button component that will be rendered in a portal
 const FloatingActionButtons = ({ 
@@ -134,10 +135,13 @@ interface FoodcubeConfiguratorProps {
 }
 
 export const FoodcubeConfigurator: React.FC<FoodcubeConfiguratorProps> = ({ variants, onUpdate, onApply, onClose }) => {
-  console.log('FoodcubeConfigurator received variants:', variants);
+  // console.log('FoodcubeConfigurator received variants:', variants);
   const { grid, requirements, toggleCell, toggleCladding, applyPreset, error, clearGrid } = useGridState();
   const [hasInteracted, setHasInteracted] = useState(false);
   const [debugMode, setDebugMode] = useState(false); // Default to false for production
+  
+  // Add tutorial context at component level
+  const { showTutorial, setCurrentStep, resetTutorial } = useTutorial();
   
   // Use our new preset constraints hook
   const {
@@ -168,7 +172,7 @@ export const FoodcubeConfigurator: React.FC<FoodcubeConfiguratorProps> = ({ vari
 
   // Update the parent component with the current requirements
   React.useEffect(() => {
-    console.log("Calling onUpdate with requirements:", JSON.stringify(requirements, null, 2));
+    // console.log("Calling onUpdate with requirements:", JSON.stringify(requirements, null, 2));
     const selections = {
       fourPackRegular: requirements.fourPackRegular,
       fourPackExtraTall: requirements.fourPackExtraTall,
@@ -182,7 +186,7 @@ export const FoodcubeConfigurator: React.FC<FoodcubeConfiguratorProps> = ({ vari
     };
 
     // Log the actual values for debugging
-    console.log("Selections for CladdingKey:", JSON.stringify(selections, null, 2));
+    // console.log("Selections for CladdingKey:", JSON.stringify(selections, null, 2));
 
     // Add a data attribute to the document body with the current requirements for testing
     document.body.setAttribute('data-requirements', JSON.stringify(selections));
@@ -192,8 +196,47 @@ export const FoodcubeConfigurator: React.FC<FoodcubeConfiguratorProps> = ({ vari
 
   // Handle toggling a cell in the grid with improved debounce protection
   const handleToggleCell = useCallback((rowIndex: number, colIndex: number) => {
+    // Get the current cube state BEFORE toggling
+    const cellElement = document.querySelector(`[data-testid="grid-cell-${rowIndex}-${colIndex}"]`);
+    const hasCubeBefore = cellElement?.getAttribute('data-has-cube') === 'true';
+    
     // Use our preset constraint handler for toggle cell operations
     handleToggleCubeInPreset(rowIndex, colIndex, toggleCell);
+    
+    // Determine the actual action based on previous state
+    const action = hasCubeBefore ? 'removed' : 'added';
+    
+    // Add more detailed debugging
+    console.log(`Cube at [${rowIndex},${colIndex}] was ${action}`);
+    
+    // Use a small timeout to ensure DOM is updated before dispatching the event
+    // This helps ensure the tutorial can properly detect the change
+    setTimeout(() => {
+      // Double-check the current state after the toggle to ensure accurate event data
+      const updatedCellElement = document.querySelector(`[data-testid="grid-cell-${rowIndex}-${colIndex}"]`);
+      const currentHasCube = updatedCellElement?.getAttribute('data-has-cube') === 'true';
+      
+      // Determine the actual action based on the current state compared to previous
+      const confirmedAction = hasCubeBefore !== currentHasCube 
+        ? action 
+        : (currentHasCube ? 'added' : 'removed'); // Fallback determination
+      
+      console.log(`Verified cube state at [${rowIndex},${colIndex}]: was=${hasCubeBefore}, now=${currentHasCube}, action=${confirmedAction}`);
+      
+      // Trigger a custom event that the tutorial can listen for
+      // Ensure we're sending primitive number types for row/col (not strings)
+      const eventDetail = { 
+        row: Number(rowIndex), 
+        col: Number(colIndex), 
+        hasCube: currentHasCube,
+        action: confirmedAction
+      };
+      
+      document.dispatchEvent(new CustomEvent('cube-toggled', { detail: eventDetail }));
+      console.log(`Dispatched cube-toggled event:`, eventDetail);
+      
+      // Special handling for tutorial no longer needed - using notifyTutorial directly
+    }, 50); // Small delay to ensure state is updated
   }, [handleToggleCubeInPreset, toggleCell]);
 
   // Handle preset application function
@@ -208,6 +251,12 @@ export const FoodcubeConfigurator: React.FC<FoodcubeConfiguratorProps> = ({ vari
     
     // Use our preset constraint handler to apply the preset
     handlePresetConstraintApply(preset, applyPreset);
+    
+    // Skip to step 3 (index 2) if tutorial is active
+    if (showTutorial) {
+      console.log('Preset selected during tutorial, skipping to step 3 (index 2)');
+      setCurrentStep(2);
+    }
     
     // Debug the configuration after applying preset
     if (debugMode) {
@@ -353,7 +402,7 @@ export const FoodcubeConfigurator: React.FC<FoodcubeConfiguratorProps> = ({ vari
                 onDismiss={dismissErrorOverlay}
               />
               
-              {/* Overlay for preset selection - positioned directly over the grid */}
+              {/* Overlay for preset selection with welcome message - positioned directly over the grid */}
               {!hasInteracted && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center z-20 rounded-xl" data-testid="config-overlay">
                   {/* Semi-transparent animated background */}
@@ -361,9 +410,34 @@ export const FoodcubeConfigurator: React.FC<FoodcubeConfiguratorProps> = ({ vari
                   
                   {/* Content card with full opacity */}
                   <div className="relative bg-white p-4 sm:p-6 rounded-xl shadow-md border border-gray-200 max-w-md w-full sm:w-4/5 mx-auto text-center transition-transform hover:scale-[1.01] duration-200 z-10">
-                    <h3 className="text-lg md:text-xl font-semibold text-gray-800 mb-4">Select a Configuration</h3>
-                    <div className="mb-4 sm:mb-6">
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                      <img 
+                        src="https://foodcube.com.au/cdn/shop/files/Foodcube_Logo_2024_Trans_BG.png?v=1705369454&width=500" 
+                        alt="Foodcube Logo" 
+                        className="h-8"
+                      />
+                      <h3 className="text-lg md:text-xl font-semibold text-gray-800">Welcome!</h3>
+                    </div>
+                    
+                    <p className="text-gray-600 text-sm mb-4">Select a preset configuration to get started</p>
+                    
+                    <div className="bg-gray-50 p-3 rounded-lg mb-4">
                       <PresetConfigs onApply={handlePresetApply} />
+                    </div>
+                    
+                    <div className="flex justify-between items-center">
+                      <p className="text-xs text-gray-500">First time? Try the L-Shape!</p>
+                      <button 
+                        className="text-xs text-blue-600 hover:text-blue-800 font-medium flex items-center"
+                        onClick={() => resetTutorial()}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1">
+                          <circle cx="12" cy="12" r="10" />
+                          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                          <line x1="12" y1="17" x2="12.01" y2="17" />
+                        </svg>
+                        Show Tutorial
+                      </button>
                     </div>
                   </div>
                 </div>

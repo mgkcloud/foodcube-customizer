@@ -6,7 +6,7 @@ import { getPanelType } from '@/utils/core/rules';
 import { calculatePipeConfiguration } from '@/utils/visualization/pipeConfigurator';
 import { findConnectedCubes } from '@/utils/validation/flowValidator';
 import { getVisualConnections } from '@/utils/flowHelpers';
-import { useMemo } from 'react';
+import { useMemo, useRef, useEffect } from 'react';
 
 type EdgeType = 'N' | 'E' | 'S' | 'W';
 
@@ -17,17 +17,25 @@ type CladdingVisualizerProps = {
   grid: GridCell[][];
   onToggle: (edge: EdgeType) => void;
   isEdgeExposed: Record<EdgeType, boolean>;
+  registerEdgeRef?: (row: number, col: number, edge: EdgeType, element: HTMLDivElement | null) => void;
 };
 
-export const CladdingVisualizer = ({ cell, row, col, grid, onToggle, isEdgeExposed }: CladdingVisualizerProps) => {
-  // Log cell state when component renders
-  console.group(`CladdingVisualizer [${row},${col}]`);
-  console.log('Cell State:', JSON.stringify({
-    hasCube: cell?.hasCube,
-    connections: cell?.connections,
-    claddingEdges: Array.from(cell?.claddingEdges || []),
-    exposedEdges: isEdgeExposed
-  }, null, 2));
+export const CladdingVisualizer = ({ 
+  cell, 
+  row, 
+  col, 
+  grid, 
+  onToggle, 
+  isEdgeExposed, 
+  registerEdgeRef
+}: CladdingVisualizerProps) => {
+  // Refs for edge elements
+  const edgeRefs = useRef<Record<EdgeType, HTMLDivElement | null>>({
+    N: null,
+    E: null,
+    S: null,
+    W: null
+  });
 
   // Calculate pipe configuration to get subgrid
   const connectedCubes = useMemo(() => {
@@ -57,6 +65,17 @@ export const CladdingVisualizer = ({ cell, row, col, grid, onToggle, isEdgeExpos
 
   const { subgrid } = pipeConfig;
 
+  // Register edge refs with parent component for tutorial targeting
+  useEffect(() => {
+    if (registerEdgeRef && cell.hasCube) {
+      Object.entries(edgeRefs.current).forEach(([edge, element]) => {
+        if (element && isEdgeExposed[edge as EdgeType]) {
+          registerEdgeRef(row, col, edge as EdgeType, element);
+        }
+      });
+    }
+  }, [registerEdgeRef, row, col, cell.hasCube, isEdgeExposed]);
+
   // Render subgrid highlighting for irrigation flow
   const renderSubgridHighlight = () => {
     return (
@@ -70,21 +89,11 @@ export const CladdingVisualizer = ({ cell, row, col, grid, onToggle, isEdgeExpos
   };
 
   if (!cell?.hasCube) {
-    console.log('No cube present, skipping visualization');
-    console.groupEnd();
     return null;
   }
 
   // Get entry/exit from cell's connections
   const { entry, exit } = cell.connections;
-  
-  // Log flow configuration
-  console.log('Flow Configuration:', JSON.stringify({
-    entry,
-    exit,
-    rotation: cell.rotation,
-    subgrid: subgrid.map(row => row.map(cell => cell ? 'RED' : 'EMPTY'))
-  }, null, 2));
   
   const getEdgeStyle = (edge: EdgeType): React.CSSProperties => {
     const isSelected = cell.claddingEdges.has(edge);
@@ -92,38 +101,13 @@ export const CladdingVisualizer = ({ cell, row, col, grid, onToggle, isEdgeExpos
     const panelType = getPanelType(edge as CompassDirection, entry, exit, subgrid.map(row => row.map(cell => Boolean(cell))));
     const baseColor = PANEL_COLORS[panelType];
     
-    // Enhanced panel logging
-    console.log(`VISUALIZATION: Panel [${row},${col}:${edge}]:`, JSON.stringify({
-      type: panelType,
-      isSelected,
-      color: baseColor,
-      isExposed: isEdgeExposed[edge],
-      flowContext: {
-        edge,
-        entry,
-        exit,
-        subgrid: subgrid.map(row => row.map(cell => cell ? 'RED' : 'EMPTY'))
-      }
-    }, null, 2));
-    
     return {
       backgroundColor: isSelected 
         ? baseColor 
         : `${baseColor}40`, // 40 = 25% opacity for unselected edges
       transition: 'background-color 0.2s ease-in-out',
-      // Hover handled by CSS classes
     };
   };
-
-  // Log all edges' panel types with a special note for right panels
-  console.log(`VISUALIZATION: All panels for cube [${row},${col}]:`, JSON.stringify({
-    north: getPanelType('N', entry, exit, subgrid.map(row => row.map(cell => Boolean(cell)))) + (getPanelType('N', entry, exit, subgrid.map(row => row.map(cell => Boolean(cell)))) === 'right' ? ' (RIGHT PANEL)' : ''),
-    east: getPanelType('E', entry, exit, subgrid.map(row => row.map(cell => Boolean(cell)))) + (getPanelType('E', entry, exit, subgrid.map(row => row.map(cell => Boolean(cell)))) === 'right' ? ' (RIGHT PANEL)' : ''),
-    south: getPanelType('S', entry, exit, subgrid.map(row => row.map(cell => Boolean(cell)))) + (getPanelType('S', entry, exit, subgrid.map(row => row.map(cell => Boolean(cell)))) === 'right' ? ' (RIGHT PANEL)' : ''),
-    west: getPanelType('W', entry, exit, subgrid.map(row => row.map(cell => Boolean(cell)))) + (getPanelType('W', entry, exit, subgrid.map(row => row.map(cell => Boolean(cell)))) === 'right' ? ' (RIGHT PANEL)' : '')
-  }, null, 2));
-
-  console.groupEnd();
 
   return (
     <div className="absolute inset-0 pointer-events-none z-20">
@@ -131,7 +115,8 @@ export const CladdingVisualizer = ({ cell, row, col, grid, onToggle, isEdgeExpos
         {(['N', 'E', 'S', 'W'] as const).map((edge) => isEdgeExposed[edge] && (
           <div
             key={edge}
-            data-testid="cladding-edge"
+            ref={el => edgeRefs.current[edge] = el}
+            data-testid={`grid-cell-${row}-${col}-edge-${edge}`}
             data-edge={edge}
             style={getEdgeStyle(edge)}
             className={cn(
@@ -154,6 +139,7 @@ export const CladdingVisualizer = ({ cell, row, col, grid, onToggle, isEdgeExpos
               }, null, 2));
               onToggle(edge);
             }}
+            data-testid={`grid-cell-${row}-${col}-edge-${edge}`}
           />
         ))}
       </div>

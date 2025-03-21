@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { GridCell } from './types';
 import { CladdingVisualizer } from './CladdingVisualizer';
 // Temporarily hidden
 // import { PipelineVisualizer } from './PipelineVisualizer';
 import { hasAdjacentCube } from '@/utils/shared/gridUtils';
+import { useTutorial } from '@/contexts/TutorialContext';
 
 interface GridProps {
   grid: GridCell[][];
@@ -21,7 +22,8 @@ export const Grid: React.FC<GridProps> = ({
   debug = false
 }) => {
   const [hasInteractedLocal, setHasInteractedLocal] = useState(false);
-
+  const { notifyTutorial } = useTutorial();
+  
   // Effect to sync hasInteractedLocal with parent's hasInteracted state
   useEffect(() => {
     if (setHasInteracted && !hasInteractedLocal) {
@@ -36,11 +38,40 @@ export const Grid: React.FC<GridProps> = ({
   const handleCellClick = (rowIndex: number, colIndex: number) => {
     setHasInteractedLocal(true);
     if (setHasInteracted) setHasInteracted(true);
+    
+    // Log for tutorial debugging
+    console.log(`Grid cell clicked: [${rowIndex}, ${colIndex}], currently has cube: ${grid[rowIndex][colIndex].hasCube}`);
+    
     onToggleCell(rowIndex, colIndex);
+    
+    // Notify tutorial system directly
+    notifyTutorial({
+      type: 'CUBE_TOGGLED',
+      payload: {
+        row: rowIndex,
+        col: colIndex,
+        hasCube: !grid[rowIndex][colIndex].hasCube, // The new state will be the opposite
+        action: grid[rowIndex][colIndex].hasCube ? 'removed' : 'added'
+      }
+    });
   };
 
   const handleCladdingToggle = (row: number, col: number, edge: 'N' | 'E' | 'S' | 'W') => {
     onToggleCladding(row, col, edge);
+    
+    // Get the current state of the cladding
+    const isActive = grid[row][col].claddingEdges.has(edge);
+    
+    // Notify tutorial system directly
+    notifyTutorial({
+      type: 'CLADDING_TOGGLED',
+      payload: {
+        row,
+        col,
+        edge,
+        isActive: !isActive // The new state will be the opposite
+      }
+    });
   };
 
   // Render subgrid within each cell
@@ -65,8 +96,13 @@ export const Grid: React.FC<GridProps> = ({
     );
   };
 
+  // Simple callback for edges - no longer registers them
+  const registerEdgeRef = (row: number, col: number, edge: 'N' | 'E' | 'S' | 'W', element: HTMLDivElement | null) => {
+    // We're not registering elements anymore
+  };
+
   return (
-    <div className="relative grid grid-cols-3 gap-1.5 sm:gap-3 md:gap-4 bg-gray-100 p-4 sm:p-5 md:p-6 rounded-xl shadow-md">
+    <div className="relative grid grid-cols-3 gap-1.5 sm:gap-3 md:gap-4 bg-gray-100 p-4 sm:p-5 md:p-6 rounded-xl shadow-md z-10">
       {!hasInteractedLocal && (
         <div className="absolute inset-0 flex items-center justify-center z-10 bg-black/5 backdrop-blur-[1px] rounded-xl">
           <div className="bg-blue-600/90 px-5 py-3 rounded-lg text-white text-center font-medium shadow-lg animate-pulse">
@@ -97,6 +133,8 @@ export const Grid: React.FC<GridProps> = ({
                 : 'none'
             }}
             onClick={() => handleCellClick(rowIndex, colIndex)}
+            // No longer using refs for tutorial targeting
+            data-cell-id={`grid-cell-${rowIndex}-${colIndex}`}
           >
             {cell.hasCube && (
               <>
@@ -122,6 +160,7 @@ export const Grid: React.FC<GridProps> = ({
                     S: !hasAdjacentCube(grid, rowIndex, colIndex, 'S'),
                     W: !hasAdjacentCube(grid, rowIndex, colIndex, 'W')
                   }}
+                  registerEdgeRef={registerEdgeRef}
                 />
                 
                 {/* Debug info */}
