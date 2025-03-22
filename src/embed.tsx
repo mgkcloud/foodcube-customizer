@@ -1,6 +1,17 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
 import { FoodcubeConfigurator } from "@/components/FoodcubeConfigurator";
+import { TutorialProvider } from "@/contexts/TutorialContext";
+import IntegratedTutorial from "@/components/IntegratedTutorial";
+import WelcomeModal from "@/components/WelcomeModal";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import HelpButton from "@/components/HelpButton";
+
+// Import CSS
+import "@/index.css";
+import "@/styles/tutorial.css";
 
 declare global {
   interface Window {
@@ -64,196 +75,205 @@ document.addEventListener("DOMContentLoaded", () => {
     const root = createRoot(container);
     root.render(
       <React.StrictMode>
-        <FoodcubeConfigurator
-          variants={variantData}
-          onUpdate={(selections) => {
-            // If we just applied selections via the "SELECT & CLOSE" button, don't update inputs
-            if (hasJustAppliedSelections) {
-              console.log('Skipping input update after applying selections');
-              // Reset the flag for next time
-              hasJustAppliedSelections = false;
-              return;
-            }
-            
-            // If all selections are zero and we have previously applied selections,
-            // use the last applied selections instead
-            const allSelectionsZero = Object.values(selections).every(value => value === 0);
-            if (allSelectionsZero && lastAppliedSelections) {
-              console.log('Using last applied selections instead of zeros');
-              return;
-            }
-            
-            Object.entries(variantData).forEach(([packType, data]) => {
-              (data as any).variants.forEach((variant: any) => {
-                const variantElement = document.querySelector(
-                  `product-customizer-variant[variant-id="${variant.id}"]`
-                );
-                if (variantElement) {
-                  const input = variantElement.querySelector("quantity-input input");
-                  if (input) {
-                    let quantity = 0;
-                    
-                    // Check if this variant should receive quantities at all based on height preference
-                    // Default all panels to 500mm height (which is the standard height) if no height preference is set
-                    const isRegular = isRegularHeight(variant.title);
-                    
-                    if (packType === "4_pack_cladding") {
-                      quantity = isRegular
-                        ? selections.fourPackRegular || 0
-                        : selections.fourPackExtraTall || 0;
-                    } else if (packType === "2_pack_cladding") {
-                      quantity = isRegular
-                        ? selections.twoPackRegular || 0
-                        : selections.twoPackExtraTall || 0;
-                    } else if (packType === "side_panel_cladding") {
-                      // Currently we don't differentiate sidePanels by height in our state
-                      // So we assign all to the 500mm variants
-                      quantity = isRegular ? selections.sidePanels || 0 : 0;
-                    } else if (packType === "left_panel_cladding") {
-                      // Currently we don't differentiate leftPanels by height in our state
-                      // So we assign all to the 500mm variants
-                      quantity = isRegular ? selections.leftPanels || 0 : 0;
-                    } else if (packType === "right_panel_cladding") {
-                      // Currently we don't differentiate rightPanels by height in our state
-                      // So we assign all to the 500mm variants
-                      quantity = isRegular ? selections.rightPanels || 0 : 0;
-                    } else if (packType === "connectors") {
-                      if ((variant as any).type === "straight") {
-                        quantity = selections.straightCouplings || 0;
-                      } else if ((variant as any).type === "corner") {
-                        quantity = selections.cornerConnectors || 0;
+        <TutorialProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <IntegratedTutorial />
+            <WelcomeModal />
+            <HelpButton />
+            <FoodcubeConfigurator
+              variants={variantData}
+              onUpdate={(selections) => {
+                // If we just applied selections via the "SELECT & CLOSE" button, don't update inputs
+                if (hasJustAppliedSelections) {
+                  console.log('Skipping input update after applying selections');
+                  // Reset the flag for next time
+                  hasJustAppliedSelections = false;
+                  return;
+                }
+                
+                // If all selections are zero and we have previously applied selections,
+                // use the last applied selections instead
+                const allSelectionsZero = Object.values(selections).every(value => value === 0);
+                if (allSelectionsZero && lastAppliedSelections) {
+                  console.log('Using last applied selections instead of zeros');
+                  return;
+                }
+                
+                Object.entries(variantData).forEach(([packType, data]) => {
+                  (data as any).variants.forEach((variant: any) => {
+                    const variantElement = document.querySelector(
+                      `product-customizer-variant[variant-id="${variant.id}"]`
+                    );
+                    if (variantElement) {
+                      const input = variantElement.querySelector("quantity-input input");
+                      if (input) {
+                        let quantity = 0;
+                        
+                        // Check if this variant should receive quantities at all based on height preference
+                        // Default all panels to 500mm height (which is the standard height) if no height preference is set
+                        const isRegular = isRegularHeight(variant.title);
+                        
+                        if (packType === "4_pack_cladding") {
+                          quantity = isRegular
+                            ? selections.fourPackRegular || 0
+                            : selections.fourPackExtraTall || 0;
+                        } else if (packType === "2_pack_cladding") {
+                          quantity = isRegular
+                            ? selections.twoPackRegular || 0
+                            : selections.twoPackExtraTall || 0;
+                        } else if (packType === "side_panel_cladding") {
+                          // Currently we don't differentiate sidePanels by height in our state
+                          // So we assign all to the 500mm variants
+                          quantity = isRegular ? selections.sidePanels || 0 : 0;
+                        } else if (packType === "left_panel_cladding") {
+                          // Currently we don't differentiate leftPanels by height in our state
+                          // So we assign all to the 500mm variants
+                          quantity = isRegular ? selections.leftPanels || 0 : 0;
+                        } else if (packType === "right_panel_cladding") {
+                          // Currently we don't differentiate rightPanels by height in our state
+                          // So we assign all to the 500mm variants
+                          quantity = isRegular ? selections.rightPanels || 0 : 0;
+                        } else if (packType === "connectors") {
+                          if ((variant as any).type === "straight") {
+                            quantity = selections.straightCouplings || 0;
+                          } else if ((variant as any).type === "corner") {
+                            quantity = selections.cornerConnectors || 0;
+                          }
+                        }
+                        
+                        // Set the input value to an empty string if quantity is 0, otherwise set to the quantity string
+                        (input as HTMLInputElement).value = quantity > 0 ? quantity.toString() : "";
+                        input.dispatchEvent(new Event("change", { bubbles: true }));
                       }
                     }
-                    
-                    // Set the input value to an empty string if quantity is 0, otherwise set to the quantity string
-                    (input as HTMLInputElement).value = quantity > 0 ? quantity.toString() : "";
-                    input.dispatchEvent(new Event("change", { bubbles: true }));
-                  }
+                  });
+                });
+              }}
+              onApply={(selections) => {
+                console.log('Applying final selections:', selections);
+                
+                // Store these selections as the last applied
+                lastAppliedSelections = { ...selections };
+                
+                // Set flag to prevent the next onUpdate call from zeroing out the inputs
+                hasJustAppliedSelections = true;
+                
+                // Calculate total number of cubes based on connectors
+                const totalCubes = calculateTotalCubes(selections);
+                console.log(`Total cubes calculated: ${totalCubes}`);
+                
+                // Update the main product quantity input with a more robust selector
+                // Try multiple selector approaches, from most specific to most generic
+                let mainQuantityInput = 
+                  // Try parent container + input
+                  document.querySelector('.product-form__quantity quantity-input .quantity__input') ||
+                  // Try by input with specific name attribute
+                  document.querySelector('input.quantity__input[name="quantity.pc__details"]') ||
+                  // Try by input with specific attributes
+                  document.querySelector('input.quantity__input[data-not-overwrite="true"]') ||
+                  // Try by input inside quantity-input custom element
+                  document.querySelector('quantity-input .quantity__input') ||
+                  // Last resort - any quantity input
+                  document.querySelector('input.quantity__input[type="number"]');
+                
+                if (mainQuantityInput && mainQuantityInput instanceof HTMLInputElement) {
+                  console.log(`Updating main product quantity to ${totalCubes}`);
+                  mainQuantityInput.value = totalCubes.toString();
+                  mainQuantityInput.dispatchEvent(new Event('change', { bubbles: true }));
+                } else {
+                  console.warn('Main product quantity input not found');
                 }
-              });
-            });
-          }}
-          onApply={(selections) => {
-            console.log('Applying final selections:', selections);
-            
-            // Store these selections as the last applied
-            lastAppliedSelections = { ...selections };
-            
-            // Set flag to prevent the next onUpdate call from zeroing out the inputs
-            hasJustAppliedSelections = true;
-            
-            // Calculate total number of cubes based on connectors
-            const totalCubes = calculateTotalCubes(selections);
-            console.log(`Total cubes calculated: ${totalCubes}`);
-            
-            // Update the main product quantity input with a more robust selector
-            // Try multiple selector approaches, from most specific to most generic
-            let mainQuantityInput = 
-              // Try parent container + input
-              document.querySelector('.product-form__quantity quantity-input .quantity__input') ||
-              // Try by input with specific name attribute
-              document.querySelector('input.quantity__input[name="quantity.pc__details"]') ||
-              // Try by input with specific attributes
-              document.querySelector('input.quantity__input[data-not-overwrite="true"]') ||
-              // Try by input inside quantity-input custom element
-              document.querySelector('quantity-input .quantity__input') ||
-              // Last resort - any quantity input
-              document.querySelector('input.quantity__input[type="number"]');
-            
-            if (mainQuantityInput && mainQuantityInput instanceof HTMLInputElement) {
-              console.log(`Updating main product quantity to ${totalCubes}`);
-              mainQuantityInput.value = totalCubes.toString();
-              mainQuantityInput.dispatchEvent(new Event('change', { bubbles: true }));
-            } else {
-              console.warn('Main product quantity input not found');
-            }
-            
-            // First update all product quantities, but ONLY for non-zero quantities
-            Object.entries(variantData).forEach(([packType, data]) => {
-              (data as any).variants.forEach((variant: any) => {
-                const variantElement = document.querySelector(
-                  `product-customizer-variant[variant-id="${variant.id}"]`
-                );
-                if (variantElement) {
-                  const input = variantElement.querySelector("quantity-input input");
-                  if (input) {
-                    let quantity = 0;
-                    
-                    // Check if this variant should receive quantities at all based on height preference
-                    // Default all panels to 500mm height (which is the standard height) if no height preference is set
-                    const isRegular = isRegularHeight(variant.title);
-                    
-                    if (packType === "4_pack_cladding") {
-                      quantity = isRegular
-                        ? selections.fourPackRegular || 0
-                        : selections.fourPackExtraTall || 0;
-                    } else if (packType === "2_pack_cladding") {
-                      quantity = isRegular
-                        ? selections.twoPackRegular || 0
-                        : selections.twoPackExtraTall || 0;
-                    } else if (packType === "side_panel_cladding") {
-                      // Currently we don't differentiate sidePanels by height in our state
-                      // So we assign all to the 500mm variants
-                      quantity = isRegular ? selections.sidePanels || 0 : 0;
-                    } else if (packType === "left_panel_cladding") {
-                      // Currently we don't differentiate leftPanels by height in our state
-                      // So we assign all to the 500mm variants
-                      quantity = isRegular ? selections.leftPanels || 0 : 0;
-                    } else if (packType === "right_panel_cladding") {
-                      // Currently we don't differentiate rightPanels by height in our state
-                      // So we assign all to the 500mm variants
-                      quantity = isRegular ? selections.rightPanels || 0 : 0;
-                    } else if (packType === "connectors") {
-                      if ((variant as any).type === "straight") {
-                        quantity = selections.straightCouplings || 0;
-                      } else if ((variant as any).type === "corner") {
-                        quantity = selections.cornerConnectors || 0;
+                
+                // First update all product quantities, but ONLY for non-zero quantities
+                Object.entries(variantData).forEach(([packType, data]) => {
+                  (data as any).variants.forEach((variant: any) => {
+                    const variantElement = document.querySelector(
+                      `product-customizer-variant[variant-id="${variant.id}"]`
+                    );
+                    if (variantElement) {
+                      const input = variantElement.querySelector("quantity-input input");
+                      if (input) {
+                        let quantity = 0;
+                        
+                        // Check if this variant should receive quantities at all based on height preference
+                        // Default all panels to 500mm height (which is the standard height) if no height preference is set
+                        const isRegular = isRegularHeight(variant.title);
+                        
+                        if (packType === "4_pack_cladding") {
+                          quantity = isRegular
+                            ? selections.fourPackRegular || 0
+                            : selections.fourPackExtraTall || 0;
+                        } else if (packType === "2_pack_cladding") {
+                          quantity = isRegular
+                            ? selections.twoPackRegular || 0
+                            : selections.twoPackExtraTall || 0;
+                        } else if (packType === "side_panel_cladding") {
+                          // Currently we don't differentiate sidePanels by height in our state
+                          // So we assign all to the 500mm variants
+                          quantity = isRegular ? selections.sidePanels || 0 : 0;
+                        } else if (packType === "left_panel_cladding") {
+                          // Currently we don't differentiate leftPanels by height in our state
+                          // So we assign all to the 500mm variants
+                          quantity = isRegular ? selections.leftPanels || 0 : 0;
+                        } else if (packType === "right_panel_cladding") {
+                          // Currently we don't differentiate rightPanels by height in our state
+                          // So we assign all to the 500mm variants
+                          quantity = isRegular ? selections.rightPanels || 0 : 0;
+                        } else if (packType === "connectors") {
+                          if ((variant as any).type === "straight") {
+                            quantity = selections.straightCouplings || 0;
+                          } else if ((variant as any).type === "corner") {
+                            quantity = selections.cornerConnectors || 0;
+                          }
+                        }
+                        
+                        // Only update inputs that have a positive quantity
+                        if (quantity > 0) {
+                          (input as HTMLInputElement).value = quantity.toString();
+                          input.dispatchEvent(new Event("change", { bubbles: true }));
+                        }
                       }
                     }
-                    
-                    // Only update inputs that have a positive quantity
-                    if (quantity > 0) {
-                      (input as HTMLInputElement).value = quantity.toString();
-                      input.dispatchEvent(new Event("change", { bubbles: true }));
-                    }
+                  });
+                });
+                
+                // Log success message
+                console.log('Successfully applied selections to products');
+                
+                // Close the modal using the global function
+                if (typeof window.closeGlobalCladdingCalculator === 'function') {
+                  window.closeGlobalCladdingCalculator();
+                } else {
+                  console.warn('closeGlobalCladdingCalculator function not found');
+                  
+                  // Fallback: try to find and close the modal directly
+                  const modal = document.getElementById('GlobalCladdingCalculatorModal');
+                  if (modal) {
+                    modal.style.display = 'none';
+                    document.body.classList.remove('overflow-hidden');
                   }
                 }
-              });
-            });
-            
-            // Log success message
-            console.log('Successfully applied selections to products');
-            
-            // Close the modal using the global function
-            if (typeof window.closeGlobalCladdingCalculator === 'function') {
-              window.closeGlobalCladdingCalculator();
-            } else {
-              console.warn('closeGlobalCladdingCalculator function not found');
-              
-              // Fallback: try to find and close the modal directly
-              const modal = document.getElementById('GlobalCladdingCalculatorModal');
-              if (modal) {
-                modal.style.display = 'none';
-                document.body.classList.remove('overflow-hidden');
-              }
-            }
-          }}
-          onClose={() => {
-            // Close the modal using the global function
-            if (typeof window.closeGlobalCladdingCalculator === 'function') {
-              window.closeGlobalCladdingCalculator();
-            } else {
-              console.warn('closeGlobalCladdingCalculator function not found');
-              
-              // Fallback: try to find and close the modal directly
-              const modal = document.getElementById('GlobalCladdingCalculatorModal');
-              if (modal) {
-                modal.style.display = 'none';
-                document.body.classList.remove('overflow-hidden');
-              }
-            }
-          }}
-        />
+              }}
+              onClose={() => {
+                // Close the modal using the global function
+                if (typeof window.closeGlobalCladdingCalculator === 'function') {
+                  window.closeGlobalCladdingCalculator();
+                } else {
+                  console.warn('closeGlobalCladdingCalculator function not found');
+                  
+                  // Fallback: try to find and close the modal directly
+                  const modal = document.getElementById('GlobalCladdingCalculatorModal');
+                  if (modal) {
+                    modal.style.display = 'none';
+                    document.body.classList.remove('overflow-hidden');
+                  }
+                }
+              }}
+            />
+          </TooltipProvider>
+        </TutorialProvider>
       </React.StrictMode>
     );
   };

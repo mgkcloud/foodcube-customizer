@@ -108,13 +108,13 @@ const tutorialSteps: TutorialStep[] = [
     content: '👉 Action required: Now let\'s try the U-Shape layout. Click on the U-Shape configuration button.',
     targetId: 'preset-u-shape',
     fallbackTargetIds: ['preset-configs'],
-    position: 'top',
+    position: 'bottom',
     alignment: 'center',
     isInteractive: true,
     requiredAction: 'PRESET_APPLIED',
     showNextButton: true,
     showPointer: true,
-    pointerPosition: 'right',
+    pointerPosition: 'top',
     spotlightPadding: 10,
   },
   
@@ -126,6 +126,7 @@ const tutorialSteps: TutorialStep[] = [
     targetId: 'cladding-key',
     position: 'left',
     alignment: 'start',
+    spotlightPadding: 10,
   },
   
   // Step 7: Apply design
@@ -136,6 +137,7 @@ const tutorialSteps: TutorialStep[] = [
     targetId: 'mobile-apply-button',
     position: 'left',
     alignment: 'center',
+    spotlightPadding: 15,
   },
   
   // Step 8: Clear option
@@ -146,6 +148,7 @@ const tutorialSteps: TutorialStep[] = [
     targetId: 'mobile-clear-button',
     position: 'left',
     alignment: 'center',
+    spotlightPadding: 10,
   },
 ];
 
@@ -357,7 +360,7 @@ export const IntegratedTutorial: React.FC = () => {
         fallbackTargetIds={currentTutorialStep.fallbackTargetIds}
         position={currentTutorialStep.position || 'top'}
         alignment={currentTutorialStep.alignment || 'center'}
-        zIndex={10001}
+        zIndex={100000000000}
       />
     </>
   );

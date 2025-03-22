@@ -59,6 +59,7 @@ interface TutorialContextType {
   setCurrentStep: (step: number) => void;
   completeTutorial: () => void;
   resetTutorial: () => void;
+  resetTutorialState: () => void;
   skipTutorial: () => void;
   
   // Target registration system
@@ -236,6 +237,13 @@ export const TutorialProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setShowTutorial(true);
   };
 
+  // Function to reset the tutorial state without showing it
+  const resetTutorialState = () => {
+    // Just reset to the beginning without showing
+    setCurrentStep(0);
+    console.log('Tutorial state reset (but not showing tutorial)');
+  };
+
   // Function to skip the tutorial
   const skipTutorial = () => {
     setShowTutorial(false);
@@ -255,6 +263,7 @@ export const TutorialProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setCurrentStep,
     completeTutorial,
     resetTutorial,
+    resetTutorialState,
     skipTutorial,
     registerTarget,
     unregisterTarget,

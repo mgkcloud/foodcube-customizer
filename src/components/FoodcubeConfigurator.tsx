@@ -26,8 +26,18 @@ const FloatingActionButtons = ({
   onApply: () => void, 
   onClear: () => void 
 }) => {
+  const { resetTutorialState, setShowTutorial } = useTutorial();
+  
+  // Handle clear with tutorial reset
+  const handleClear = () => {
+    onClear();
+    resetTutorialState();
+    // Also close the tutorial if it's open
+    setShowTutorial(false);
+  };
+  
   return createPortal(
-    <div className="fixed z-[99999999999] bottom-6 right-6 flex flex-col items-end gap-4" style={{ position: 'fixed', pointerEvents: 'auto' }}>
+    <div className="fixed z-[100000000001] bottom-6 right-6 flex flex-col items-end gap-4" style={{ position: 'fixed', pointerEvents: 'auto' }}>
       {/* Apply button */}
       <button
         onClick={onApply}
@@ -63,7 +73,7 @@ const FloatingActionButtons = ({
       
       {/* Clear button */}
       <button
-        onClick={onClear}
+        onClick={handleClear}
         className="flex flex-wrap items-center justify-center w-24 h-24 rounded-full bg-white shadow-2xl border-2 border-gray-200 text-gray-500 hover:text-red-500 transition-all transform hover:scale-105"
         style={{ flexDirection: 'column', boxShadow: '0 10px 25px -3px rgba(0, 0, 0, 0.15), 0 6px 10px -2px rgba(0, 0, 0, 0.1)' }}
         data-testid="mobile-clear-button"
@@ -96,7 +106,7 @@ const ErrorOverlay = ({
   
   return (
     <div 
-      className="absolute top-0 left-0 right-0 z-[9999] flex justify-center transition-all duration-300"
+      className="absolute top-0 left-0 right-0 z-[100000000001] flex justify-center transition-all duration-300"
       style={{ 
         opacity: isVisible ? 1 : 0,
         transform: isVisible ? 'translateY(0)' : 'translateY(-10px)'

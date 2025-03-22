@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useTutorial, TutorialTargetId } from '@/contexts/TutorialContext';
 import { throttle } from '@/lib/utils';
 
@@ -35,32 +35,141 @@ export const IntegratedSpotlight: React.FC<IntegratedSpotlightProps> = ({
   
   const [currentTargetId, setCurrentTargetId] = useState<TutorialTargetId | null>(null);
   const [isPositioned, setIsPositioned] = useState(false);
+  const [isScrolling, setIsScrolling] = useState(false);
+  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastVisibleElementRef = useRef<HTMLElement | null>(null);
 
-  // Find the first valid target from the primary and fallback options
+  // Check if an element is in the viewport
+  const isInViewport = useCallback((element: HTMLElement) => {
+    const rect = element.getBoundingClientRect();
+    
+    // Check if the element is actually visible in the DOM (not hidden via CSS)
+    const style = window.getComputedStyle(element);
+    const isVisible = style.display !== 'none' && 
+                      style.visibility !== 'hidden' && 
+                      style.opacity !== '0' &&
+                      rect.width > 0 && 
+                      rect.height > 0;
+    
+    if (!isVisible) return false;
+    
+    // Check if it's in the viewport
+    return (
+      rect.top >= 0 &&
+      rect.left >= 0 &&
+      rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
+      rect.right <= (window.innerWidth || document.documentElement.clientWidth)
+    );
+  }, []);
+
+  // Calculate how close an element is to being in the viewport
+  const getDistanceFromViewport = useCallback((element: HTMLElement) => {
+    const rect = element.getBoundingClientRect();
+    const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+    const viewportWidth = window.innerWidth || document.documentElement.clientWidth;
+    
+    // If it's in the viewport, distance is 0
+    if (
+      rect.top >= 0 &&
+      rect.left >= 0 &&
+      rect.bottom <= viewportHeight &&
+      rect.right <= viewportWidth
+    ) {
+      return 0;
+    }
+    
+    // Calculate distance from viewport
+    const topDistance = rect.top < 0 ? Math.abs(rect.top) : Math.max(0, rect.top - viewportHeight);
+    const leftDistance = rect.left < 0 ? Math.abs(rect.left) : Math.max(0, rect.left - viewportWidth);
+    
+    // Return the combined distance
+    return topDistance + leftDistance;
+  }, []);
+
+  // Scroll element into view with smooth behavior
+  const scrollIntoViewIfNeeded = useCallback((element: HTMLElement) => {
+    if (!isInViewport(element) && !isScrolling) {
+      console.log(`Scrolling target ${currentTargetId} into view...`);
+      setIsScrolling(true);
+      
+      // Clear any existing timeout
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+      
+      // Scroll the element into view smoothly
+      element.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'center', 
+        inline: 'center' 
+      });
+      
+      // Set a timeout to prevent multiple scrolls
+      scrollTimeoutRef.current = setTimeout(() => {
+        setIsScrolling(false);
+      }, 1000); // Wait a bit after scrolling to prevent multiple scrolls
+    }
+  }, [isInViewport, currentTargetId, isScrolling]);
+
+  // Find the best target from the primary and fallback options, handling duplicates
   const findTarget = useCallback(() => {
-    // Try primary target first
-    let target = document.querySelector(`[data-testid="${targetId}"], [data-cell-id="${targetId}"]`) as HTMLElement;
+    // Try primary target first - but now get ALL matching elements
+    let elements = Array.from(document.querySelectorAll(`[data-testid="${targetId}"], [data-cell-id="${targetId}"]`)) as HTMLElement[];
     let id = targetId;
     
     // If primary target not found, try fallbacks in order
-    if (!target && fallbackTargetIds.length > 0) {
+    if (elements.length === 0 && fallbackTargetIds.length > 0) {
       for (const fallbackId of fallbackTargetIds) {
-        target = document.querySelector(`[data-testid="${fallbackId}"], [data-cell-id="${fallbackId}"]`) as HTMLElement;
-        if (target) {
+        elements = Array.from(document.querySelectorAll(`[data-testid="${fallbackId}"], [data-cell-id="${fallbackId}"]`)) as HTMLElement[];
+        if (elements.length > 0) {
           id = fallbackId;
-          console.log(`Using fallback target: ${fallbackId} for spotlight`);
           break;
         }
       }
     }
     
-    if (target) {
+    if (elements.length === 0) {
+      return null;
+    }
+    
+    // If we have elements, choose the best one
+    // First, check if any are in the viewport
+    const visibleElements = elements.filter(el => isInViewport(el));
+    
+    let bestTarget: HTMLElement | null = null;
+    
+    if (visibleElements.length > 0) {
+      // If we have visible elements, use the first one
+      bestTarget = visibleElements[0];
+    } else if (lastVisibleElementRef.current && elements.includes(lastVisibleElementRef.current)) {
+      // If we have a previously visible element that's still valid, use it
+      bestTarget = lastVisibleElementRef.current;
+    } else {
+      // Otherwise, find the element closest to being in the viewport
+      let closestDistance = Infinity;
+      elements.forEach(el => {
+        // Skip elements that are not visible in the DOM
+        const style = window.getComputedStyle(el);
+        if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') {
+          return;
+        }
+        
+        const distance = getDistanceFromViewport(el);
+        if (distance < closestDistance) {
+          closestDistance = distance;
+          bestTarget = el;
+        }
+      });
+    }
+    
+    if (bestTarget) {
       setCurrentTargetId(id);
-      return target;
+      lastVisibleElementRef.current = bestTarget;
+      return bestTarget;
     }
     
     return null;
-  }, [targetId, fallbackTargetIds]);
+  }, [targetId, fallbackTargetIds, isInViewport, getDistanceFromViewport]);
 
   // Throttled function for updating spotlight position
   const updatePosition = useCallback(throttle((target: HTMLElement) => {
@@ -78,11 +187,14 @@ export const IntegratedSpotlight: React.FC<IntegratedSpotlightProps> = ({
       });
       
       setIsPositioned(true);
+      
+      // Check if we need to scroll the element into view
+      scrollIntoViewIfNeeded(target);
     } catch (error) {
       console.error('Error positioning spotlight:', error);
       setIsPositioned(false);
     }
-  }, 100), [padding]);
+  }, 100), [padding, scrollIntoViewIfNeeded]);
 
   // Update spotlight position based on target element
   useEffect(() => {
@@ -117,31 +229,52 @@ export const IntegratedSpotlight: React.FC<IntegratedSpotlightProps> = ({
     // Clear interval after max 2 seconds to prevent infinite loop
     setTimeout(() => clearInterval(initialPositionInterval), 2000);
     
-    // Update position on resize and scroll
-    window.addEventListener('resize', () => {
+    // Define event handlers for resize and scroll
+    const handleResize = () => {
       const resizeTarget = findTarget();
       if (resizeTarget) updatePosition(resizeTarget);
-    });
+    };
     
-    window.addEventListener('scroll', () => {
+    const handleScroll = () => {
       const scrollTarget = findTarget();
       if (scrollTarget) updatePosition(scrollTarget);
-    });
+    };
+    
+    // Set up a regular interval to recheck which element is visible (for responsive layouts)
+    const visibilityCheckInterval = setInterval(() => {
+      const checkTarget = findTarget();
+      if (checkTarget && checkTarget !== lastVisibleElementRef.current) {
+        updatePosition(checkTarget);
+      }
+    }, 500);
+    
+    // Update position on resize and scroll
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('scroll', handleScroll);
     
     return () => {
-      window.removeEventListener('resize', () => {
-        const resizeTarget = findTarget();
-        if (resizeTarget) updatePosition(resizeTarget);
-      });
-      
-      window.removeEventListener('scroll', () => {
-        const scrollTarget = findTarget();
-        if (scrollTarget) updatePosition(scrollTarget);
-      });
+      // Properly remove event listeners
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('scroll', handleScroll);
       
       clearInterval(initialPositionInterval);
+      clearInterval(visibilityCheckInterval);
+      
+      // Clear any existing scroll timeout
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
     };
   }, [isActive, targetId, fallbackTargetIds, findTarget, updatePosition, isPositioned, currentTargetId]);
+  
+  // Clean up on unmount
+  useEffect(() => {
+    return () => {
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+    };
+  }, []);
   
   if (!isActive) return null;
   

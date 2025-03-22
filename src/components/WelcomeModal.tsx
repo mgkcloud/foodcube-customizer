@@ -27,9 +27,9 @@ export const WelcomeModal: React.FC = () => {
     <Dialog open={showWelcomeModal} onOpenChange={setShowWelcomeModal}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold text-center">Welcome to FoodCube Garden Designer</DialogTitle>
+          <DialogTitle className="text-xl font-bold text-center">Design Your Garden</DialogTitle>
           <DialogDescription className="text-center">
-            Design your perfect modular garden with our interactive configuration tool
+            Fresh homegrown food has never been easier
           </DialogDescription>
         </DialogHeader>
         
@@ -42,20 +42,20 @@ export const WelcomeModal: React.FC = () => {
         </div>
         
         <div className="p-4 bg-gray-50 rounded-lg text-sm space-y-2">
-          <p>The Garden Designer helps you:</p>
+          <p className="font-medium">This easy tool helps you:</p>
           <ul className="list-disc pl-5 space-y-1">
-            <li>Create custom garden layouts</li>
-            <li>Calculate required panels and connectors</li>
-            <li>Visualise your garden before purchasing</li>
-            <li>Choose from preset configurations</li>
+            <li>Create your perfect garden setup</li>
+            <li>Know exactly what to buy</li>
+            <li>See how it will look in your space</li>
+            <li>Start growing faster with less hassle</li>
           </ul>
           
-          <p className="mt-3 font-medium text-blue-600">Our interactive tutorial will guide you through:</p>
+          <p className="mt-3 font-medium text-blue-600">Try our 30-second tutorial:</p>
           <ul className="list-disc pl-5 space-y-1 text-gray-700">
-            <li>Selecting preset configurations</li>
-            <li>Adding and removing garden cubes</li>
-            <li>Configuring cladding panels</li>
-            <li>Understanding component requirements</li>
+            <li>Choose a garden style</li>
+            <li>Adjust to fit your space</li>
+            <li>Get a shopping list</li>
+            <li>Start growing!</li>
           </ul>
         </div>
         
@@ -71,7 +71,7 @@ export const WelcomeModal: React.FC = () => {
             onClick={handleStartTutorial}
             className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700"
           >
-            Start Tutorial
+            Show Me How
           </Button>
         </DialogFooter>
       </DialogContent>
