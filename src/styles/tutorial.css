@@ -23,32 +23,18 @@
   to { transform: translateX(5px); }
 }
 
+@keyframes rotate-pulse {
+  0% { transform: rotate(0deg); }
+  25% { transform: rotate(-5deg); }
+  75% { transform: rotate(5deg); }
+  100% { transform: rotate(0deg); }
+}
+
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(-10px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Integrated tutorial tooltip styling */
-[data-testid^="tutorial-tooltip"] {
-  animation: fadeIn 0.3s ease-out;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-}
-
-/* Integrated spotlight styling */
-[data-testid="integrated-spotlight"] {
-  animation: fadeIn 0.3s ease-out;
-  pointer-events: none;
-  transition: all 0.3s ease-out;
-}
-
-/* Enhanced spotlight border effects */
-.spotlight-border {
-  position: relative;
-  z-index: 10000;
-}
-
-/* Add glowing effect to the spotlight border */
 @keyframes spotlight-glow {
   0% {
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.7), 0 0 0 6px rgba(37, 99, 235, 0.3);
@@ -64,14 +50,43 @@
   }
 }
 
-/* Apply the glowing animation to spotlight borders */
-.spotlight-border {
-  animation: spotlight-glow 1.5s infinite ease-in-out !important;
+/* Enhanced Tooltip Container */
+#tutorial-tooltips-container {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  pointer-events: none !important;
+  z-index: 2147483646 !important; /* Max z-index - 1 */
+  overflow: visible !important;
 }
 
-/* Apply consistent animation to pointer elements */
-[data-testid="integrated-spotlight"] .animate-pulse {
+/* Integrated tutorial tooltip styling */
+[data-testid^="tutorial-tooltip"] {
+  animation: fadeIn 0.3s ease-out;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  pointer-events: auto !important;
+}
+
+/* Direct element styling for spotlight targets */
+.spotlight-target {
+  /* Remove all layout-affecting properties */
+  animation: spotlight-glow 1.5s infinite ease-in-out !important;
+  box-shadow: 0 0 15px rgba(59, 130, 246, 0.7), 0 0 30px rgba(59, 130, 246, 0.4) !important;
+  outline: 3px solid #3b82f6 !important;
+  outline-offset: 2px !important;
+  /* Remove z-index and transition which cause recalculation */
+}
+
+/* Tutorial pointer styling */
+.tutorial-pointer {
+  position: absolute;
+  font-size: 2rem;
+  z-index: 100000;
   animation: arrow-pulse 0.8s infinite alternate;
+  filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.3));
 }
 
 /* Makes ALL interactive elements clickable during tutorial mode */
@@ -83,20 +98,23 @@ body.tutorial-active a,
 body.tutorial-active input,
 body.tutorial-active select {
   pointer-events: auto !important;
-  z-index: 48000 !important; /* High enough to be clickable but below spotlight */
+  z-index: 10000 !important; /* High enough to be clickable */
 }
 
 /* Special highlight for elements being specifically targeted in tutorial steps */
 body.tutorial-active [data-testid="grid-cell-1-1"] [data-edge="E"],
 body.tutorial-active [data-testid="preset-l-shape"].tutorial-highlight,
 body.tutorial-active [data-testid="preset-u-shape"].tutorial-highlight {
-  z-index: 49500 !important; /* Even higher to ensure visibility during targeted steps */
+  z-index: 10001 !important; /* Even higher to ensure visibility during targeted steps */
   position: relative !important;
 }
 
 /* Button styling in tutorial */
-[data-testid^="tutorial-tooltip"] button.bg-blue-500 {
+[data-testid^="tutorial-tooltip"] button {
   transition: all 0.2s ease-in-out;
+}
+
+[data-testid^="tutorial-tooltip"] button[class*="bg-blue"] {
   box-shadow: 0 2px 5px rgba(59, 130, 246, 0.3);
   background-color: #3b82f6 !important;
   color: white !important;
@@ -105,39 +123,30 @@ body.tutorial-active [data-testid="preset-u-shape"].tutorial-highlight {
   padding: 4px 12px !important;
 }
 
-[data-testid^="tutorial-tooltip"] button.bg-blue-500:hover {
+[data-testid^="tutorial-tooltip"] button[class*="bg-blue"]:hover {
   transform: translateY(-1px);
   box-shadow: 0 3px 7px rgba(59, 130, 246, 0.4);
   background-color: #2563eb !important;
 }
 
-[data-testid^="tutorial-tooltip"] button.bg-blue-500:active {
+[data-testid^="tutorial-tooltip"] button[class*="bg-blue"]:active {
   transform: translateY(1px);
   box-shadow: 0 1px 3px rgba(59, 130, 246, 0.3);
 }
 
-/* Make sure our tutorial elements always appear above other UI elements */
-[data-testid^="tutorial-tooltip"] {
-  z-index: 50000 !important; /* Highest z-index to ensure visibility */
-}
-
-[data-testid="integrated-spotlight"] {
-  z-index: 49000 !important; /* Just below tooltips */
-}
-
 /* Ensure tooltip arrows are styled correctly */
 [data-testid^="tutorial-tooltip"] [class*="rotate-45"] {
-  z-index: 50001 !important; /* Slightly above tooltips */
+  z-index: 1 !important; /* Slightly above tooltips */
 }
 
 /* Helper class for components targeted by the tutorial */
 .tutorial-target {
-  position: relative;
-  z-index: 100;
+  position: relative !important;
+  z-index: 10000 !important;
 }
 
 /* Ensure proper animation for the pointer */
-.animate-tutorial-pulse {
+.animate-pulse {
   animation: pulse 1.5s infinite;
 }
 
@@ -152,22 +161,170 @@ body.tutorial-active {
 }
 
 body.tutorial-active .tutorial-highlight {
-  z-index: 9999 !important;
+  z-index: 10001 !important;
 }
 
-/* Ensure pointers are front and center */
-.tutorial-pointer {
-  z-index: 10005 !important;
-  position: relative;
-}
-
-/* Special highlight for preset buttons during tutorial 
-   This replaces the static L-shape highlight with a dynamic class */
-body.tutorial-active .tutorial-preset-highlight {
-  z-index: 10005 !important;
+/* Style for interactive tutorial elements like buttons and inputs */
+body.tutorial-active [data-edge].spotlight-target,
+body.tutorial-active [data-testid^="preset"].spotlight-target,
+body.tutorial-active button.spotlight-target {
   transform: scale(1.05);
-  box-shadow: 0 0 15px rgba(59, 130, 246, 0.7), 0 0 30px rgba(59, 130, 246, 0.4);
-  border: 2px solid #3b82f6;
+  transition: transform 0.3s ease;
+}
+
+/* Special animation for interactive elements to draw attention */
+body.tutorial-active [data-edge].spotlight-target:hover,
+body.tutorial-active [data-testid^="preset"].spotlight-target:hover,
+body.tutorial-active button.spotlight-target:hover {
+  transform: scale(1.1);
+}
+
+/* Fix for nested elements getting spotlight treatment */
+.spotlight-target .spotlight-target {
+  animation: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+  /* Ensure pointers are visible across all contexts */
+.tutorial-pointer {
+  pointer-events: none !important;
+}
+
+/* Specific animations for pointer directions */
+.tutorial-pointer[style*="rotate(-90deg)"] {
+  animation: rotate-pulse 2s infinite ease-in-out;
+}
+
+/* The tooltip container is now properly configured above */
+
+/* Tutorial system CSS */
+
+/* Base tutorial styles */
+body.tutorial-active {
   position: relative;
-  animation: pulse 2s infinite;
+}
+
+/* Enhanced spotlight effect for target elements */
+.spotlight-target {
+  /* position: relative; */
+  z-index: 9999 !important;
+  animation: spotlight-pulse 2s infinite ease-in-out;
+  /* border: 6px solid rgba(59, 130, 246, 0.8); */
+  outline-offset: 2px;
+  transition: outline-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Interactive target with pulsing effect */
+.spotlight-target.interactive {
+  outline-color: rgba(245, 158, 11, 0.8);
+  box-shadow: 0 0 15px rgba(245, 158, 11, 0.7), 0 0 30px rgba(245, 158, 11, 0.4);
+}
+
+/* Success state for completed interactions */
+.spotlight-target.success {
+  outline-color: rgba(16, 185, 129, 0.8);
+  box-shadow: 0 0 15px rgba(16, 185, 129, 0.7), 0 0 30px rgba(16, 185, 129, 0.4);
+  animation: spotlight-success-pulse 1s ease-in-out forwards;
+}
+
+/* Animated pulsing effect for spotlight */
+@keyframes spotlight-pulse {
+  0% {
+    box-shadow: 0 0 8px rgba(59, 130, 246, 0.5), 0 0 16px rgba(59, 130, 246, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 15px rgba(59, 130, 246, 0.8), 0 0 30px rgba(59, 130, 246, 0.5);
+  }
+  100% {
+    box-shadow: 0 0 8px rgba(59, 130, 246, 0.5), 0 0 16px rgba(59, 130, 246, 0.3);
+  }
+}
+
+/* Interactive element pulse */
+@keyframes spotlight-interactive-pulse {
+  0% {
+    box-shadow: 0 0 8px rgba(245, 158, 11, 0.5), 0 0 16px rgba(245, 158, 11, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 15px rgba(245, 158, 11, 0.8), 0 0 30px rgba(245, 158, 11, 0.5);
+  }
+  100% {
+    box-shadow: 0 0 8px rgba(245, 158, 11, 0.5), 0 0 16px rgba(245, 158, 11, 0.3);
+  }
+}
+
+/* Success animation */
+@keyframes spotlight-success-pulse {
+  0% {
+    box-shadow: 0 0 8px rgba(16, 185, 129, 0.5), 0 0 16px rgba(16, 185, 129, 0.3);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.8), 0 0 40px rgba(16, 185, 129, 0.5);
+    transform: scale(1.05);
+  }
+  100% {
+    box-shadow: 0 0 15px rgba(16, 185, 129, 0.7), 0 0 30px rgba(16, 185, 129, 0.4);
+    transform: scale(1);
+  }
+}
+
+/* Tooltip animations */
+.tutorial-tooltip {
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.tutorial-tooltip.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Pointer animations */
+.tutorial-pointer {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  background-color: rgba(245, 158, 11, 0.9);
+  border-radius: 50%;
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.7);
+  animation: pointer-pulse 1.5s infinite ease-in-out;
+}
+
+@keyframes pointer-pulse {
+  0% {
+    transform: scale(0.8);
+    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 10px rgba(245, 158, 11, 0);
+  }
+  100% {
+    transform: scale(0.8);
+    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0);
+  }
+}
+
+/* Tutorial backdrop overlay */
+.tutorial-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  /* background-color: rgba(0, 0, 0, 0.7); */
+  z-index: 9990;
+  pointer-events: none;
+}
+
+/* Make click-through elements work correctly with the spotlight */
+.tutorial-allow-click {
+  pointer-events: none;
+}
+
+.tutorial-allow-click .spotlight-target {
+  pointer-events: auto;
 }

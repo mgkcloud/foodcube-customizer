@@ -1,0 +1,140 @@
+/* WelcomeModal specific styles for both normal and embedded contexts */
+
+/* Basic styles for the welcome modal */
+.welcome-modal-container {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+/* Ensure modal content is properly displayed */
+.welcome-modal-content {
+  background-color: white !important;
+  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.2) !important;
+  border-radius: 12px !important;
+  max-width: 500px !important;
+  width: 90% !important;
+  margin: 0 auto !important;
+  padding: 20px !important;
+}
+
+/* Fix the dialog backdrop for embedded context */
+.welcome-modal-container [data-state="open"]::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+/* Fix button styles to avoid inheritance issues */
+.welcome-modal-content button {
+  cursor: pointer !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-weight: 600 !important;
+  border-radius: 6px !important;
+  padding: 8px 16px !important;
+  transition: all 0.2s ease !important;
+  text-align: center !important;
+}
+
+.welcome-modal-content button[variant="outline"] {
+  background-color: white !important;
+  color: #333 !important;
+  border: 1px solid #ddd !important;
+}
+
+.welcome-modal-content .bg-blue-600 {
+  background-color: #2563eb !important;
+  color: white !important;
+  border: none !important;
+}
+
+.welcome-modal-content .bg-blue-600:hover {
+  background-color: #1d4ed8 !important;
+}
+
+/* Ensure text styles are properly enforced */
+.welcome-modal-content .text-center {
+  text-align: center !important;
+}
+
+.welcome-modal-content .font-bold {
+  font-weight: 700 !important;
+}
+
+.welcome-modal-content .text-xl {
+  font-size: 1.25rem !important;
+  line-height: 1.75rem !important;
+}
+
+.welcome-modal-content .text-sm {
+  font-size: 0.875rem !important;
+  line-height: 1.25rem !important;
+}
+
+/* Ensure lists and paragraphs are styled correctly */
+.welcome-modal-content ul {
+  list-style-type: disc !important;
+  margin-left: 1.5rem !important;
+}
+
+.welcome-modal-content li {
+  margin-bottom: 0.5rem !important;
+  display: list-item !important;
+}
+
+.welcome-modal-content p {
+  margin-bottom: 0.75rem !important;
+}
+
+/* Fix spacing */
+.welcome-modal-content .my-4 {
+  margin-top: 1rem !important;
+  margin-bottom: 1rem !important;
+}
+
+.welcome-modal-content .mt-4 {
+  margin-top: 1rem !important;
+}
+
+.welcome-modal-content .space-y-2 > * + * {
+  margin-top: 0.5rem !important;
+}
+
+/* Logo styling */
+.welcome-modal-content img {
+  max-width: 200px !important;
+  height: auto !important;
+}
+
+/* Utility classes */
+.welcome-modal-content .flex {
+  display: flex !important;
+}
+
+.welcome-modal-content .justify-center {
+  justify-content: center !important;
+}
+
+/* Force the modal overlay to be at the highest z-index in any context */
+[role="dialog"] {
+  z-index: 2147483647 !important;
+}
+
+/* Embedded-specific adjustments */
+body.embedded-content .welcome-modal-container,
+.foodcube-configurator-embed .welcome-modal-container {
+  position: fixed !important;
+  z-index: 2147483646 !important; /* One less than the modal itself */
+  inset: 0 !important;
+}
+
+/* Force the modal itself to be visible regardless of parent styles */
+body.embedded-content .welcome-modal-content,
+.foodcube-configurator-embed .welcome-modal-content {
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: none !important;
+  transition: none !important;
+} 

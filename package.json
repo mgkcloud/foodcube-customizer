@@ -7,6 +7,8 @@
     "dev": "vite --port ${VITE_PORT:-8082} --host mac.centaur-cloud.ts.net",
     "build": "vite build",
     "build:dev": "vite build --mode development",
+    "clean": "rm -rf dist",
+    "build:clean": "npm run clean && npm run build",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "jest --config jest.config.cjs",

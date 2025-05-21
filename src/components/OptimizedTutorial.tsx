@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTutorial, ActionType, TutorialAction } from '@/contexts/TutorialContext';
-import IntegratedTutorialTooltip from './IntegratedTutorialTooltip';
-import IntegratedSpotlight from './IntegratedSpotlight';
-import { throttle } from '@/lib/utils';
+import OptimizedTutorialTooltip from './OptimizedTutorialTooltip';
+import OptimizedSpotlight from './OptimizedSpotlight';
+import { tutorialManager } from '@/utils/tutorial';
 
 // Define the tutorial step interface with target IDs instead of selectors
 interface TutorialStep {
@@ -15,13 +15,14 @@ interface TutorialStep {
   alignment?: 'start' | 'center' | 'end';
   isInteractive?: boolean;
   requiredAction?: ActionType;
-  showPointer?: boolean;
+  showPointer?: boolean;  
   pointerPosition?: 'top' | 'bottom' | 'left' | 'right';
   showNextButton?: boolean;
   spotlightPadding?: number;
 }
 
-// Define the tutorial steps
+// Keep the same tutorial steps from original implementation
+// but can be optimized with additional data if needed
 const tutorialSteps: TutorialStep[] = [
   // Step 0: Welcome introduction
   {
@@ -29,6 +30,7 @@ const tutorialSteps: TutorialStep[] = [
     title: 'Welcome to FoodCube Designer!',
     content: 'This interactive tool helps you design custom garden layouts. Let\'s get started with a quick tutorial to show you the main features. Follow the highlighted steps!',
     targetId: 'config-overlay',
+    fallbackTargetIds: ['foodcube-configurator', 'configurator-title', 'grid-wrapper'],
     position: 'top',
     alignment: 'center',
   },
@@ -152,7 +154,11 @@ const tutorialSteps: TutorialStep[] = [
   },
 ];
 
-export const IntegratedTutorial: React.FC = () => {
+/**
+ * High-performance tutorial component that uses the optimized infrastructure
+ * to show tutorial steps with spotlights and tooltips.
+ */
+export const OptimizedTutorial: React.FC = () => {
   const { 
     showTutorial, 
     currentStep,
@@ -168,15 +174,133 @@ export const IntegratedTutorial: React.FC = () => {
   
   // Wait a short moment for the app to fully render before starting the tutorial
   const [ready, setReady] = useState(false);
+  
+  // Flag to track if U-shape was selected
+  const [uShapeApplied, setUShapeApplied] = useState(false);
+  
+  // Initialize tutorial system
   useEffect(() => {
+    // Initialize the tutorial system when component mounts
+    tutorialManager.initialize();
+    
+    // Inject critical tutorial styles directly to ensure they're always available
+    const injectCriticalStyles = () => {
+      // Check if styles are already injected
+      if (document.getElementById('tutorial-critical-styles')) return;
+      
+      // Create style element
+      const styleEl = document.createElement('style');
+      styleEl.id = 'tutorial-critical-styles';
+      
+      // Add critical styles for tutorial functionality
+      styleEl.textContent = `
+        /* Backdrop overlay */
+        .tutorial-backdrop {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          z-index: 9990;
+          pointer-events: none;
+        }
+        
+        /* Core spotlight styles */
+        .spotlight-target {
+          z-index: 9999 !important;
+          outline: 3px solid #3b82f6 !important;
+          outline-offset: 2px !important;
+          box-shadow: 0 0 15px rgba(59, 130, 246, 0.7), 0 0 30px rgba(59, 130, 246, 0.4) !important;
+        }
+        
+        /* Interactive spotlight styles */
+        .spotlight-target.interactive {
+          outline-color: #f59e0b !important;
+          box-shadow: 0 0 15px rgba(245, 158, 11, 0.7), 0 0 30px rgba(245, 158, 11, 0.4) !important;
+        }
+        
+        /* Success state */
+        .spotlight-target.success {
+          outline-color: #10b981 !important;
+          box-shadow: 0 0 15px rgba(16, 185, 129, 0.7), 0 0 30px rgba(16, 185, 129, 0.4) !important;
+        }
+        
+        /* Tooltip container */
+        #tutorial-tooltips-container {
+          position: fixed !important;
+          top: 0 !important;
+          left: 0 !important;
+          width: 100% !important;
+          height: 100% !important;
+          pointer-events: none !important;
+          z-index: 2147483646 !important;
+          overflow: visible !important;
+        }
+        
+        /* Tutorial animations */
+        @keyframes spotlight-glow {
+          0% {
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.7), 0 0 0 6px rgba(37, 99, 235, 0.3);
+            outline-color: #2563eb;
+          }
+          50% {
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.8), 0 0 0 8px rgba(37, 99, 235, 0.4);
+            outline-color: #3b82f6;
+          }
+          100% {
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.7), 0 0 0 6px rgba(37, 99, 235, 0.3);
+            outline-color: #2563eb;
+          }
+        }
+        
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(-10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Makes interactive elements clickable during tutorial */
+        body.tutorial-active [data-edge],
+        body.tutorial-active [data-has-cube],
+        body.tutorial-active [data-testid^="preset"],
+        body.tutorial-active button,
+        body.tutorial-active a,
+        body.tutorial-active input,
+        body.tutorial-active select {
+          pointer-events: auto !important;
+          z-index: 10000 !important;
+        }
+      `;
+      
+      // Add to document head
+      document.head.appendChild(styleEl);
+      
+      console.log('[OptimizedTutorial] Critical tutorial styles injected');
+    };
+    
+    // Inject styles
+    injectCriticalStyles();
+    
+    // Set up a short delay before marking the tutorial as ready
     const timer = setTimeout(() => {
       setReady(true);
     }, 500);
-    return () => clearTimeout(timer);
+    
+    return () => {
+      clearTimeout(timer);
+      // Clean up tutorial system when component unmounts
+      tutorialManager.cleanup();
+      
+      // Optionally remove injected styles on unmount
+      // const styleEl = document.getElementById('tutorial-critical-styles');
+      // if (styleEl) styleEl.remove();
+    };
   }, []);
   
-  // Add a body class when tutorial is active to help with styling
+  // Set tutorial active state based on showTutorial flag
   useEffect(() => {
+    tutorialManager.setTutorialActive(showTutorial && ready);
+    
+    // Add body class when tutorial is active
     if (showTutorial && ready) {
       document.body.classList.add('tutorial-active');
     } else {
@@ -187,9 +311,9 @@ export const IntegratedTutorial: React.FC = () => {
       document.body.classList.remove('tutorial-active');
     };
   }, [showTutorial, ready]);
-
+  
   // Check if the action satisfies the current step's requirements
-  const checkActionForStep = useCallback((step: TutorialStep, action: TutorialAction | null): boolean => {
+  const checkActionForStep = (step: TutorialStep, action: TutorialAction | null): boolean => {
     if (!action || !step.requiredAction) return false;
     
     // Check if action type matches the required type
@@ -222,21 +346,17 @@ export const IntegratedTutorial: React.FC = () => {
       default:
         return true;
     }
-  }, [currentStep]);
-
-  // Flag to track if U-shape was selected
-  const [uShapeApplied, setUShapeApplied] = useState(false);
-
+  };
+  
   // Initialize uShapeApplied based on lastAction if needed
   useEffect(() => {
     if (lastAction?.type === 'PRESET_APPLIED' && 
         lastAction.payload && 'presetName' in lastAction.payload && 
         lastAction.payload.presetName === 'u-shape') {
-      console.log('U-shape preset detected, setting flag to skip redundant steps');
       setUShapeApplied(true);
     }
   }, [lastAction]);
-
+  
   // Monitor lastAction to auto-advance interactive steps
   useEffect(() => {
     if (!showTutorial || !ready || currentStep >= tutorialSteps.length) return;
@@ -247,7 +367,6 @@ export const IntegratedTutorial: React.FC = () => {
     if (uShapeApplied) {
       // If we're on steps 2, 3, or 4 (remove cube, add cube, toggle cladding), skip to step 6 (components)
       if (currentStep >= 2 && currentStep < 6) {
-        console.log('U-shape was applied, skipping from step', currentStep, 'to components step (step 6)');
         setCurrentStep(6); // Skip to components step
         return;
       }
@@ -258,8 +377,6 @@ export const IntegratedTutorial: React.FC = () => {
       const actionSatisfiesStep = checkActionForStep(currentTutorialStep, lastAction);
       
       if (actionSatisfiesStep) {
-        console.log(`Step ${currentStep} completed through action: ${lastAction.type}`);
-        
         // If this is the U-shape step that was completed
         if (currentStep === 5 && lastAction.type === 'PRESET_APPLIED' && 
             lastAction.payload && 'presetName' in lastAction.payload && 
@@ -267,24 +384,34 @@ export const IntegratedTutorial: React.FC = () => {
           setUShapeApplied(true);
         }
         
+        // Show success animation on the target element
+        const targetElement = document.querySelector(`[data-testid="${currentTutorialStep.targetId}"]`) ||
+                             document.getElementById(currentTutorialStep.targetId);
+        
+        if (targetElement) {
+          // Add temporary success class
+          targetElement.classList.add('spotlight-target', 'success');
+          
+          // Remove after animation completes
+          setTimeout(() => {
+            targetElement.classList.remove('success');
+          }, 1500);
+        }
+        
         setInteractiveStepCompleted(true);
       }
     }
-  }, [showTutorial, ready, currentStep, lastAction, checkActionForStep, uShapeApplied, setCurrentStep]);
-
+  }, [showTutorial, ready, currentStep, lastAction, uShapeApplied, setCurrentStep]);
+  
   // Auto-advance to next step when interactive steps are completed
   useEffect(() => {
     if (interactiveStepCompleted && currentStep < tutorialSteps.length) {
-      console.log(`Step ${currentStep} completed, moving to next step after delay`);
-      
       // Wait a moment for the user to see the result of their action
       const timer = setTimeout(() => {
         // If U-shape was just applied, skip to components step
         if (uShapeApplied && currentStep === 5) {
-          console.log(`U-shape was applied, skipping from step ${currentStep} to step 6`);
           setCurrentStep(6);
         } else {
-          console.log(`Advancing from step ${currentStep} to ${currentStep + 1}`);
           setCurrentStep(currentStep + 1);
         }
         setInteractiveStepCompleted(false);
@@ -293,7 +420,7 @@ export const IntegratedTutorial: React.FC = () => {
       return () => clearTimeout(timer);
     }
   }, [interactiveStepCompleted, currentStep, setCurrentStep, uShapeApplied]);
-
+  
   // Handle navigation
   const handleNext = () => {
     if (currentStep < tutorialSteps.length - 1) {
@@ -307,7 +434,7 @@ export const IntegratedTutorial: React.FC = () => {
       completeTutorial();
     }
   };
-
+  
   const handlePrev = () => {
     if (currentStep > 0) {
       // If currently at components step and U-shape was applied, go back to U-shape step
@@ -321,30 +448,39 @@ export const IntegratedTutorial: React.FC = () => {
       }
     }
   };
-
+  
   if (!ready || !showTutorial || currentStep >= tutorialSteps.length) {
     return null;
   }
-
+  
   const currentTutorialStep = tutorialSteps[currentStep];
   const isLastStep = currentStep === tutorialSteps.length - 1;
-
+  
   return (
     <>
+      {/* Backdrop overlay */}
+      {showTutorial && ready && (
+        <div
+          className="tutorial-backdrop"
+          aria-hidden="true"
+          onClick={currentTutorialStep.isInteractive ? undefined : handleNext}
+        />
+      )}
+      
       {/* Spotlight overlay */}
-      <IntegratedSpotlight
+      <OptimizedSpotlight
         targetId={currentTutorialStep.targetId}
         fallbackTargetIds={currentTutorialStep.fallbackTargetIds}
         isActive={true}
-        allowClickThrough={currentTutorialStep.isInteractive}
         showPointer={currentTutorialStep.showPointer}
         pointerPosition={currentTutorialStep.pointerPosition || 'top'}
         zIndex={10000}
         padding={currentTutorialStep.spotlightPadding}
+        isInteractive={currentTutorialStep.isInteractive}
       />
       
       {/* Tooltip */}
-      <IntegratedTutorialTooltip
+      <OptimizedTutorialTooltip
         title={currentTutorialStep.title}
         content={currentTutorialStep.content}
         isVisible={showTutorial}
@@ -366,4 +502,4 @@ export const IntegratedTutorial: React.FC = () => {
   );
 };
 
-export default IntegratedTutorial;
+export default OptimizedTutorial;

@@ -1,0 +1,81 @@
+/* Reset and normalize styles for embedded context */
+.foodcube-configurator-embed {
+  /* Reset everything within our component */
+  all: initial;
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  line-height: 1.5;
+  color: #333;
+  
+  /* Ensure our container creates a new stacking context */
+  position: relative;
+  z-index: 1;
+}
+
+/* Ensure all elements within get proper box-sizing */
+.foodcube-configurator-embed *,
+.foodcube-configurator-embed *::before,
+.foodcube-configurator-embed *::after {
+  box-sizing: inherit;
+}
+
+/* Reset common elements to avoid inheritance from parent site */
+.foodcube-configurator-embed h1, 
+.foodcube-configurator-embed h2, 
+.foodcube-configurator-embed h3, 
+.foodcube-configurator-embed h4, 
+.foodcube-configurator-embed h5, 
+.foodcube-configurator-embed h6, 
+.foodcube-configurator-embed p, 
+.foodcube-configurator-embed span, 
+.foodcube-configurator-embed div, 
+.foodcube-configurator-embed a, 
+.foodcube-configurator-embed button {
+  all: unset;
+  box-sizing: border-box;
+}
+
+/* Override specific styles for modals and dialogs */
+.foodcube-configurator-embed [role="dialog"],
+.foodcube-configurator-embed [data-state="open"] {
+  z-index: 100000000002 !important; /* Even higher than our action buttons */
+}
+
+/* Ensure root-level portal elements are properly styled */
+#root [data-radix-portal] {
+  z-index: 2147483647 !important; /* Highest possible z-index */
+}
+
+/* Force dialog content to be visible and styled correctly */
+.foodcube-configurator-embed [role="dialog"] [role="document"] {
+  background-color: white !important;
+  border-radius: 8px !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2) !important;
+  padding: 20px !important;
+  max-width: 500px !important;
+  width: 90% !important;
+  margin: 0 auto !important;
+}
+
+/* Make buttons look like buttons */
+.foodcube-configurator-embed button {
+  cursor: pointer;
+  display: inline-block;
+  padding: 8px 16px;
+  border-radius: 4px;
+  background-color: #f1f1f1;
+  color: #333;
+  font-weight: 500;
+  text-align: center;
+}
+
+/* Style dialog overlay properly */
+.foodcube-configurator-embed [data-radix-portal] > div {
+  background-color: rgba(0, 0, 0, 0.5) !important;
+  position: fixed !important;
+  inset: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 2147483646 !important;
+} 

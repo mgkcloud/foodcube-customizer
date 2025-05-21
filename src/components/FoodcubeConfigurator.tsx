@@ -151,7 +151,7 @@ export const FoodcubeConfigurator: React.FC<FoodcubeConfiguratorProps> = ({ vari
   const [debugMode, setDebugMode] = useState(false); // Default to false for production
   
   // Add tutorial context at component level
-  const { showTutorial, setCurrentStep, resetTutorial } = useTutorial();
+  const { showTutorial, setCurrentStep, resetTutorial, resetTutorialState, setShowTutorial } = useTutorial();
   
   // Use our new preset constraints hook
   const {
@@ -325,6 +325,10 @@ export const FoodcubeConfigurator: React.FC<FoodcubeConfiguratorProps> = ({ vari
     setHasInteracted(false);
     resetPresetState();
     
+    // Reset tutorial state and close it, just like the Clear button does
+    resetTutorialState();
+    setShowTutorial(false);
+    
     // If onClose callback is provided, call it to close the modal
     if (onClose) {
       onClose();
@@ -414,7 +418,7 @@ export const FoodcubeConfigurator: React.FC<FoodcubeConfiguratorProps> = ({ vari
               
               {/* Overlay for preset selection with welcome message - positioned directly over the grid */}
               {!hasInteracted && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center z-20 rounded-xl" data-testid="config-overlay">
+                <div className="absolute inset-0 flex flex-col items-center justify-center z-20 rounded-xl" data-testid="config-overlay" data-tutorial-no-position="true">
                   {/* Semi-transparent animated background */}
                   <div className="absolute inset-0 bg-gray-800/50 backdrop-blur-sm animate-pulse rounded-xl"></div>
                   

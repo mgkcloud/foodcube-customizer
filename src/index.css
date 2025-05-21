@@ -590,3 +590,8 @@
   top: 30%;
   animation-delay: 1.2s;
 }
+
+
+[data-testid="config-overlay"] {
+  zoom: 1.43; /* Approximately 1/0.7 */
+}

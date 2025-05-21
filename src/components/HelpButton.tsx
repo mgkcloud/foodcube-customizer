@@ -9,7 +9,7 @@ export const HelpButton: React.FC = () => {
   return (
     <TooltipProvider>
       <Tooltip>
-        <TooltipTrigger asChild>
+        {/* <TooltipTrigger asChild>
           <Button
             variant="outline"
             size="icon"
@@ -37,7 +37,7 @@ export const HelpButton: React.FC = () => {
         </TooltipTrigger>
         <TooltipContent side="right">
           <p>Restart Tutorial</p>
-        </TooltipContent>
+        </TooltipContent> */}
       </Tooltip>
     </TooltipProvider>
   );

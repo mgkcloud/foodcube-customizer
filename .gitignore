@@ -67,3 +67,5 @@ credentials.json
 # Token tracking logs
 token_logs/
 test_token_logs/
+dist/foodcube-configurator.iife.js
+dist/foodcube-configurator.iife.js.map

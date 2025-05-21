@@ -1,4 +1,5 @@
 import React, { createContext, useState, useContext, useEffect, useRef } from 'react';
+import { tutorialManager } from '@/utils/tutorial';
 
 // Type definitions for target registration
 export type TutorialTarget = HTMLElement;
@@ -100,6 +101,22 @@ export const TutorialProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   // Target registry - stores references to DOM elements by ID
   const [targetRegistry, setTargetRegistry] = useState<Record<TutorialTargetId, TutorialTargetRegistryEntry>>({});
   
+  // Initialize the tutorial manager
+  useEffect(() => {
+    // Initialize the tutorial system
+    tutorialManager.initialize();
+    
+    return () => {
+      // Clean up tutorial system when provider unmounts
+      tutorialManager.cleanup();
+    };
+  }, []);
+  
+  // Sync tutorial active state with tutorialManager
+  useEffect(() => {
+    tutorialManager.setTutorialActive(showTutorial);
+  }, [showTutorial]);
+
   // Get cookie value helper
   const getCookie = (name: string): string | null => {
     const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
