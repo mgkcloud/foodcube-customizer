@@ -8,6 +8,7 @@ import useGridState from '@/hooks/useGridState';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import HeightSwitch from './HeightSwitch';
 import { debugConfiguration } from '@/utils/validation/configDebugger';
 import { createPortal } from 'react-dom';
 import { GridCell } from './types';
@@ -477,6 +478,7 @@ export const FoodcubeConfigurator: React.FC<FoodcubeConfiguratorProps> = ({ vari
             <div className="lg:col-span-5 space-y-3" data-testid="requirements-panel">
               {/* Desktop order (hidden on mobile) */}
               <div className="hidden lg:!block space-y-3">
+                <HeightSwitch />
                 {/* Cladding Key */}
                 <div className="transition-all duration-300 ease-in-out">
                   <CladdingKey requirements={requirements} showDebug={debugMode} />
@@ -506,6 +508,7 @@ export const FoodcubeConfigurator: React.FC<FoodcubeConfiguratorProps> = ({ vari
               
               {/* Mobile order (hidden on desktop) - Preset configs above Cladding Key */}
               <div className="block lg:hidden space-y-3">
+                <HeightSwitch />
                 {/* Preset configurations first */}
                 {hasInteracted && (
                   <div className="bg-white p-3 sm:p-4 rounded-xl shadow-sm border border-gray-100" data-testid="side-presets-mobile">
