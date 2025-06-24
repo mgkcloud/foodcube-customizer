@@ -94,10 +94,18 @@ interface CladdingKeyProps {
     straightCouplings: number;
     cornerConnectors: number;
   };
+  prices?: {
+    fourPackRegular?: number;
+    fourPackExtraTall?: number;
+    twoPackRegular?: number;
+    twoPackExtraTall?: number;
+    cornerConnectors?: number;
+    straightCouplings?: number;
+  };
   showDebug?: boolean;
 }
 
-export const CladdingKey: React.FC<CladdingKeyProps> = ({ requirements, showDebug = false }) => {
+export const CladdingKey: React.FC<CladdingKeyProps> = ({ requirements, prices, showDebug = false }) => {
   // console.log("CladdingKey received requirements:", JSON.stringify(requirements, null, 2));
   
   // Enhanced logging to track requirements updates
@@ -228,6 +236,18 @@ export const CladdingKey: React.FC<CladdingKeyProps> = ({ requirements, showDebu
   }, [requirements, totalSidePanels, totalLeftPanels, totalRightPanels, configurationType]);
   
   const hasRequirements = Object.values(requirements).some(val => val > 0);
+
+  const subtotal = React.useMemo(() => {
+    if (!prices) return 0;
+    return (
+      (requirements.fourPackRegular * (prices.fourPackRegular || 0)) +
+      (requirements.fourPackExtraTall * (prices.fourPackExtraTall || 0)) +
+      (requirements.twoPackRegular * (prices.twoPackRegular || 0)) +
+      (requirements.twoPackExtraTall * (prices.twoPackExtraTall || 0)) +
+      (requirements.cornerConnectors * (prices.cornerConnectors || 0)) +
+      (requirements.straightCouplings * (prices.straightCouplings || 0))
+    );
+  }, [requirements, prices]);
   
   // Group all products (packages, panels, connectors) into a single list
   const allProducts = [
@@ -473,7 +493,13 @@ export const CladdingKey: React.FC<CladdingKeyProps> = ({ requirements, showDebu
           </div>
         )}
       </div>
-      
+
+      {subtotal > 0 && (
+        <div className="mt-3 text-right font-semibold text-sm" data-testid="subtotal">
+          Subtotal: ${subtotal.toFixed(2)}
+        </div>
+      )}
+
       {/* Debug Info - only shown when explicitly enabled */}
       {showDebug && (
         <details className="mt-2 text-sm border-t border-gray-100 pt-1">

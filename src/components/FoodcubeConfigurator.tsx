@@ -149,6 +149,18 @@ export const FoodcubeConfigurator: React.FC<FoodcubeConfiguratorProps> = ({ vari
   const { grid, requirements, toggleCell, toggleCladding, applyPreset, error, clearGrid } = useGridState();
   const [hasInteracted, setHasInteracted] = useState(false);
   const [debugMode, setDebugMode] = useState(false); // Default to false for production
+
+  const prices = React.useMemo(
+    () => ({
+      fourPackRegular: variants?.fourPackRegular?.price ?? 0,
+      fourPackExtraTall: variants?.fourPackExtraTall?.price ?? 0,
+      twoPackRegular: variants?.twoPackRegular?.price ?? 0,
+      twoPackExtraTall: variants?.twoPackExtraTall?.price ?? 0,
+      cornerConnectors: variants?.cornerConnectors?.price ?? 0,
+      straightCouplings: variants?.straightCouplings?.price ?? 0
+    }),
+    [variants]
+  );
   
   // Add tutorial context at component level
   const { showTutorial, setCurrentStep, resetTutorial, resetTutorialState, setShowTutorial } = useTutorial();
@@ -479,7 +491,7 @@ export const FoodcubeConfigurator: React.FC<FoodcubeConfiguratorProps> = ({ vari
               <div className="hidden lg:!block space-y-3">
                 {/* Cladding Key */}
                 <div className="transition-all duration-300 ease-in-out">
-                  <CladdingKey requirements={requirements} showDebug={debugMode} />
+                  <CladdingKey requirements={requirements} prices={prices} showDebug={debugMode} />
                 </div>
                 
                 {/* Preset configurations */}
@@ -529,7 +541,7 @@ export const FoodcubeConfigurator: React.FC<FoodcubeConfiguratorProps> = ({ vari
                 
                 {/* Cladding Key second */}
                 <div className="transition-all duration-300 ease-in-out">
-                  <CladdingKey requirements={requirements} showDebug={debugMode} />
+                  <CladdingKey requirements={requirements} prices={prices} showDebug={debugMode} />
                 </div>
               </div>
             </div>
