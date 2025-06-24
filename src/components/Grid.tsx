@@ -23,6 +23,43 @@ export const Grid: React.FC<GridProps> = ({
 }) => {
   const [hasInteractedLocal, setHasInteractedLocal] = useState(false);
   const { notifyTutorial } = useTutorial();
+
+  // --- Keyboard navigation state ---
+  const [focusedCell, setFocusedCell] = useState<[number, number]>([0, 0]);
+  const cellRefs = useRef<HTMLDivElement[][]>([]);
+
+  // Move focus to the currently selected cell
+  useEffect(() => {
+    const [row, col] = focusedCell;
+    cellRefs.current[row]?.[col]?.focus();
+  }, [focusedCell]);
+
+  const handleGridKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    const [row, col] = focusedCell;
+    switch (event.key) {
+      case "ArrowUp":
+        event.preventDefault();
+        setFocusedCell([Math.max(0, row - 1), col]);
+        break;
+      case "ArrowDown":
+        event.preventDefault();
+        setFocusedCell([Math.min(grid.length - 1, row + 1), col]);
+        break;
+      case "ArrowLeft":
+        event.preventDefault();
+        setFocusedCell([row, Math.max(0, col - 1)]);
+        break;
+      case "ArrowRight":
+        event.preventDefault();
+        setFocusedCell([row, Math.min(grid[0].length - 1, col + 1)]);
+        break;
+      case " ":
+      case "Enter":
+        event.preventDefault();
+        handleCellClick(row, col);
+        break;
+    }
+  };
   
   // Effect to sync hasInteractedLocal with parent's hasInteracted state
   useEffect(() => {
@@ -102,7 +139,12 @@ export const Grid: React.FC<GridProps> = ({
   };
 
   return (
-    <div className="relative grid grid-cols-3 gap-1.5 sm:gap-3 md:gap-4 bg-gray-100 p-4 sm:p-5 md:p-6 rounded-xl shadow-md z-10">
+    <div
+      className="relative grid grid-cols-3 gap-1.5 sm:gap-3 md:gap-4 bg-gray-100 p-4 sm:p-5 md:p-6 rounded-xl shadow-md z-10"
+      tabIndex={0}
+      onKeyDown={handleGridKeyDown}
+      role="grid"
+    >
       {!hasInteractedLocal && (
         <div className="absolute inset-0 flex items-center justify-center z-10 bg-black/5 backdrop-blur-[1px] rounded-xl">
           <div className="bg-blue-600/90 px-5 py-3 rounded-lg text-white text-center font-medium shadow-lg animate-pulse">
@@ -113,10 +155,18 @@ export const Grid: React.FC<GridProps> = ({
       
       {grid.map((row, rowIndex) => (
         row.map((cell, colIndex) => (
-          <div 
+          <div
             key={`${rowIndex}-${colIndex}`}
             data-testid={`grid-cell-${rowIndex}-${colIndex}`}
             data-has-cube={cell.hasCube.toString()}
+            ref={el => {
+              if (!cellRefs.current[rowIndex]) cellRefs.current[rowIndex] = [];
+              cellRefs.current[rowIndex][colIndex] = el;
+            }}
+            tabIndex={focusedCell[0] === rowIndex && focusedCell[1] === colIndex ? 0 : -1}
+            onFocus={() => setFocusedCell([rowIndex, colIndex])}
+            role="gridcell"
+            aria-selected={focusedCell[0] === rowIndex && focusedCell[1] === colIndex}
             className={`
               relative aspect-square cursor-pointer
               ${cell.hasCube 
@@ -126,6 +176,7 @@ export const Grid: React.FC<GridProps> = ({
               border-2 sm:border-3 border-gray-300 sm:border-gray-200 rounded-lg
               transition-all duration-200 shadow-sm hover:shadow-md
               transform active:scale-[0.98]
+              ${focusedCell[0] === rowIndex && focusedCell[1] === colIndex ? 'ring-2 ring-offset-2 ring-blue-500' : ''}
             `}
             style={{
               backgroundImage: cell.hasCube 
