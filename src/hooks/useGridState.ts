@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { GridCell, Requirements, CompassDirection } from '@/components/types';
 import { calculateRequirements as calculateFlowRequirements } from '@/utils/calculation/requirementsCalculator';
 import { calculateFlowPathPanels } from '@/utils/calculation/panelCalculator';
@@ -78,6 +78,11 @@ const useGridState = () => {
     straightCouplings: 0
   });
 
+  // History stack for undo/redo functionality
+  const historyRef = useRef<GridCell[][][]>([]);
+  const historyIndexRef = useRef(-1);
+  const skipHistoryRef = useRef(false);
+
   const logGridState = (grid: GridCell[][], requirements: Requirements) => {
     // Clear console before logging new state
     console.clear();
@@ -100,6 +105,39 @@ const useGridState = () => {
     console.log('Grid:', gridState);
     console.log('Requirements:', requirements);
     console.groupEnd();
+  };
+
+  // Clone grid to preserve Set structures
+  const cloneGrid = (g: GridCell[][]): GridCell[][] =>
+    g.map(row =>
+      row.map(cell => ({
+        ...cell,
+        claddingEdges: new Set([...cell.claddingEdges]),
+        excludedCladdingEdges: new Set([...cell.excludedCladdingEdges])
+      }))
+    );
+
+  const pushHistory = (g: GridCell[][]) => {
+    const snapshot = cloneGrid(g);
+    historyRef.current = historyRef.current.slice(0, historyIndexRef.current + 1);
+    historyRef.current.push(snapshot);
+    historyIndexRef.current++;
+  };
+
+  const undo = () => {
+    if (historyIndexRef.current <= 0) return;
+    historyIndexRef.current--;
+    skipHistoryRef.current = true;
+    const prevGrid = historyRef.current[historyIndexRef.current];
+    setGrid(cloneGrid(prevGrid));
+  };
+
+  const redo = () => {
+    if (historyIndexRef.current >= historyRef.current.length - 1) return;
+    historyIndexRef.current++;
+    skipHistoryRef.current = true;
+    const nextGrid = historyRef.current[historyIndexRef.current];
+    setGrid(cloneGrid(nextGrid));
   };
 
   const validateAndUpdateGrid = useCallback((newGrid: GridCell[][]) => {
@@ -472,14 +510,22 @@ const useGridState = () => {
     }
   }, [calculateRequirements, validateAndUpdateGrid]);
 
-  // Update requirements whenever the grid changes
+  // Update requirements whenever the grid changes and manage history
+  const isInitialMount = useRef(true);
   useEffect(() => {
-    // Clear console before updating requirements on grid change
     console.clear();
-    
     const newRequirements = calculateRequirements(grid);
     setRequirements(newRequirements);
     logGridState(grid, newRequirements);
+
+    if (isInitialMount.current) {
+      pushHistory(grid);
+      isInitialMount.current = false;
+    } else if (!skipHistoryRef.current) {
+      pushHistory(grid);
+    } else {
+      skipHistoryRef.current = false;
+    }
   }, [grid, calculateRequirements]);
 
   // Function to clear the grid and reset to initial state
@@ -488,7 +534,11 @@ const useGridState = () => {
     // Clear error state
     setError(null);
     // Reset grid to empty state
-    setGrid(initializeGrid());
+    const empty = initializeGrid();
+    setGrid(empty);
+    historyRef.current = [];
+    historyIndexRef.current = -1;
+    pushHistory(empty);
     // Reset requirements
     setRequirements({
       fourPackRegular: 0,
@@ -512,7 +562,9 @@ const useGridState = () => {
     toggleCladding,
     applyPreset,
     error,
-    clearGrid
+    clearGrid,
+    undo,
+    redo
   };
 };
 
