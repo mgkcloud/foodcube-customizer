@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Undo2, Redo2 } from 'lucide-react';
 import { HelpTooltip } from './HelpTooltip';
 import { Grid } from './Grid';
 import { PresetConfigs } from './PresetConfigs';
@@ -146,7 +147,7 @@ interface FoodcubeConfiguratorProps {
 
 export const FoodcubeConfigurator: React.FC<FoodcubeConfiguratorProps> = ({ variants, onUpdate, onApply, onClose }) => {
   // console.log('FoodcubeConfigurator received variants:', variants);
-  const { grid, requirements, toggleCell, toggleCladding, applyPreset, error, clearGrid } = useGridState();
+  const { grid, requirements, toggleCell, toggleCladding, applyPreset, error, clearGrid, undo, redo } = useGridState();
   const [hasInteracted, setHasInteracted] = useState(false);
   const [debugMode, setDebugMode] = useState(false); // Default to false for production
   
@@ -179,6 +180,21 @@ export const FoodcubeConfigurator: React.FC<FoodcubeConfiguratorProps> = ({ vari
       debugConfiguration(grid, requirements);
     }
   }, [grid, requirements, debugMode]);
+
+  // Keyboard shortcuts for undo/redo
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase() === 'z') {
+        e.preventDefault();
+        undo();
+      } else if ((e.ctrlKey || e.metaKey) && (e.key.toLowerCase() === 'y' || (e.shiftKey && e.key.toLowerCase() === 'z'))) {
+        e.preventDefault();
+        redo();
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [undo, redo]);
 
   // Update the parent component with the current requirements
   React.useEffect(() => {
@@ -357,8 +373,12 @@ export const FoodcubeConfigurator: React.FC<FoodcubeConfiguratorProps> = ({ vari
 
   return (
     <div className="relative w-full mx-auto bg-transparent rounded-xl overflow-hidden backdrop-blur-sm" data-testid="foodcube-configurator">
-      {/* Debug toggle - only visible when debug is enabled */}
-      <div className="absolute top-4 right-4 z-50">
+      {/* Debug toggle and history buttons */}
+      <div className="absolute top-4 right-4 z-50 flex space-x-2">
+        <div className="flex items-center space-x-1 bg-white/90 p-1 rounded-full shadow-sm border border-gray-100">
+          <button onClick={undo} aria-label="Undo" data-testid="undo-button" className="p-1"><Undo2 className="w-4 h-4" /></button>
+          <button onClick={redo} aria-label="Redo" data-testid="redo-button" className="p-1"><Redo2 className="w-4 h-4" /></button>
+        </div>
         {debugMode && (
           <div className="flex items-center space-x-2 bg-white/90 p-1 rounded-full shadow-sm border border-gray-100">
             <Switch
