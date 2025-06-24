@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -49,14 +49,35 @@ const EmbeddedModal = ({
 export const WelcomeModal: React.FC = () => {
   const { showWelcomeModal, setShowWelcomeModal, setShowTutorial, skipTutorial } = useTutorial();
   const [mounted, setMounted] = useState(false);
+  const lastFocusedRef = useRef<HTMLElement | null>(null);
 
   // Effect to log visibility state for debugging
   useEffect(() => {
     console.log('WelcomeModal visibility:', showWelcomeModal);
     console.log('Is embedded:', isEmbedded());
-    
+
     setMounted(true);
   }, [showWelcomeModal]);
+
+  // Close on ESC and restore focus to the previously focused element
+  useEffect(() => {
+    if (showWelcomeModal) {
+      lastFocusedRef.current = document.activeElement as HTMLElement;
+      const onKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+          setShowWelcomeModal(false);
+        }
+      };
+      document.addEventListener('keydown', onKeyDown);
+      return () => {
+        document.removeEventListener('keydown', onKeyDown);
+      };
+    }
+
+    if (!showWelcomeModal && lastFocusedRef.current) {
+      lastFocusedRef.current.focus();
+    }
+  }, [showWelcomeModal, setShowWelcomeModal]);
 
   const handleStartTutorial = () => {
     setShowWelcomeModal(false);
