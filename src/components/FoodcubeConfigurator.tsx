@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { HelpTooltip } from './HelpTooltip';
 import { Grid } from './Grid';
+import { ZoomPanWrapper } from './ZoomPanWrapper';
 import { PresetConfigs } from './PresetConfigs';
 import { Summary } from './Summary';
 import { CladdingKey } from './CladdingKey';
@@ -457,20 +458,22 @@ export const FoodcubeConfigurator: React.FC<FoodcubeConfiguratorProps> = ({ vari
                 </div>
               )}
               
-              <Grid 
-                grid={grid} 
-                onToggleCell={(row, col) => {
-                  console.log(`Toggling cell at [${row}, ${col}]`);
-                  handleToggleCell(row, col);
-                }}
-                onToggleCladding={(row, col, edge) => {
-                  console.log(`Toggling cladding at [${row}, ${col}], edge: ${edge}`);
-                  updateLastInteraction(); // Mark cladding toggle as an interaction
-                  toggleCladding(row, col, edge);
-                }}
-                setHasInteracted={setHasInteracted}
-                debug={debugMode}
-              />
+              <ZoomPanWrapper>
+                <Grid
+                  grid={grid}
+                  onToggleCell={(row, col) => {
+                    console.log(`Toggling cell at [${row}, ${col}]`);
+                    handleToggleCell(row, col);
+                  }}
+                  onToggleCladding={(row, col, edge) => {
+                    console.log(`Toggling cladding at [${row}, ${col}], edge: ${edge}`);
+                    updateLastInteraction(); // Mark cladding toggle as an interaction
+                    toggleCladding(row, col, edge);
+                  }}
+                  setHasInteracted={setHasInteracted}
+                  debug={debugMode}
+                />
+              </ZoomPanWrapper>
             </div>
             
             {/* Requirements panel */}
