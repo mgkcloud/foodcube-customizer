@@ -37,58 +37,38 @@ const FloatingActionButtons = ({
   };
   
   return createPortal(
-    <div className="fixed z-[100000000001] bottom-6 right-6 flex flex-col items-end gap-4" style={{ position: 'fixed', pointerEvents: 'auto' }}>
-      {/* Apply button */}
-      <button
-        onClick={onApply}
-        className="flex flex-col items-center justify-center w-44 h-44 rounded-full bg-gradient-to-br from-blue-400 via-blue-600 to-blue-700 text-white font-bold shadow-2xl border-4 border-white hover:bg-blue-700 transition-all transform hover:scale-105 relative"
-        style={{ 
-          background: `linear-gradient(135deg, ${PANEL_COLORS.left}DD, ${PANEL_COLORS.left}, ${PANEL_COLORS.left}99)`, 
-          boxShadow: '0 10px 35px -5px rgba(18, 159, 206, 0.6), 0 10px 20px -6px rgba(18, 159, 206, 0.4)'
-        }}
-        data-testid="mobile-apply-button"
-        aria-label="Select products"
-      >
-        {/* Arrow indicator */}
-        <div className="absolute -top-7 left-1/2 transform -translate-x-1/2 bg-yellow-400 text-blue-900 px-4 py-1.5 rounded-full text-sm font-bold shadow-md animate-pulse flex items-center gap-1">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="12" y1="5" x2="12" y2="19"></line>
-            <polyline points="19 12 12 19 5 12"></polyline>
-          </svg>
-          TAP HERE
-        </div>
-        
-        <div className="flex flex-col items-center justify-center leading-none">
-          {/* <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mb-2">
-            <path d="M20 6L9 17l-5-5"></path>
-          </svg> */}
-          <span className="text-lg font-extrabold mb-2 uppercase tracking-wide text-white">SELECT<br />& CLOSE</span>
-          <div className="bg-white/30 px-4 py-2 rounded-full">
-            <span className="text-2xl font-black text-white">{requirementsSum}</span>
-            <span className="text-base ml-1 text-white">packs</span>
-          </div>
-          {/* <span className="text-sm mt-3 opacity-90 font-medium text-white semibold">Tap to complete</span> */}
-        </div>
-      </button>
-      
-      {/* Clear button */}
-      <button
-        onClick={handleClear}
-        className="flex flex-wrap items-center justify-center w-24 h-24 rounded-full bg-white shadow-2xl border-2 border-gray-200 text-gray-500 hover:text-red-500 transition-all transform hover:scale-105"
-        style={{ flexDirection: 'column', boxShadow: '0 10px 25px -3px rgba(0, 0, 0, 0.15), 0 6px 10px -2px rgba(0, 0, 0, 0.1)' }}
-        data-testid="mobile-clear-button"
-        aria-label="Clear configuration"
-      >
-        {/* <svg xmlns="http://www.w3.org/2000/svg" width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className='mx-auto'>
-          <path d="M18 6L6 18"></path>
-          <path d="M6 6l12 12"></path>
-        </svg> */}
-        <span className="text-lg w-full mx-auto font-extrabold mb-2 uppercase tracking-wide text-gray-500">CLEAR</span>
+    <div className="fixed z-[100000000001] bottom-0 left-0 right-0 flex justify-center p-4 pointer-events-auto">
+      <div className="relative w-full max-w-md">
+        {/* Apply bar */}
+        <button
+          onClick={onApply}
+          className="w-full py-4 rounded-full text-white font-bold shadow-2xl"
+          style={{
+            background: `linear-gradient(135deg, ${PANEL_COLORS.left}DD, ${PANEL_COLORS.left}, ${PANEL_COLORS.left}99)`,
+            boxShadow: '0 10px 35px -5px rgba(18, 159, 206, 0.6), 0 10px 20px -6px rgba(18, 159, 206, 0.4)'
+          }}
+          data-testid="mobile-apply-button"
+          aria-label="Add layout to kit"
+        >
+          Add Layout to Kit
+          <span className="ml-2 text-sm font-semibold">({requirementsSum} packs)</span>
+        </button>
 
-      </button>
+        {/* Clear button */}
+        <button
+          onClick={handleClear}
+          className="absolute -left-14 top-1/2 -translate-y-1/2 flex items-center justify-center w-12 h-12 rounded-full bg-white shadow-2xl border-2 border-gray-200 text-gray-500 hover:text-red-500 transition-all"
+          style={{ boxShadow: '0 10px 25px -3px rgba(0, 0, 0, 0.15), 0 6px 10px -2px rgba(0, 0, 0, 0.1)' }}
+          data-testid="mobile-clear-button"
+          aria-label="Clear configuration"
+        >
+          <span className="text-xs font-bold">CLEAR</span>
+        </button>
+      </div>
     </div>,
     document.body
   );
+
 };
 
 // Error Overlay component for grid
