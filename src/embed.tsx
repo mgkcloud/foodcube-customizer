@@ -9,6 +9,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import HelpButton from "@/components/HelpButton";
+import { toast } from "@/components/ui/use-toast";
+import { ToastAction } from "@/components/ui/toast";
 
 // Import CSS
 import "@/index.css";
@@ -291,6 +293,28 @@ document.addEventListener("DOMContentLoaded", () => {
               
               // Log success message
               console.log('Successfully applied selections to products');
+
+              toast({
+                title: `Layout added to kit – ${totalCubes} Foodcubes`,
+                action: (
+                  <ToastAction
+                    altText="Edit"
+                    onClick={() => {
+                      if (typeof (window as any).openGlobalCladdingCalculator === 'function') {
+                        (window as any).openGlobalCladdingCalculator();
+                      } else {
+                        const modal = document.getElementById('GlobalCladdingCalculatorModal');
+                        if (modal) {
+                          modal.style.display = 'block';
+                          document.body.classList.add('overflow-hidden');
+                        }
+                      }
+                    }}
+                  >
+                    Edit
+                  </ToastAction>
+                )
+              });
               
               // Close the modal using the global function
               if (typeof window.closeGlobalCladdingCalculator === 'function') {
