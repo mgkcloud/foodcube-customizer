@@ -49,6 +49,81 @@ const EmbeddedApp = ({ variants, onUpdate, onApply, onClose }) => {
       modalContainer.setAttribute('data-scrollable', 'true');
       console.log('Added data-scrollable attribute to GlobalCladdingCalculatorModal');
     }
+
+    // Fix font size scaling issue in Shopify themes
+    // Shopify themes often set html { font-size: 62.5%; } which scales down all rem-based sizes
+    const originalFontSize = document.documentElement.style.fontSize;
+    const computedFontSize = window.getComputedStyle(document.documentElement).fontSize;
+    
+    // Store original values for restoration
+    const fontSizeData = {
+      original: originalFontSize,
+      computed: computedFontSize
+    };
+    
+    // Create and inject font size override style scoped to embedded content only
+    const fontSizeOverrideStyle = document.createElement('style');
+    fontSizeOverrideStyle.id = 'foodcube-font-size-override';
+    fontSizeOverrideStyle.textContent = `
+      /* Set base font size for the embedded configurator container */
+      .foodcube-configurator-embed {
+        font-size: 16px !important;
+      }
+      
+      /* Override common Tailwind text classes with pixel values within the embed */
+      .foodcube-configurator-embed .text-xs { font-size: 12px !important; }
+      .foodcube-configurator-embed .text-sm { font-size: 14px !important; }
+      .foodcube-configurator-embed .text-base { font-size: 16px !important; }
+      .foodcube-configurator-embed .text-lg { font-size: 18px !important; }
+      .foodcube-configurator-embed .text-xl { font-size: 20px !important; }
+      .foodcube-configurator-embed .text-2xl { font-size: 24px !important; }
+      .foodcube-configurator-embed .text-3xl { font-size: 30px !important; }
+      .foodcube-configurator-embed .text-4xl { font-size: 36px !important; }
+      .foodcube-configurator-embed .text-5xl { font-size: 48px !important; }
+      .foodcube-configurator-embed .text-6xl { font-size: 60px !important; }
+      
+      /* Override button and input text sizes specifically within the embed */
+      .foodcube-configurator-embed button { font-size: 14px !important; }
+      .foodcube-configurator-embed input { font-size: 14px !important; }
+      .foodcube-configurator-embed label { font-size: 14px !important; }
+      .foodcube-configurator-embed select { font-size: 14px !important; }
+      .foodcube-configurator-embed textarea { font-size: 14px !important; }
+      
+      /* Override specific UI component text sizes */
+      .foodcube-configurator-embed .text-muted-foreground { font-size: 13px !important; }
+      .foodcube-configurator-embed h1 { font-size: 32px !important; }
+      .foodcube-configurator-embed h2 { font-size: 24px !important; }
+      .foodcube-configurator-embed h3 { font-size: 20px !important; }
+      .foodcube-configurator-embed h4 { font-size: 18px !important; }
+      .foodcube-configurator-embed h5 { font-size: 16px !important; }
+      .foodcube-configurator-embed h6 { font-size: 14px !important; }
+      .foodcube-configurator-embed p { font-size: 16px !important; }
+      .foodcube-configurator-embed span { font-size: inherit !important; }
+      
+      /* Ensure tooltips and dropdowns have proper sizing */
+      .foodcube-configurator-embed [data-testid*="tooltip"] { font-size: 14px !important; }
+      .foodcube-configurator-embed [role="tooltip"] { font-size: 14px !important; }
+      .foodcube-configurator-embed [role="menu"] { font-size: 14px !important; }
+      .foodcube-configurator-embed [role="menuitem"] { font-size: 14px !important; }
+    `;
+    
+    document.head.appendChild(fontSizeOverrideStyle);
+    
+    console.log('Applied font size override for embedded modal', {
+      originalFontSize: fontSizeData.original,
+      computedFontSize: fontSizeData.computed
+    });
+    
+    // Cleanup function
+    return () => {
+      // Remove font size override style
+      const styleElement = document.getElementById('foodcube-font-size-override');
+      if (styleElement) {
+        styleElement.remove();
+      }
+      
+      console.log('Cleaned up font size override');
+    };
   }, []);
 
   return (

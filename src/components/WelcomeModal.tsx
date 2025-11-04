@@ -77,29 +77,29 @@ export const WelcomeModal: React.FC = () => {
       <EmbeddedModal open={showWelcomeModal} onOpenChange={setShowWelcomeModal}>
         <div className="welcome-modal-content">
           <div className="text-center">
-            <h2 className="text-xl font-bold mb-1">Design Your Garden</h2>
-            <p className="text-gray-600 mb-4">Fresh homegrown food has never been easier</p>
+            <h2 className="text-2xl sm:text-3xl font-bold mb-2">Design Your Garden</h2>
+            <p className="text-gray-600 text-base sm:text-lg mb-5">Fresh homegrown food has never been easier</p>
           </div>
           
           <div className="flex justify-center my-4">
             <img 
               src="https://foodcube.com.au/cdn/shop/files/Foodcube_Logo_2024_Trans_BG.png?v=1705369454&width=500"
               alt="FoodCube Logo"
-              style={{ maxWidth: '200px', height: 'auto' }}
+              style={{ maxWidth: '260px', height: 'auto' }}
             />
           </div>
           
-          <div className="p-4 bg-gray-50 rounded-lg text-sm space-y-2">
-            <p className="font-medium">This easy tool helps you:</p>
-            <ul className="list-disc pl-5 space-y-1">
+          <div className="p-4 bg-gray-50 rounded-lg text-base space-y-3">
+            <p className="font-medium text-lg">This easy tool helps you:</p>
+            <ul className="list-disc pl-5 space-y-1.5 text-base">
               <li>Create your perfect garden setup</li>
               <li>Know exactly what to buy</li>
               <li>See how it will look in your space</li>
               <li>Start growing faster with less hassle</li>
             </ul>
             
-            <p className="mt-3 font-medium text-blue-600">Try our 30-second tutorial:</p>
-            <ul className="list-disc pl-5 space-y-1 text-gray-700">
+            <p className="mt-4 font-semibold text-blue-600 text-lg">Try our 30-second tutorial:</p>
+            <ul className="list-disc pl-5 space-y-1.5 text-base text-gray-700">
               <li>Choose a garden style</li>
               <li>Adjust to fit your space</li>
               <li>Get a shopping list</li>
@@ -131,8 +131,8 @@ export const WelcomeModal: React.FC = () => {
     <Dialog open={showWelcomeModal} onOpenChange={setShowWelcomeModal}>
       <DialogContent className="sm:max-w-md welcome-modal-content">
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold text-center">Design Your Garden</DialogTitle>
-          <DialogDescription className="text-center">
+          <DialogTitle className="text-2xl sm:text-3xl font-bold text-center">Design Your Garden</DialogTitle>
+          <DialogDescription className="text-center text-base sm:text-lg">
             Fresh homegrown food has never been easier
           </DialogDescription>
         </DialogHeader>
@@ -141,22 +141,22 @@ export const WelcomeModal: React.FC = () => {
           <img 
             src="https://foodcube.com.au/cdn/shop/files/Foodcube_Logo_2024_Trans_BG.png?v=1705369454&width=500"
             alt="FoodCube Logo"
-            className="h-16"
-            style={{ maxWidth: '200px', height: 'auto' }}
+            className="h-20 sm:h-24"
+            style={{ maxWidth: '260px', height: 'auto' }}
           />
         </div>
         
-        <div className="p-4 bg-gray-50 rounded-lg text-sm space-y-2">
-          <p className="font-medium">This easy tool helps you:</p>
-          <ul className="list-disc pl-5 space-y-1">
+        <div className="p-4 bg-gray-50 rounded-lg text-base space-y-3">
+          <p className="font-medium text-lg">This easy tool helps you:</p>
+          <ul className="list-disc pl-5 space-y-1.5">
             <li>Create your perfect garden setup</li>
             <li>Know exactly what to buy</li>
             <li>See how it will look in your space</li>
             <li>Start growing faster with less hassle</li>
           </ul>
           
-          <p className="mt-3 font-medium text-blue-600">Try our 30-second tutorial:</p>
-          <ul className="list-disc pl-5 space-y-1 text-gray-700">
+          <p className="mt-4 font-semibold text-blue-600 text-lg">Try our 30-second tutorial:</p>
+          <ul className="list-disc pl-5 space-y-1.5 text-base text-gray-700">
             <li>Choose a garden style</li>
             <li>Adjust to fit your space</li>
             <li>Get a shopping list</li>

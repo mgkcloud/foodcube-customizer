@@ -14,6 +14,30 @@ const CONNECTOR_COLORS = {
   straight: '#4B5563' // Gray
 };
 
+const getStraightOrientation = (
+  entry: CompassDirection | null,
+  exit: CompassDirection | null
+): 'horizontal' | 'vertical' => {
+  const directions = [entry, exit].filter(Boolean) as CompassDirection[];
+  if (directions.length === 0) {
+    return 'horizontal';
+  }
+
+  const hasVertical = directions.some(dir => dir === 'N' || dir === 'S');
+  const hasHorizontal = directions.some(dir => dir === 'E' || dir === 'W');
+
+  if (hasVertical && !hasHorizontal) {
+    return 'vertical';
+  }
+
+  if (hasHorizontal && !hasVertical) {
+    return 'horizontal';
+  }
+
+  const primaryDirection = directions[0];
+  return primaryDirection === 'N' || primaryDirection === 'S' ? 'vertical' : 'horizontal';
+};
+
 interface PipelineVisualizerProps {
   cell: GridCell;
   row: number;
@@ -301,12 +325,15 @@ export const PipelineVisualizer: React.FC<PipelineVisualizerProps> = ({
       )}
       
       {/* Connection type indicator */}
-      <div 
-        className={`connector-type ${isCorner ? 'corner' : 'straight'} z-15`}
+      <div
+        className={[
+          'connector-visual',
+          isCorner ? 'corner' : 'straight',
+          !isCorner ? `straight-${getStraightOrientation(cell.connections.entry, cell.connections.exit)}` : '',
+        ].filter(Boolean).join(' ')}
         title={isCorner ? 'Corner Connector' : 'Straight Coupling'}
-      >
-        {isCorner ? '⌟' : '━'}
-      </div>
+        aria-hidden="true"
+      />
       
       {/* Position indicator */}
       {showDebug && (
