@@ -245,76 +245,128 @@
   box-shadow: 0 4px 0 -2px rgba(0, 255, 0, 0.5), -4px 0 0 -2px rgba(255, 0, 0, 0.5);
 }
 
-/* Flow direction arrows */
-.flow-arrow {
+/* Flow connector overlays */
+.flow-connector {
   position: absolute;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  color: white;
-  font-weight: bold;
-  font-size: 14px;
   z-index: 20;
-  box-shadow: 0 0 5px rgba(0, 0, 0, 0.4);
-  transition: transform 0.2s ease;
+  border-radius: 999px;
+  border: 2px solid rgba(0, 0, 0, 0.8);
+  background: linear-gradient(135deg, #1f1f1f 0%, #090909 100%);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
+  pointer-events: none;
+  overflow: hidden;
+  transform: scale(1.28);
+  transform-origin: center;
+  transition: none !important;
 }
 
-.flow-arrow:hover {
-  transform: scale(1.2) !important;
-  box-shadow: 0 0 8px rgba(0, 0, 0, 0.5);
-  z-index: 30;
+.flow-connector::after,
+.connector-preview::after {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, #2b2b2b 0%, #101010 100%);
 }
 
-/* Positioning for arrow indicators - adjusted for larger arrows */
-.entry-n {
-  top: -10px;
-  left: 50%;
-  transform: translateX(-50%);
+.flow-connector.corner,
+.connector-preview.corner {
+  border-color: #ff9800;
+  box-shadow: 0 0 0 2px rgba(255, 152, 0, 0.35), 0 2px 6px rgba(0, 0, 0, 0.45);
 }
 
+.flow-connector.corner::after,
+.connector-preview.corner::after {
+  background: linear-gradient(135deg, #ffba5d 0%, #c96d00 100%);
+}
+
+.flow-connector.straight,
+.connector-preview.straight {
+  border-color: #4b5563;
+}
+
+.flow-connector.straight::after,
+.connector-preview.straight::after {
+  background: linear-gradient(135deg, #5a6575 0%, #2f3642 100%);
+}
+
+.flow-connector.axis-vertical,
+.connector-preview.axis-vertical {
+  width: 18px;
+  height: 48px;
+  border-radius: 10px;
+}
+
+.flow-connector.axis-horizontal,
+.connector-preview.axis-horizontal {
+  width: 48px;
+  height: 18px;
+  border-radius: 10px;
+}
+
+.flow-connector.corner.axis-vertical,
+.flow-connector.corner.axis-horizontal,
+.connector-preview.corner.axis-vertical,
+.connector-preview.corner.axis-horizontal {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+}
+
+.flow-connector.corner.axis-vertical::after,
+.flow-connector.corner.axis-horizontal::after,
+.connector-preview.corner.axis-vertical::after,
+.connector-preview.corner.axis-horizontal::after {
+  inset: 3px;
+  border-radius: 6px;
+}
+
+.connector-preview {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 2px solid rgba(0, 0, 0, 0.8);
+  background: linear-gradient(135deg, #1f1f1f 0%, #090909 100%);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  width: 48px;
+  height: 18px;
+  overflow: hidden;
+}
+
+.connector-preview.corner {
+  width: 28px;
+  height: 28px;
+}
+
+/* Positioning for connector indicators */
+.entry-n,
 .exit-n {
-  top: -10px;
-  left: 50%;
-  transform: translateX(-50%) rotate(180deg);
-}
-
-.entry-s {
-  bottom: -10px;
-  left: 50%;
-  transform: translateX(-50%) rotate(180deg);
-}
-
-.exit-s {
-  bottom: -10px;
+  top: -22px;
   left: 50%;
   transform: translateX(-50%);
 }
 
-.entry-e {
-  right: -10px;
-  top: 50%;
-  transform: translateY(-50%) rotate(270deg);
+.entry-s,
+.exit-s {
+  bottom: -22px;
+  left: 50%;
+  transform: translateX(-50%);
 }
 
+.entry-e,
 .exit-e {
-  right: -10px;
+  right: -22px;
   top: 50%;
-  transform: translateY(-50%) rotate(90deg);
+  transform: translateY(-50%);
 }
 
-.entry-w {
-  left: -10px;
-  top: 50%;
-  transform: translateY(-50%) rotate(90deg);
-}
-
+.entry-w,
 .exit-w {
-  left: -10px;
+  left: -22px;
   top: 50%;
-  transform: translateY(-50%) rotate(270deg);
+  transform: translateY(-50%);
 }
 
 /* Connector type indicator */
@@ -385,12 +437,12 @@
 }
 
 /* Enhanced styling for flow types */
-.flow-start .connector-type {
+.flow-start .connector-visual {
   border-color: #4CAF50;
   color: #4CAF50;
 }
 
-.flow-end .connector-type {
+.flow-end .connector-visual {
   border-color: #F44336;
   color: #F44336;
 }

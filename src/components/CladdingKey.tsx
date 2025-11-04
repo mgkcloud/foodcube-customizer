@@ -444,8 +444,12 @@ export const CladdingKey: React.FC<CladdingKeyProps> = ({ requirements, showDebu
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-1">
                   {requirements.straightCouplings > 0 && (
                     <div className="bg-white rounded-md p-1.5 shadow-sm flex items-center justify-between">
-                      <div className="flex flex-col">
-                        <span className="text-sm font-medium">Straight Connector</span>
+                      <div className="flex items-center gap-2">
+                        <div className="connector-preview straight axis-horizontal" aria-hidden="true" />
+                        <div className="flex flex-col leading-tight">
+                          <span className="text-sm font-medium">Straight Connector</span>
+                          <span className="text-xs text-gray-500">Coupling (top view)</span>
+                        </div>
                       </div>
                       <span className="text-sm font-semibold px-2 py-0.5 bg-blue-50 rounded-full text-blue-700 min-w-[2rem] text-center">
                         {requirements.straightCouplings}x
@@ -454,8 +458,12 @@ export const CladdingKey: React.FC<CladdingKeyProps> = ({ requirements, showDebu
                   )}
                   {requirements.cornerConnectors > 0 && (
                     <div className="bg-white rounded-md p-1.5 shadow-sm flex items-center justify-between">
-                      <div className="flex flex-col">
+                      <div className="flex items-center gap-2">
+                        <div className="connector-preview corner axis-horizontal" aria-hidden="true" />
+                        <div className="flex flex-col leading-tight">
                           <span className="text-sm font-medium">Corner Connector</span>
+                          <span className="text-xs text-gray-500">Elbow (top view)</span>
+                        </div>
                       </div>
                       <span className="text-sm font-semibold px-2 py-0.5 bg-blue-50 rounded-full text-blue-700 min-w-[2rem] text-center">
                         {requirements.cornerConnectors}x

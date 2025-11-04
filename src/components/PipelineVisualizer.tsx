@@ -8,10 +8,9 @@ import { visualizeFlow } from '@/utils/core/flowVisualizer';
 import { CompassDirection } from './types';
 import { debug } from '@/utils/shared/debugUtils';
 
-// Define connector colors to match the key
-const CONNECTOR_COLORS = {
-  corner: '#FF9800', // Orange/Amber
-  straight: '#4B5563' // Gray
+const getAxisClass = (direction: CompassDirection | null | undefined): string => {
+  if (!direction) return '';
+  return direction === 'N' || direction === 'S' ? 'axis-vertical' : 'axis-horizontal';
 };
 
 const getStraightOrientation = (
@@ -60,17 +59,6 @@ const isCornerConnection = (entry: CompassDirection | null, exit: CompassDirecti
   
   // Check if it's not a straight connection
   return !straightConnections.some(([e, x]) => e === entry && x === exit);
-};
-
-// Helper to get rotation angle based on entry and exit points
-const getArrowRotation = (direction: CompassDirection): number => {
-  switch (direction) {
-    case 'N': return 0;    // Up
-    case 'E': return 90;   // Right
-    case 'S': return 180;  // Down
-    case 'W': return 270;  // Left
-    default: return 0;
-  }
 };
 
 export const PipelineVisualizer: React.FC<PipelineVisualizerProps> = ({
@@ -288,40 +276,38 @@ export const PipelineVisualizer: React.FC<PipelineVisualizerProps> = ({
     <div className={`pipe-container ${flowClasses.join(' ')}`}>
       <PipeRenderer subgrid={subgrid} />
       
-      {/* Entry arrows for corners only */}
+      {/* Entry connectors for corners only */}
       {shouldShowEntryArrow && (
-        <div 
-          className={`flow-arrow entry entry-${cell.connections.entry.toLowerCase()} z-20`}
-          style={{ 
-            transform: `rotate(${getArrowRotation(cell.connections.entry)}deg)`,
-            backgroundColor: CONNECTOR_COLORS.corner, // Orange for corners
-            width: '20px',
-            height: '20px',
-            fontSize: '14px'
-          }}
+        <div
+          className={[
+            'flow-connector',
+            'entry',
+            `entry-${cell.connections.entry?.toLowerCase()}`,
+            getAxisClass(cell.connections.entry),
+            isCorner ? 'corner' : 'straight'
+          ].filter(Boolean).join(' ')}
           title={`Corner Connector (${cell.connections.entry} to ${cell.connections.exit})`}
-        >
-          ↑
-        </div>
+          role="presentation"
+          aria-hidden="true"
+        />
       )}
       
-      {/* Exit arrows for both straight and corner connectors */}
+      {/* Exit connectors for both straight and corner connectors */}
       {shouldShowExitArrow && (
-        <div 
-          className={`flow-arrow exit exit-${cell.connections.exit.toLowerCase()} z-20`}
-          style={{ 
-            transform: `rotate(${getArrowRotation(cell.connections.exit)}deg)`,
-            backgroundColor: isCorner ? CONNECTOR_COLORS.corner : CONNECTOR_COLORS.straight, // Orange for corners, Gray for straight
-            width: '20px',
-            height: '20px',
-            fontSize: '14px'
-          }}
+        <div
+          className={[
+            'flow-connector',
+            'exit',
+            `exit-${cell.connections.exit?.toLowerCase()}`,
+            getAxisClass(cell.connections.exit),
+            isCorner ? 'corner' : 'straight'
+          ].filter(Boolean).join(' ')}
           title={isCorner ? 
             `Corner Connector: ${cell.connections.entry} to ${cell.connections.exit}` : 
             `Straight Connector: ${cell.connections.entry} to ${cell.connections.exit}`}
-        >
-          ↑
-        </div>
+          role="presentation"
+          aria-hidden="true"
+        />
       )}
       
       {/* Connection type indicator */}
