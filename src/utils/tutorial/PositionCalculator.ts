@@ -50,7 +50,8 @@ export class PositionCalculator {
       preferredPosition = 'top',
       alignment = 'center',
       padding = 0,
-      offset = 10
+      offset = 10,
+      elementDimensions
     } = params;
     
     // Get or measure the target element
@@ -58,13 +59,17 @@ export class PositionCalculator {
     const targetRect = measurements.rect;
     
     // Default tooltip/spotlight dimensions (can be adjusted based on content)
-    const elementWidth = preferredPosition === 'left' || preferredPosition === 'right' 
-      ? 264  // Width for side tooltips
-      : targetRect.width + (padding * 2); // Width for top/bottom tooltips or spotlight
-      
-    const elementHeight = preferredPosition === 'top' || preferredPosition === 'bottom'
-      ? 150  // Height for top/bottom tooltips
-      : targetRect.height + (padding * 2); // Height for side tooltips or spotlight
+    const elementWidth = elementDimensions?.width ?? (
+      preferredPosition === 'left' || preferredPosition === 'right'
+        ? 264
+        : targetRect.width + (padding * 2)
+    );
+    
+    const elementHeight = elementDimensions?.height ?? (
+      preferredPosition === 'top' || preferredPosition === 'bottom'
+        ? 150
+        : targetRect.height + (padding * 2)
+    );
     
     // Get container bounds
     const containerRect = containerElement.getBoundingClientRect();
@@ -141,9 +146,9 @@ export class PositionCalculator {
         transform = transform.replace('translateY(-50%)', '');
       }
     }
-    
+
     // Bottom overflow
-    else if (top + elementHeight > viewportBounds.bottom - 10) {
+    if (top + elementHeight > viewportBounds.bottom - 10) {
       if (preferredPosition === 'bottom') {
         // Flip to top
         finalPosition = 'top';
@@ -155,7 +160,7 @@ export class PositionCalculator {
         transform = transform.replace('translateY(-50%)', '');
       }
     }
-    
+
     // Left overflow
     if (left < viewportBounds.left + 10) {
       if (preferredPosition === 'left') {
@@ -169,9 +174,9 @@ export class PositionCalculator {
         transform = transform.replace('translateX(-50%)', '');
       }
     }
-    
+
     // Right overflow
-    else if (left + elementWidth > viewportBounds.right - 10) {
+    if (left + elementWidth > viewportBounds.right - 10) {
       if (preferredPosition === 'right') {
         // Flip to left
         finalPosition = 'left';

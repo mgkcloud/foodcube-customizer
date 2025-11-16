@@ -23,6 +23,15 @@ export function getVisualConnections(
   col: number,
   cell: GridCell
 ): VisualConnections {
+  // TEMP DEBUG for bottom-right corner
+  if (row === 2 && col === 2) {
+    console.log('🔍 DEBUG getVisualConnections [2,2] START:', {
+      cellEntry: cell.connections?.entry,
+      cellExit: cell.connections?.exit,
+      cellConnections: cell.connections
+    });
+  }
+
   // Start with the cell's own connections
   let entry = cell.connections?.entry || null;
   let exit = cell.connections?.exit || null;
@@ -93,6 +102,15 @@ export function getVisualConnections(
 
   // Determine vertical line position
   const verticalLinePosition = determineVerticalLinePosition(grid, row, col, entry, exit);
+
+  // TEMP DEBUG for bottom-right corner
+  if (row === 2 && col === 2) {
+    console.log('🔍 DEBUG getVisualConnections [2,2] END:', {
+      entry,
+      exit,
+      turn: `${entry}→${exit}`
+    });
+  }
 
   return { visualEntry: entry, visualExit: exit, verticalLinePosition };
 }

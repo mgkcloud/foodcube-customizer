@@ -50,11 +50,18 @@ const Index = () => {
   }, [showWelcomeModal]);
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <FoodcubeConfigurator 
-        variants={variants} 
-        onUpdate={handleUpdate}
-      />
+    <div
+      className="bg-gray-50"
+      style={{ minHeight: '100dvh', height: '100dvh' }}
+    >
+      <div className="flex h-full flex-col overflow-hidden">
+        <div className="flex-1 min-h-0">
+          <FoodcubeConfigurator 
+            variants={variants} 
+            onUpdate={handleUpdate}
+          />
+        </div>
+      </div>
     </div>
   );
 };

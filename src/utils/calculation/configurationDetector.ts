@@ -354,7 +354,7 @@ export const isLShapedConfiguration = (path: { cubes: PathCube[] }): boolean => 
   
   // Standard 3-cube L-shape check
   // Count corner turns
-  let cornerCount = countCornerConnectors(path.cubes);
+  const cornerCount = countCornerConnectors(path.cubes);
   console.log(`Standard L-shape check: cornerCount=${cornerCount}`);
   
   // L-shape must have exactly 1 corner

@@ -4,6 +4,9 @@ import { Grid } from './Grid';
 import { PresetConfigs } from './PresetConfigs';
 import { Summary } from './Summary';
 import { CladdingKey } from './CladdingKey';
+import { DraggableBottomSheet } from './DraggableBottomSheet';
+import { StickySummaryBar } from './StickySummaryBar';
+import { ModeToggle, InteractionMode } from './ModeToggle';
 import useGridState from '@/hooks/useGridState';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Switch } from "@/components/ui/switch";
@@ -17,17 +20,17 @@ import { PANEL_COLORS } from '@/constants/colors';
 import { useTutorial } from '@/contexts/TutorialContext';
 
 // Floating Action Button component that will be rendered in a portal
-const FloatingActionButtons = ({ 
+const FloatingActionButtons = ({
   requirementsSum,
-  onApply, 
-  onClear 
-}: { 
+  onApply,
+  onClear
+}: {
   requirementsSum: number,
-  onApply: () => void, 
-  onClear: () => void 
+  onApply: () => void,
+  onClear: () => void
 }) => {
-  const { resetTutorialState, setShowTutorial } = useTutorial();
-  
+  const { resetTutorialState, setShowTutorial, showTutorial, setCurrentStep } = useTutorial();
+
   // Handle clear with tutorial reset
   const handleClear = () => {
     onClear();
@@ -35,15 +38,57 @@ const FloatingActionButtons = ({
     // Also close the tutorial if it's open
     setShowTutorial(false);
   };
-  
+
+  // Handle tutorial start - skip to step 2 (after preset selection)
+  const handleStartTutorial = () => {
+    setCurrentStep(2); // Skip welcome (0) and preset selection (1), start at "Remove a Cube" (2)
+    setShowTutorial(true);
+  };
+
   return createPortal(
-    <div className="fixed z-[100000000001] bottom-6 right-6 flex flex-col items-end gap-4" style={{ position: 'fixed', pointerEvents: 'auto' }}>
+    <div className="hidden lg:flex fixed z-[100000000001] bottom-6 right-6 flex-col items-end gap-4" style={{ position: 'fixed', pointerEvents: 'auto' }}>
+      {/* Tutorial button - only show when tutorial is not active */}
+      {!showTutorial && (
+        <button
+          onClick={handleStartTutorial}
+          className="flex flex-col items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 text-white font-bold shadow-xl border-2 border-white hover:shadow-2xl transition-all transform hover:scale-110 relative group"
+          style={{
+            boxShadow: '0 8px 25px -3px rgba(124, 58, 237, 0.5), 0 6px 10px -2px rgba(124, 58, 237, 0.3)'
+          }}
+          data-testid="tutorial-button"
+          aria-label="Start tutorial"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="28"
+            height="28"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="animate-pulse"
+          >
+            <circle cx="12" cy="12" r="10"></circle>
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+
+          {/* Tooltip on hover */}
+          <div className="absolute right-full mr-3 top-1/2 transform -translate-y-1/2 bg-gray-900 text-white text-sm font-medium px-3 py-2 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+            Start Tutorial
+            <div className="absolute right-0 top-1/2 transform translate-x-1/2 -translate-y-1/2 rotate-45 w-2 h-2 bg-gray-900"></div>
+          </div>
+        </button>
+      )}
+
       {/* Apply button */}
       <button
         onClick={onApply}
         className="flex flex-col items-center justify-center w-44 h-44 rounded-full bg-gradient-to-br from-blue-400 via-blue-600 to-blue-700 text-white font-bold shadow-2xl border-4 border-white hover:bg-blue-700 transition-all transform hover:scale-105 relative"
-        style={{ 
-          background: `linear-gradient(135deg, ${PANEL_COLORS.left}DD, ${PANEL_COLORS.left}, ${PANEL_COLORS.left}99)`, 
+        style={{
+          background: `linear-gradient(135deg, ${PANEL_COLORS.left}DD, ${PANEL_COLORS.left}, ${PANEL_COLORS.left}99)`,
           boxShadow: '0 10px 35px -5px rgba(18, 159, 206, 0.6), 0 10px 20px -6px rgba(18, 159, 206, 0.4)'
         }}
         data-testid="mobile-apply-button"
@@ -149,9 +194,11 @@ export const FoodcubeConfigurator: React.FC<FoodcubeConfiguratorProps> = ({ vari
   const { grid, requirements, toggleCell, toggleCladding, applyPreset, error, clearGrid } = useGridState();
   const [hasInteracted, setHasInteracted] = useState(false);
   const [debugMode, setDebugMode] = useState(false); // Default to false for production
-  
+  const [isBottomSheetOpen, setIsBottomSheetOpen] = useState(false);
+  const [interactionMode, setInteractionMode] = useState<InteractionMode>('cube');
+
   // Add tutorial context at component level
-  const { showTutorial, setCurrentStep, resetTutorial, resetTutorialState, setShowTutorial } = useTutorial();
+  const { showTutorial, currentStep, setCurrentStep, resetTutorial, resetTutorialState, setShowTutorial } = useTutorial();
   
   // Use our new preset constraints hook
   const {
@@ -356,7 +403,10 @@ export const FoodcubeConfigurator: React.FC<FoodcubeConfiguratorProps> = ({ vari
   const friendlyErrorMessage = getUserFriendlyErrorMessage(displayError);
 
   return (
-    <div className="relative w-full mx-auto bg-transparent rounded-xl overflow-hidden backdrop-blur-sm" data-testid="foodcube-configurator">
+    <div
+      className="relative flex h-full w-full max-w-[1440px] mx-auto px-4 py-4 sm:px-6 sm:py-6"
+      data-testid="foodcube-configurator"
+    >
       {/* Debug toggle - only visible when debug is enabled */}
       <div className="absolute top-4 right-4 z-50">
         {debugMode && (
@@ -375,8 +425,8 @@ export const FoodcubeConfigurator: React.FC<FoodcubeConfiguratorProps> = ({ vari
         )}
       </div>
       
-      <div className="bg-white/95 backdrop-blur-md rounded-xl shadow-lg overflow-hidden border border-gray-100">
-        <div className="p-4 sm:p-6">
+      <div className="flex h-full w-full flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white/95 shadow-lg backdrop-blur-md">
+        <div className="px-4 pt-4 sm:px-6 sm:pt-6">
           <div className="flex flex-col items-center justify-center mb-4 sm:mb-5" data-testid="configurator-title">
             {/* Header with Foodcube logo and specified font color */}
             <div className="flex items-center justify-center">
@@ -405,84 +455,92 @@ export const FoodcubeConfigurator: React.FC<FoodcubeConfiguratorProps> = ({ vari
               <div className="h-0.5 w-40 sm:w-48 rounded-full bg-gray-700"></div>
             </div>
           </div>
-          
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
+        </div>
+        
+        <div className="flex-1 min-h-0 px-4 pb-4 sm:px-6 sm:pb-6">
+          <div className="h-full min-h-0 overflow-y-auto lg:overflow-hidden">
+            <div className="grid h-full min-h-0 grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-12">
             {/* Grid takes up more space */}
-            <div className="lg:col-span-7 bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100 relative" data-testid="grid-wrapper">
-              {/* Error message overlay */}
-              <ErrorOverlay 
-                message={friendlyErrorMessage} 
-                isVisible={showErrorOverlay && !!displayError}
-                onDismiss={dismissErrorOverlay}
-              />
-              
-              {/* Overlay for preset selection with welcome message - positioned directly over the grid */}
-              {!hasInteracted && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center z-20 rounded-xl" data-testid="config-overlay" data-tutorial-no-position="true">
-                  {/* Semi-transparent animated background */}
-                  <div className="absolute inset-0 bg-gray-800/50 backdrop-blur-sm animate-pulse rounded-xl"></div>
-                  
-                  {/* Content card with full opacity */}
-                  <div className="relative bg-white p-4 sm:p-6 rounded-xl shadow-md border border-gray-200 max-w-md w-full sm:w-4/5 mx-auto text-center transition-transform hover:scale-[1.01] duration-200 z-10">
-                    <div className="flex items-center justify-center gap-2 mb-2">
-                      <img 
-                        src="https://foodcube.com.au/cdn/shop/files/Foodcube_Logo_2024_Trans_BG.png?v=1705369454&width=500" 
-                        alt="Foodcube Logo" 
-                        className="h-8"
-                      />
-                      <h3 className="text-lg md:text-xl font-semibold text-gray-800">Welcome!</h3>
-                    </div>
-                    
-                    <p className="text-gray-600 text-sm mb-4">Select a preset configuration to get started</p>
-                    
-                    <div className="bg-gray-50 p-3 rounded-lg mb-4">
-                      <PresetConfigs onApply={handlePresetApply} />
-                    </div>
-                    
-                    <div className="flex justify-between items-center">
-                      <p className="text-xs text-gray-500">First time? Try the L-Shape!</p>
-                      <button 
-                        className="text-xs text-blue-600 hover:text-blue-800 font-medium flex items-center"
-                        onClick={() => resetTutorial()}
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1">
-                          <circle cx="12" cy="12" r="10" />
-                          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
-                          <line x1="12" y1="17" x2="12.01" y2="17" />
-                        </svg>
-                        Show Tutorial
-                      </button>
+            <div className="lg:col-span-7 flex flex-col min-h-0 rounded-xl border border-gray-100 bg-white shadow-sm" data-testid="grid-wrapper">
+              <div className="flex-1 min-h-0 relative">
+                {/* Error message overlay */}
+                <ErrorOverlay 
+                  message={friendlyErrorMessage} 
+                  isVisible={showErrorOverlay && !!displayError}
+                  onDismiss={dismissErrorOverlay}
+                />
+                
+                {/* Overlay for preset selection with welcome message - positioned directly over the grid */}
+                {!hasInteracted && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center z-20 rounded-xl" data-testid="config-overlay" data-tutorial-no-position="true">
+                    <div className="absolute inset-0 bg-gray-800/50 backdrop-blur-sm animate-pulse rounded-xl"></div>
+                    <div className="relative bg-white p-4 sm:p-6 rounded-xl shadow-md border border-gray-200 max-w-md w-full sm:w-4/5 mx-auto text-center transition-transform hover:scale-[1.01] duration-200 z-10">
+                      <div className="flex items-center justify-center gap-2 mb-2">
+                        <img 
+                          src="https://foodcube.com.au/cdn/shop/files/Foodcube_Logo_2024_Trans_BG.png?v=1705369454&width=500" 
+                          alt="Foodcube Logo" 
+                          className="h-8"
+                        />
+                        <h3 className="text-lg md:text-xl font-semibold text-gray-800">Welcome!</h3>
+                      </div>
+                      <p className="text-gray-600 text-sm mb-4">Select a preset configuration to get started</p>
+                      <div className="bg-gray-50 p-3 rounded-lg mb-4">
+                        <PresetConfigs onApply={handlePresetApply} />
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <p className="text-xs text-gray-500">First time? Try the L-Shape!</p>
+                        <button 
+                          className="text-xs text-blue-600 hover:text-blue-800 font-medium flex items-center"
+                          onClick={() => resetTutorial()}
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1">
+                            <circle cx="12" cy="12" r="10" />
+                            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                            <line x1="12" y1="17" x2="12.01" y2="17" />
+                          </svg>
+                          Show Tutorial
+                        </button>
+                      </div>
                     </div>
                   </div>
+                )}
+
+                {/* Mode Toggle - only show after interaction */}
+                {hasInteracted && (
+                  <div className="flex justify-center py-3">
+                    <ModeToggle
+                      mode={interactionMode}
+                      onChange={setInteractionMode}
+                    />
+                  </div>
+                )}
+
+                <div className="h-full overflow-auto p-3 sm:p-4">
+                  <Grid
+                    grid={grid}
+                    onToggleCell={(row, col) => {
+                      console.log(`Toggling cell at [${row}, ${col}]`);
+                      handleToggleCell(row, col);
+                    }}
+                    onToggleCladding={(row, col, edge) => {
+                      console.log(`Toggling cladding at [${row}, ${col}], edge: ${edge}`);
+                      updateLastInteraction(); // Mark cladding toggle as an interaction
+                      toggleCladding(row, col, edge);
+                    }}
+                    setHasInteracted={setHasInteracted}
+                    debug={debugMode}
+                    interactionMode={interactionMode}
+                  />
                 </div>
-              )}
-              
-              <Grid 
-                grid={grid} 
-                onToggleCell={(row, col) => {
-                  console.log(`Toggling cell at [${row}, ${col}]`);
-                  handleToggleCell(row, col);
-                }}
-                onToggleCladding={(row, col, edge) => {
-                  console.log(`Toggling cladding at [${row}, ${col}], edge: ${edge}`);
-                  updateLastInteraction(); // Mark cladding toggle as an interaction
-                  toggleCladding(row, col, edge);
-                }}
-                setHasInteracted={setHasInteracted}
-                debug={debugMode}
-              />
+              </div>
             </div>
             
             {/* Requirements panel */}
-            <div className="lg:col-span-5 space-y-3" data-testid="requirements-panel">
-              {/* Desktop order (hidden on mobile) */}
-              <div className="hidden lg:!block space-y-3">
-                {/* Cladding Key */}
+            <div className="lg:col-span-5 flex flex-col min-h-0" data-testid="requirements-panel">
+              <div className="hidden lg:flex lg:flex-1 lg:flex-col lg:space-y-3 lg:overflow-y-auto lg:pr-1">
                 <div className="transition-all duration-300 ease-in-out">
                   <CladdingKey requirements={requirements} showDebug={debugMode} />
                 </div>
-                
-                {/* Preset configurations */}
                 {hasInteracted && (
                   <div className="bg-white p-3 sm:p-4 rounded-xl shadow-sm border border-gray-100" data-testid="side-presets-desktop">
                     <div className="mb-1 sm:mb-2">
@@ -504,39 +562,14 @@ export const FoodcubeConfigurator: React.FC<FoodcubeConfiguratorProps> = ({ vari
                 )}
               </div>
               
-              {/* Mobile order (hidden on desktop) - Preset configs above Cladding Key */}
-              <div className="block lg:hidden space-y-3">
-                {/* Preset configurations first */}
-                {hasInteracted && (
-                  <div className="bg-white p-3 sm:p-4 rounded-xl shadow-sm border border-gray-100" data-testid="side-presets-mobile">
-                    <div className="mb-1 sm:mb-2">
-                      <h3 className="text-sm sm:text-lg md:text-xl font-bold text-gray-700 flex items-center" data-testid="presets-heading-mobile">
-                        <span className="bg-gray-100 w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center mr-1.5">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" className="sm:w-3.5 sm:h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                            <line x1="8" y1="12" x2="16" y2="12"></line>
-                            <line x1="12" y1="8" x2="12" y2="16"></line>
-                          </svg>
-                        </span>
-                        Preset Configurations
-                      </h3>
-                    </div>
-                    <div className="bg-gray-50/70 rounded-lg p-1.5 sm:p-2.5 flex flex-col gap-1.5 sm:gap-2.5">
-                      <PresetConfigs onApply={handlePresetApply} />
-                    </div>
-                  </div>
-                )}
-                
-                {/* Cladding Key second */}
-                <div className="transition-all duration-300 ease-in-out">
-                  <CladdingKey requirements={requirements} showDebug={debugMode} />
-                </div>
-              </div>
+              {/* Mobile: Bottom Sheet (replaces inline requirements) */}
             </div>
-          </div>
+          </div> {/* end grid layout */}
+        </div> {/* end scroll container */}
+      </div> {/* end flex-1 content column */}
           
-          {/* Hidden element for testing that contains all requirements as data attributes */}
-          <div 
+      {/* Hidden element for testing that contains all requirements as data attributes */}
+      <div 
             data-testid="requirements-data"
             data-four-pack-regular={requirements.fourPackRegular}
             data-four-pack-extra-tall={requirements.fourPackExtraTall}
@@ -549,16 +582,60 @@ export const FoodcubeConfigurator: React.FC<FoodcubeConfiguratorProps> = ({ vari
             data-corner-connectors={requirements.cornerConnectors}
             style={{ display: 'none' }}
           />
-        </div>
       </div>
-      
-      {/* Render the floating action buttons using React Portal */}
       {hasInteracted && (
-        <FloatingActionButtons 
+        <FloatingActionButtons
           requirementsSum={totalPacks}
           onApply={handleApplyConfiguration}
           onClear={handleClearGrid}
         />
+      )}
+
+      {/* Mobile Bottom Sheet for Requirements */}
+      {hasInteracted && (
+        <DraggableBottomSheet
+          isOpen={isBottomSheetOpen}
+          onToggle={setIsBottomSheetOpen}
+          summary={
+            <StickySummaryBar
+              totalPacks={totalPacks}
+              hasRequirements={totalPacks > 0}
+              onClick={() => setIsBottomSheetOpen(!isBottomSheetOpen)}
+              interactionMode={interactionMode}
+              tutorialStep={currentStep}
+              showTutorial={showTutorial}
+              onStartTutorial={() => {
+                setCurrentStep(2);
+                setShowTutorial(true);
+              }}
+              onApply={handleApplyConfiguration}
+              onClear={() => {
+                handleClearGrid();
+                resetTutorialState();
+                setShowTutorial(false);
+              }}
+              panelColor={PANEL_COLORS.left}
+            />
+          }
+        >
+          <div className="space-y-4">
+            {/* Presets section */}
+            <div className="bg-gray-50/50 p-4 rounded-2xl border border-gray-100">
+              <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                  <line x1="8" y1="12" x2="16" y2="12"></line>
+                  <line x1="12" y1="8" x2="12" y2="16"></line>
+                </svg>
+                Preset Layouts
+              </h3>
+              <PresetConfigs onApply={handlePresetApply} />
+            </div>
+
+            {/* Requirements section */}
+            <CladdingKey requirements={requirements} showDebug={debugMode} />
+          </div>
+        </DraggableBottomSheet>
       )}
     </div>
   );

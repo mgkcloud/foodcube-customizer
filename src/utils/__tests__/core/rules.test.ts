@@ -219,14 +219,14 @@ describe('Core Rules', () => {
       // Manual validation
       // A disconnected path is created when there are multiple separate paths
       let hasDisconnectedPaths = false;
-      let visitedCells = new Set<string>();
+      const visitedCells = new Set<string>();
       for (let row = 0; row < invalidGrid.length; row++) {
         for (let col = 0; col < invalidGrid[0].length; col++) {
           if (invalidGrid[row][col].hasCube && !visitedCells.has(`${row},${col}`)) {
             // Perform DFS
-            let stack = [[row, col]];
+            const stack = [[row, col]];
             while (stack.length > 0) {
-              let [currRow, currCol] = stack.pop()!;
+              const [currRow, currCol] = stack.pop()!;
               if (!visitedCells.has(`${currRow},${currCol}`)) {
                 visitedCells.add(`${currRow},${currCol}`);
                 // Check adjacent cells

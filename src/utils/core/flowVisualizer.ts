@@ -45,7 +45,7 @@ export const visualizeFlow = (grid: GridCell[][]): FlowVisualization => {
 
   // Second pass: Build the continuous flow path
   let currentCell: GridCell | null = null;
-  let visited = new Set<string>();
+  const visited = new Set<string>();
 
   // Find the starting cell (one with only exit or where entry is 'W')
   grid.forEach((row, rowIndex) => {

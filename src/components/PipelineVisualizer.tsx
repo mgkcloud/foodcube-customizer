@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useCallback } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { GridCell } from './types';
 import { validateIrrigationPath, findConnectedCubes } from '@/utils/validation/flowValidator';
 import { getVisualConnections } from '../utils/flowHelpers';
@@ -6,6 +6,7 @@ import { calculatePipeConfiguration } from '@/utils/visualization/pipeConfigurat
 import { PipeRenderer } from './PipeRenderer';
 import { visualizeFlow } from '@/utils/core/flowVisualizer';
 import { CompassDirection } from './types';
+import { hasAdjacentCube } from '@/utils/shared/gridUtils';
 import { debug } from '@/utils/shared/debugUtils';
 
 const getAxisClass = (direction: CompassDirection | null | undefined): string => {
@@ -37,6 +38,25 @@ const getStraightOrientation = (
   return primaryDirection === 'N' || primaryDirection === 'S' ? 'vertical' : 'horizontal';
 };
 
+const formatConnectorLabel = (
+  entry: CompassDirection | null,
+  exit: CompassDirection | null
+): string => {
+  if (entry && exit) {
+    return `${entry} to ${exit}`;
+  }
+
+  if (entry) {
+    return `from ${entry}`;
+  }
+
+  if (exit) {
+    return `to ${exit}`;
+  }
+
+  return '';
+};
+
 interface PipelineVisualizerProps {
   cell: GridCell;
   row: number;
@@ -48,17 +68,16 @@ interface PipelineVisualizerProps {
 // Helper to determine if a connection is a corner (90-degree turn)
 const isCornerConnection = (entry: CompassDirection | null, exit: CompassDirection | null): boolean => {
   if (!entry || !exit) return false;
-  
-  // Straight connections (opposite directions)
-  const straightConnections = [
-    ['N', 'S'],
-    ['S', 'N'],
-    ['E', 'W'],
-    ['W', 'E']
+
+  // Check if this is a valid corner turn (must match VALID_TURNS from irrigationRules)
+  // Only accept the 8 valid 90-degree turns
+  const turn = `${entry}→${exit}`;
+  const validCorners = [
+    'N→E', 'E→S', 'S→W', 'W→N',  // Right turns
+    'N→W', 'W→S', 'S→E', 'E→N'   // Left turns
   ];
-  
-  // Check if it's not a straight connection
-  return !straightConnections.some(([e, x]) => e === entry && x === exit);
+
+  return validCorners.includes(turn);
 };
 
 export const PipelineVisualizer: React.FC<PipelineVisualizerProps> = ({
@@ -94,6 +113,16 @@ export const PipelineVisualizer: React.FC<PipelineVisualizerProps> = ({
     visualizeFlow(grid);
   }, [gridKey]); // Use gridKey instead of grid to prevent excessive calls
 
+  // Get visual connections for rendering
+  const { visualEntry, visualExit } = useMemo(() => {
+    return getVisualConnections(grid, row, col, cell);
+  }, [gridKey, row, col, cell]);
+
+  const hasNeighborInExitDirection = useMemo(() => {
+    if (!visualExit) return false;
+    return hasAdjacentCube(grid, row, col, visualExit);
+  }, [grid, row, col, visualExit, gridKey]);
+
   // Check if this cube is part of the path - memoized
   const pathInfo = useMemo(() => {
     const isCubeInPath = connectedCubes.some(([r, c]) => r === row && c === col);
@@ -108,7 +137,7 @@ export const PipelineVisualizer: React.FC<PipelineVisualizerProps> = ({
     const isEndCube = pathPosition === connectedCubes.length - 1;
     
     // Determine if this is a corner connector
-    const isCorner = isCornerConnection(cell.connections.entry, cell.connections.exit);
+    const isCorner = isCornerConnection(visualEntry, visualExit);
     
     // Cube type based on position and connection
     let cubeType = 'middle';
@@ -124,7 +153,7 @@ export const PipelineVisualizer: React.FC<PipelineVisualizerProps> = ({
       isCorner,
       cubeType
     };
-  }, [connectedCubes, row, col, cell.connections.entry, cell.connections.exit]);
+  }, [connectedCubes, row, col, visualEntry, visualExit]);
 
   const { isCubeInPath, pathPosition, isStartCube, isEndCube, isCorner, cubeType } = pathInfo;
   
@@ -144,12 +173,27 @@ export const PipelineVisualizer: React.FC<PipelineVisualizerProps> = ({
         },
         connections: {
           entry: cell.connections.entry,
-          exit: cell.connections.exit
+          exit: cell.connections.exit,
+          visualEntry,
+          visualExit
         }
       };
       
       debug.debug(`Cube [${row},${col}] in path`, cubeInfo);
-      
+
+      // TEMP DEBUG for bottom-right corner
+      if (row === 2 && col === 2) {
+        console.log('🔍 DEBUG PipelineVisualizer [2,2]:', {
+          rawConnections: cell.connections,
+          visualEntry,
+          visualExit,
+          isCorner,
+          pathPosition,
+          isInPath: isCubeInPath,
+          turn: `${visualEntry}→${visualExit}`
+        });
+      }
+
       // Only log neighbors at trace level to reduce token usage
       if (isCubeInPath) {
         const prevCube = pathPosition > 0 ? connectedCubes[pathPosition - 1] : null;
@@ -163,15 +207,11 @@ export const PipelineVisualizer: React.FC<PipelineVisualizerProps> = ({
       }
     }
   }, [showDebug, isCubeInPath, row, col, pathPosition, connectedCubes.length, isValidPath, 
-      isStartCube, isEndCube, isCorner, cubeType, cell.connections, pathInfo, gridKey]);
+      isStartCube, isEndCube, isCorner, cubeType, cell.connections, pathInfo, gridKey, visualEntry, visualExit]);
   
   if (!isCubeInPath || !cell.hasCube) {
     return null;
   }
-
-  // Get visual connections
-  const { visualEntry, visualExit } = getVisualConnections(grid, row, col, cell);
-
   // Calculate pipe configuration - memoized to prevent recalculation
   const pipeConfig = useMemo(() => {
     return calculatePipeConfiguration(
@@ -186,6 +226,7 @@ export const PipelineVisualizer: React.FC<PipelineVisualizerProps> = ({
   }, [grid, row, col, cell, connectedCubes, visualEntry, visualExit, gridKey]);
 
   const { subgrid } = pipeConfig;
+  const connectorLabel = formatConnectorLabel(visualEntry, visualExit);
 
   // Log the subgrid state for debugging - moved to effect to prevent re-renders
   useEffect(() => {
@@ -208,12 +249,12 @@ export const PipelineVisualizer: React.FC<PipelineVisualizerProps> = ({
   const flowClasses = [];
   
   // Add flow direction indicators
-  if (cell.connections.entry) {
-    flowClasses.push(`flow-from-${cell.connections.entry.toLowerCase()}`);
+  if (visualEntry) {
+    flowClasses.push(`flow-from-${visualEntry.toLowerCase()}`);
   }
   
-  if (cell.connections.exit) {
-    flowClasses.push(`flow-to-${cell.connections.exit.toLowerCase()}`);
+  if (visualExit) {
+    flowClasses.push(`flow-to-${visualExit.toLowerCase()}`);
   }
   
   // Add position and type specific classes
@@ -224,8 +265,8 @@ export const PipelineVisualizer: React.FC<PipelineVisualizerProps> = ({
     flowClasses.push('connector-corner');
     
     // Add specific corner type
-    if (cell.connections.entry && cell.connections.exit) {
-      flowClasses.push(`corner-${cell.connections.entry.toLowerCase()}-${cell.connections.exit.toLowerCase()}`);
+    if (visualEntry && visualExit) {
+      flowClasses.push(`corner-${visualEntry.toLowerCase()}-${visualExit.toLowerCase()}`);
     }
   } else {
     flowClasses.push('connector-straight');
@@ -235,7 +276,7 @@ export const PipelineVisualizer: React.FC<PipelineVisualizerProps> = ({
   
   // For entry arrows: show only if NOT the start cube, and only for corners
   // This ensures corners get proper visualization
-  const shouldShowEntryArrow = cell.connections.entry && isCorner && !isStartCube;
+  const shouldShowEntryArrow = Boolean(visualEntry) && isCorner && !isStartCube;
   
   // For exit arrows: complete rewrite of logic to ensure end cube arrows are never shown
   // Use multiple checks to be extremely defensive
@@ -244,7 +285,14 @@ export const PipelineVisualizer: React.FC<PipelineVisualizerProps> = ({
     if (isEndCube) return false;
     if (pathPosition === connectedCubes.length - 1) return false;
     // Only show if there's an exit direction
-    if (!cell.connections.exit) return false;
+    if (!visualExit) return false;
+    // Don't render if no adjacent cube actually exists in that direction
+    if (!hasNeighborInExitDirection) {
+      if (showDebug) {
+        debug.warn(`No adjacent cube found at [${row},${col}] exiting ${visualExit}, hiding connector`);
+      }
+      return false;
+    }
     
     // Debug logs to help understand rendering logic
     if (showDebug) {
@@ -253,7 +301,10 @@ export const PipelineVisualizer: React.FC<PipelineVisualizerProps> = ({
         isEndCube,
         pathPosition,
         totalCubes: connectedCubes.length,
-        connections: cell.connections
+        connections: {
+          raw: cell.connections,
+          visual: { entry: visualEntry, exit: visualExit }
+        }
       });
     }
     
@@ -262,7 +313,7 @@ export const PipelineVisualizer: React.FC<PipelineVisualizerProps> = ({
 
   // Add additional logging specific to exit arrows
   useEffect(() => {
-    if (showDebug && isEndCube && cell.connections.exit) {
+    if (showDebug && isEndCube && visualExit) {
       debug.warn(`End cube detected at [${row},${col}] - exit arrows should be hidden`, {
         isEndCube,
         pathPosition,
@@ -270,7 +321,7 @@ export const PipelineVisualizer: React.FC<PipelineVisualizerProps> = ({
         shouldShowExitArrow
       });
     }
-  }, [showDebug, isEndCube, row, col, pathPosition, connectedCubes.length, cell.connections.exit, shouldShowExitArrow]);
+  }, [showDebug, isEndCube, row, col, pathPosition, connectedCubes.length, visualExit, shouldShowExitArrow]);
 
   return (
     <div className={`pipe-container ${flowClasses.join(' ')}`}>
@@ -282,11 +333,11 @@ export const PipelineVisualizer: React.FC<PipelineVisualizerProps> = ({
           className={[
             'flow-connector',
             'entry',
-            `entry-${cell.connections.entry?.toLowerCase()}`,
-            getAxisClass(cell.connections.entry),
+            `entry-${visualEntry?.toLowerCase()}`,
+            getAxisClass(visualEntry),
             isCorner ? 'corner' : 'straight'
           ].filter(Boolean).join(' ')}
-          title={`Corner Connector (${cell.connections.entry} to ${cell.connections.exit})`}
+          title={`Corner Connector${connectorLabel ? ` (${connectorLabel})` : ''}`}
           role="presentation"
           aria-hidden="true"
         />
@@ -298,13 +349,13 @@ export const PipelineVisualizer: React.FC<PipelineVisualizerProps> = ({
           className={[
             'flow-connector',
             'exit',
-            `exit-${cell.connections.exit?.toLowerCase()}`,
-            getAxisClass(cell.connections.exit),
+            `exit-${visualExit?.toLowerCase()}`,
+            getAxisClass(visualExit),
             isCorner ? 'corner' : 'straight'
           ].filter(Boolean).join(' ')}
           title={isCorner ? 
-            `Corner Connector: ${cell.connections.entry} to ${cell.connections.exit}` : 
-            `Straight Connector: ${cell.connections.entry} to ${cell.connections.exit}`}
+            `Corner Connector${connectorLabel ? ` (${connectorLabel})` : ''}` : 
+            `Straight Connector${connectorLabel ? ` (${connectorLabel})` : ''}`}
           role="presentation"
           aria-hidden="true"
         />
@@ -312,14 +363,14 @@ export const PipelineVisualizer: React.FC<PipelineVisualizerProps> = ({
       
       {/* Connection type indicator */}
       <div
-        className={[
-          'connector-visual',
-          isCorner ? 'corner' : 'straight',
-          !isCorner ? `straight-${getStraightOrientation(cell.connections.entry, cell.connections.exit)}` : '',
-        ].filter(Boolean).join(' ')}
-        title={isCorner ? 'Corner Connector' : 'Straight Coupling'}
-        aria-hidden="true"
-      />
+          className={[
+            'connector-visual',
+            isCorner ? 'corner' : 'straight',
+            !isCorner ? `straight-${getStraightOrientation(visualEntry, visualExit)}` : '',
+          ].filter(Boolean).join(' ')}
+          title={isCorner ? 'Corner Connector' : 'Straight Coupling'}
+          aria-hidden="true"
+        />
       
       {/* Position indicator */}
       {showDebug && (

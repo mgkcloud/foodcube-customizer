@@ -255,7 +255,7 @@
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
   pointer-events: none;
   overflow: hidden;
-  transform: scale(1.28);
+  transform: scale(1.45);
   transform-origin: center;
   transition: none !important;
 }
@@ -343,28 +343,28 @@
 /* Positioning for connector indicators */
 .entry-n,
 .exit-n {
-  top: -22px;
+  top: -26px;
   left: 50%;
   transform: translateX(-50%);
 }
 
 .entry-s,
 .exit-s {
-  bottom: -22px;
+  bottom: -26px;
   left: 50%;
   transform: translateX(-50%);
 }
 
 .entry-e,
 .exit-e {
-  right: -22px;
+  right: -26px;
   top: 50%;
   transform: translateY(-50%);
 }
 
 .entry-w,
 .exit-w {
-  left: -22px;
+  left: -26px;
   top: 50%;
   transform: translateY(-50%);
 }

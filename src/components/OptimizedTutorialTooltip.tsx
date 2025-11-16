@@ -1,7 +1,7 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useTutorial, TutorialTargetId } from '@/contexts/TutorialContext';
 import { tutorialManager } from '@/utils/tutorial';
-import { RecalculationTrigger } from '@/utils/tutorial/types';
+import { PositionResult, RecalculationTrigger } from '@/utils/tutorial/types';
 import { Button } from "@/components/ui/button";
 import { createPortal } from 'react-dom';
 
@@ -23,6 +23,60 @@ interface OptimizedTutorialTooltipProps {
   isLastStep?: boolean;
   zIndex?: number;
 }
+
+const computeArrowPosition = (position: string, alignment: string) => {
+  const basePosition = position.replace('inside-', '');
+  
+  switch (basePosition) {
+    case 'top':
+      return {
+        bottom: '-6px',
+        left: alignment === 'start' ? '12px' : alignment === 'end' ? 'calc(100% - 12px)' : '50%',
+        transform: 'translateX(-50%) rotate(45deg)',
+      };
+    case 'bottom':
+      return {
+        top: '-6px',
+        left: alignment === 'start' ? '12px' : alignment === 'end' ? 'calc(100% - 12px)' : '50%',
+        transform: 'translateX(-50%) rotate(45deg)',
+      };
+    case 'left':
+      return {
+        right: '-6px',
+        top: alignment === 'start' ? '12px' : alignment === 'end' ? 'calc(100% - 12px)' : '50%',
+        transform: 'translateY(-50%) rotate(45deg)',
+      };
+    case 'right':
+      return {
+        left: '-6px',
+        top: alignment === 'start' ? '12px' : alignment === 'end' ? 'calc(100% - 12px)' : '50%',
+        transform: 'translateY(-50%) rotate(45deg)',
+      };
+    default:
+      return {
+        bottom: '-6px',
+        left: '50%',
+        transform: 'translateX(-50%) rotate(45deg)',
+      };
+  }
+};
+
+const computeArrowBorderWidth = (position: string) => {
+  const basePosition = position.replace('inside-', '');
+  
+  switch (basePosition) {
+    case 'top':
+      return '0 1px 1px 0';
+    case 'bottom':
+      return '1px 0 0 1px';
+    case 'left':
+      return '1px 1px 0 0';
+    case 'right':
+      return '0 0 1px 1px';
+    default:
+      return '0 1px 1px 0';
+  }
+};
 
 /**
  * A high-performance tooltip component for the tutorial system
@@ -51,8 +105,14 @@ export const OptimizedTutorialTooltip: React.FC<OptimizedTutorialTooltipProps> =
   
   // References
   const tooltipIdRef = useRef<string>('');
-  const isVisibleRef = useRef<boolean>(false);
+  const [tooltipInstanceVersion, setTooltipInstanceVersion] = useState(0);
   const tooltipRef = useRef<HTMLDivElement>(null);
+  const [hasResolvedPosition, setHasResolvedPosition] = useState(false);
+  const [resolvedPosition, setResolvedPosition] = useState(position);
+  const [arrowPositionStyles, setArrowPositionStyles] = useState<React.CSSProperties>(() =>
+    computeArrowPosition(position, alignment)
+  );
+  const [arrowBorderWidth, setArrowBorderWidth] = useState(() => computeArrowBorderWidth(position));
   
   // State for portal container
   const [tooltipContainer, setTooltipContainer] = useState<HTMLElement | null>(null);
@@ -79,39 +139,68 @@ export const OptimizedTutorialTooltip: React.FC<OptimizedTutorialTooltipProps> =
     };
   }, []);
   
-  // Initialize tooltip on mount
+  const fallbackKey = fallbackTargetIds.join('|');
+  const fallbackTargetsRef = useRef<TutorialTargetId[]>(fallbackTargetIds);
+  
   useEffect(() => {
-    // Create tooltip element (not visible yet)
-    tooltipIdRef.current = tutorialManager.createTooltip({
+    fallbackTargetsRef.current = fallbackTargetIds;
+  }, [fallbackTargetIds, fallbackKey]);
+  
+  const handlePositionChange = useCallback((result: PositionResult) => {
+    setResolvedPosition(result.position);
+    setArrowPositionStyles(result.arrowPosition || computeArrowPosition(result.position, alignment));
+    setArrowBorderWidth(computeArrowBorderWidth(result.position));
+    setHasResolvedPosition(true);
+  }, [alignment]);
+  
+  // Initialize tooltip once the DOM node exists so we can hand the element to the tutorial manager
+  useLayoutEffect(() => {
+    if (!tooltipContainer) return;
+    const tooltipElement = tooltipRef.current;
+    if (!tooltipElement) return;
+    
+    setHasResolvedPosition(false);
+    setResolvedPosition(position);
+    setArrowPositionStyles(computeArrowPosition(position, alignment));
+    setArrowBorderWidth(computeArrowBorderWidth(position));
+    
+    const newTooltipId = tutorialManager.createTooltip({
       targetId,
-      fallbackTargetIds,
+      fallbackTargetIds: fallbackTargetsRef.current,
       type: 'tooltip',
       position,
       alignment,
       zIndex,
-      isActive: false
+      isActive: false,
+      styleElement: tooltipElement,
+      onPositionChange: handlePositionChange
     });
     
+    if (newTooltipId) {
+      tooltipIdRef.current = newTooltipId;
+      setTooltipInstanceVersion((version) => version + 1);
+    }
+    
     return () => {
-      // Clean up tooltip on unmount
-      if (tooltipIdRef.current) {
-        tutorialManager.removeElement(tooltipIdRef.current);
+      const currentId = tooltipIdRef.current;
+      if (currentId) {
+        tutorialManager.deactivateElement(currentId);
+        tutorialManager.removeElement(currentId);
+        tooltipIdRef.current = '';
       }
     };
-  }, [targetId]);
-  
-  // Update tooltip visibility
+  }, [targetId, fallbackKey, position, alignment, zIndex, handlePositionChange, tooltipContainer]);
+
+  // Update tooltip visibility whenever state changes or a new tooltip is created
   useEffect(() => {
-    if (isVisible !== isVisibleRef.current && tooltipIdRef.current) {
-      if (isVisible) {
-        tutorialManager.activateElement(tooltipIdRef.current);
-      } else {
-        tutorialManager.deactivateElement(tooltipIdRef.current);
-      }
-      
-      isVisibleRef.current = isVisible;
+    const currentId = tooltipIdRef.current;
+    if (!currentId) return;
+    if (isVisible) {
+      tutorialManager.activateElement(currentId);
+    } else {
+      tutorialManager.deactivateElement(currentId);
     }
-  }, [isVisible]);
+  }, [isVisible, tooltipInstanceVersion]);
   
   // Trigger updates when props change
   useEffect(() => {
@@ -131,68 +220,6 @@ export const OptimizedTutorialTooltip: React.FC<OptimizedTutorialTooltipProps> =
     }
   };
   
-  // Function to get arrow position based on tooltip position
-  const getArrowPosition = (position: string, alignment: string) => {
-    // Extract position from tooltip position (which could include 'inside-')
-    const basePosition = position.replace('inside-', '');
-    
-    switch (basePosition) {
-      case 'top':
-        // Arrow at the bottom of the tooltip
-        return {
-          bottom: '-6px',
-          left: alignment === 'start' ? '12px' : alignment === 'end' ? 'calc(100% - 12px)' : '50%',
-          transform: 'translateX(-50%) rotate(45deg)',
-        };
-      case 'bottom':
-        // Arrow at the top of the tooltip
-        return {
-          top: '-6px',
-          left: alignment === 'start' ? '12px' : alignment === 'end' ? 'calc(100% - 12px)' : '50%',
-          transform: 'translateX(-50%) rotate(45deg)',
-        };
-      case 'left':
-        // Arrow at the right of the tooltip
-        return {
-          right: '-6px',
-          top: alignment === 'start' ? '12px' : alignment === 'end' ? 'calc(100% - 12px)' : '50%',
-          transform: 'translateY(-50%) rotate(45deg)',
-        };
-      case 'right':
-        // Arrow at the left of the tooltip
-        return {
-          left: '-6px',
-          top: alignment === 'start' ? '12px' : alignment === 'end' ? 'calc(100% - 12px)' : '50%',
-          transform: 'translateY(-50%) rotate(45deg)',
-        };
-      default:
-        return {
-          bottom: '-6px',
-          left: '50%',
-          transform: 'translateX(-50%) rotate(45deg)',
-        };
-    }
-  };
-  
-  // Function to get arrow border width based on tooltip position
-  const getArrowBorderWidth = (position: string) => {
-    // Extract position from tooltip position (which could include 'inside-')
-    const basePosition = position.replace('inside-', '');
-    
-    switch (basePosition) {
-      case 'top':
-        return '0 1px 1px 0'; // Border on right and bottom for arrow pointing down
-      case 'bottom':
-        return '1px 0 0 1px'; // Border on top and left for arrow pointing up
-      case 'left':
-        return '1px 1px 0 0'; // Border on top and right for arrow pointing left
-      case 'right':
-        return '0 0 1px 1px'; // Border on bottom and left for arrow pointing right
-      default:
-        return '0 1px 1px 0';
-    }
-  };
-  
   // Don't render anything if not visible or container not ready
   if (!isVisible || !tooltipContainer) return null;
   
@@ -200,51 +227,80 @@ export const OptimizedTutorialTooltip: React.FC<OptimizedTutorialTooltipProps> =
   return createPortal(
     <div
       ref={tooltipRef}
-      className="fixed bg-white rounded-lg shadow-lg border border-blue-100 p-4 w-64 max-w-[90vw] pointer-events-auto transition-all duration-300 ease-in-out"
+      className="fixed backdrop-blur-xl bg-white/90 rounded-2xl shadow-2xl border border-white/20 p-7 w-80 max-w-[90vw] pointer-events-auto transition-all duration-500 ease-out"
       style={{
         zIndex,
+        opacity: hasResolvedPosition ? 1 : 0,
+        transform: hasResolvedPosition ? 'scale(1) translateY(0)' : 'scale(0.95) translateY(-8px)',
+        boxShadow: '0 20px 60px -12px rgba(0, 0, 0, 0.12), 0 8px 24px -8px rgba(0, 0, 0, 0.08)',
       }}
       data-testid={`tutorial-tooltip-${targetId}`}
+      data-position={resolvedPosition}
     >
-      <div className="flex flex-col">
-        <div className="mb-2">
-          <h3 className="font-bold text-blue-600">{title}</h3>
+      {/* Subtle gradient overlay for depth */}
+      <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-white/40 via-transparent to-transparent pointer-events-none" />
+
+      <div className="relative flex flex-col space-y-5">
+        {/* Title section with icon */}
+        <div className="flex items-start space-x-3">
+          <div className="flex-shrink-0 w-9 h-9 rounded-full bg-gradient-to-br from-blue-500/10 to-indigo-500/10 flex items-center justify-center">
+            <svg
+              className="w-5 h-5 text-blue-600"
+              fill="none"
+              strokeWidth="2.5"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 001.5-.189m-1.5.189a6.01 6.01 0 01-1.5-.189m3.75 7.478a12.06 12.06 0 01-4.5 0m3.75 2.383a14.406 14.406 0 01-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 10-7.517 0c.85.493 1.509 1.333 1.509 2.316V18" />
+            </svg>
+          </div>
+          <h3 className="flex-1 font-semibold text-gray-900 text-lg leading-tight tracking-tight">
+            {title}
+          </h3>
         </div>
-        <div className="text-sm text-gray-700 mb-4">
+
+        {/* Content with better typography */}
+        <p className="text-base leading-relaxed text-gray-700 font-normal">
           {content}
-        </div>
-        <div className="flex justify-between items-center">
+        </p>
+
+        {/* Action buttons with refined styling */}
+        <div className="flex justify-between items-center pt-3">
           {showBackButton && onPrev ? (
-            <Button variant="outline" size="sm" onClick={onPrev} className="text-xs">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onPrev}
+              className="text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100/50 transition-colors px-4 py-2"
+            >
               Back
             </Button>
           ) : (
             <div></div>
           )}
-          
+
           <div className="flex gap-2">
-            {/* {showSkipButton && onSkip && (
-              <Button variant="ghost" size="sm" onClick={onSkip} className="text-xs text-gray-500">
-                Skip
-              </Button>
-            )} */}
-            
             {showNextButton && (
-              <Button size="sm" onClick={handleNext} className="text-xs">
+              <Button
+                size="sm"
+                onClick={handleNext}
+                className="text-sm font-medium bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-sm hover:shadow-md transition-all duration-200 px-5 py-2"
+              >
                 {isLastStep ? 'Finish' : (isInteractive ? 'Skip' : 'Next')}
               </Button>
             )}
           </div>
         </div>
       </div>
-      
-      {/* Arrow pointing to the target */}
+
+      {/* Refined arrow with glass effect */}
       <div
-        className="absolute w-3 h-3 bg-white transform rotate-45 border-blue-100"
+        className="absolute w-3 h-3 backdrop-blur-xl bg-white/90 transform rotate-45 border-white/20"
         style={{
-          ...getArrowPosition(position, alignment),
-          borderWidth: getArrowBorderWidth(position),
-          zIndex: 1, // Ensure arrow is above tooltip content
+          ...arrowPositionStyles,
+          borderWidth: arrowBorderWidth,
+          zIndex: 1,
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
         }}
         data-testid={`tutorial-tooltip-arrow-${targetId}`}
       ></div>

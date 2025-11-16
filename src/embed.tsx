@@ -293,7 +293,7 @@ document.addEventListener("DOMContentLoaded", () => {
               
               // Update the main product quantity input with a more robust selector
               // Try multiple selector approaches, from most specific to most generic
-              let mainQuantityInput = 
+              const mainQuantityInput = 
                 // Try parent container + input
                 document.querySelector('.product-form__quantity quantity-input .quantity__input') ||
                 // Try by input with specific name attribute

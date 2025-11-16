@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { PANEL_COLORS } from '@/constants/colors';
+import { AnimatedCounter } from './AnimatedCounter';
 
 const CONNECTOR_COLORS = {
   corner: '#D97706', // Amber
@@ -55,24 +56,24 @@ interface ProductItemProps {
 }
 
 const ProductItem: React.FC<ProductItemProps> = ({ label, count, description, color, testId }) => (
-  <div 
-    className="flex items-center py-1.5 px-2 hover:bg-gray-50/80 rounded-md transition-colors group relative"
+  <div
+    className="flex items-center py-2 px-3 hover:bg-gray-50/80 rounded-xl transition-all duration-200 group relative"
     data-testid={testId || `product-${label.toLowerCase().replace(/\s+/g, '-')}`}
   >
     {color && (
-      <div 
-        className="w-3 h-3 sm:w-4 sm:h-4 rounded-md flex-shrink-0 shadow-sm border border-gray-100 mr-2" 
+      <div
+        className="w-4 h-4 sm:w-5 sm:h-5 rounded-lg flex-shrink-0 shadow-sm border border-gray-100 mr-3"
         style={{ backgroundColor: color }}
       />
     )}
     <div className="flex flex-col">
       <span className="text-gray-800 font-semibold text-sm sm:text-base" data-testid={`product-label-${label.toLowerCase().replace(/\s+/g, '-')}`}>{label}</span>
       {description && (
-        <span className="text-sm sm:text-sm text-gray-500 leading-tight" data-testid={`product-description-${label.toLowerCase().replace(/\s+/g, '-')}`}>{description}</span>
+        <span className="text-xs sm:text-sm text-gray-500 leading-tight" data-testid={`product-description-${label.toLowerCase().replace(/\s+/g, '-')}`}>{description}</span>
       )}
     </div>
-    <span className="ml-auto text-sm sm:text-base font-semibold px-2 py-0.5 bg-blue-50 rounded-full text-blue-700 min-w-[2.5rem] sm:min-w-[3rem] text-center" data-testid={`product-count-${label.toLowerCase().replace(/\s+/g, '-')}`}>
-      {count > 0 ? count + 'x' : '0'}
+    <span className="ml-auto text-sm sm:text-base font-bold px-3 py-1 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-full text-blue-700 min-w-[3rem] sm:min-w-[3.5rem] text-center transition-all duration-200" data-testid={`product-count-${label.toLowerCase().replace(/\s+/g, '-')}`}>
+      {count > 0 ? <><AnimatedCounter value={count} />x</> : '0'}
     </span>
     {description && (
       <div 
@@ -233,46 +234,46 @@ export const CladdingKey: React.FC<CladdingKeyProps> = ({ requirements, showDebu
   const allProducts = [
     // Packages first
     ...(requirements.fourPackRegular > 0 ? [{
-      label: "4-Pack",
+      label: "Foundation Set (4-Pack)",
       count: requirements.fourPackRegular,
-      description: "Contains: 2 side panels + 1 left panel + 1 right panel"
+      description: "Complete starter set: 2 side + 1 left + 1 right panel"
     }] : []),
     ...(requirements.twoPackRegular > 0 ? [{
-      label: "2-Pack",
+      label: "Side Panel Set (2-Pack)",
       count: requirements.twoPackRegular,
-      description: "Contains: 2 side panels"
+      description: "Perfect pair of matching side panels"
     }] : []),
-    
+
     // Individual panels (only show if there are individual panels needed)
     ...(requirements.sidePanels > 0 ? [{
       label: "Side Panel",
       count: requirements.sidePanels,
-      description: `Additional individual side panels (Blue) - ${totalSidePanels} total needed`,
+      description: `Additional side panels to complete your design (${totalSidePanels} total)`,
       color: PANEL_COLORS.side
     }] : []),
     ...(requirements.leftPanels > 0 ? [{
       label: "Left Panel",
       count: requirements.leftPanels,
-      description: `Additional individual left panels (Green) - ${totalLeftPanels} total needed`,
+      description: `Additional left panels for your layout (${totalLeftPanels} total)`,
       color: PANEL_COLORS.left
     }] : []),
     ...(requirements.rightPanels > 0 ? [{
       label: "Right Panel",
       count: requirements.rightPanels,
-      description: `Additional individual right panels (Orange) - ${totalRightPanels} total needed`,
+      description: `Additional right panels for your layout (${totalRightPanels} total)`,
       color: PANEL_COLORS.right
     }] : []),
-    
+
     // Connectors
     ...(requirements.straightCouplings > 0 ? [{
       label: "Straight Connector",
       count: requirements.straightCouplings,
-      description: "For connecting cubes in a straight line"
+      description: "Links cubes in a straight line for extended rows"
     }] : []),
     ...(requirements.cornerConnectors > 0 ? [{
       label: "Corner Connector",
       count: requirements.cornerConnectors,
-      description: "For connecting cubes at 90° angles (L and U shapes)"
+      description: "Creates 90° turns for L-shaped and U-shaped designs"
     }] : [])
   ];
   
@@ -280,17 +281,30 @@ export const CladdingKey: React.FC<CladdingKeyProps> = ({ requirements, showDebu
   const totalPanelsTooltip = `Total panels needed: ${totalSidePanels} side, ${totalLeftPanels} left, ${totalRightPanels} right`;
   
   return (
-    <div className="bg-white p-2 sm:p-3 md:p-4 rounded-xl shadow-sm cladding-key-container" data-testid="cladding-key">
-      {/* Header with title and status badge */}
-      <div className="flex items-center justify-between mb-1 sm:mb-2">
-        <div className="flex items-center">
-          <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-800" data-testid="products-heading">Required Products</h3>
-          {hasRequirements && (
-            <div className="ml-2 inline-flex items-center">
-              <span className="w-2 h-2 sm:w-2.5 sm:h-2.5 bg-green-500 rounded-full mr-1"></span>
-              <span className="text-sm sm:text-sm text-blue-700">Ready</span>
-            </div>
-          )}
+    <div className="bg-white p-3 sm:p-4 md:p-5 rounded-2xl shadow-md border border-gray-50 cladding-key-container transition-all duration-300" data-testid="cladding-key">
+      {/* Header with title */}
+      <div className="flex items-center justify-between mb-3 sm:mb-4">
+        <div className="flex items-center gap-3">
+          {/* Icon */}
+          <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="text-blue-600"
+            >
+              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+            </svg>
+          </div>
+          <h3 className="text-xl sm:text-2xl font-semibold text-gray-900 tracking-tight" data-testid="products-heading">
+            Your Garden Materials
+          </h3>
         </div>
         
         {/* Total panel counts info button with tooltip */}

@@ -5,20 +5,24 @@ import { PipelineVisualizer } from './PipelineVisualizer';
 import { hasAdjacentCube } from '@/utils/shared/gridUtils';
 import { useTutorial } from '@/contexts/TutorialContext';
 
+export type InteractionMode = 'cube' | 'cladding';
+
 interface GridProps {
   grid: GridCell[][];
   onToggleCell: (row: number, col: number) => void;
   onToggleCladding: (row: number, col: number, edge: 'N' | 'E' | 'S' | 'W') => void;
   setHasInteracted?: (value: boolean) => void;
   debug?: boolean;
+  interactionMode?: InteractionMode;
 }
 
-export const Grid: React.FC<GridProps> = ({ 
-  grid, 
-  onToggleCell, 
-  onToggleCladding, 
+export const Grid: React.FC<GridProps> = ({
+  grid,
+  onToggleCell,
+  onToggleCladding,
   setHasInteracted,
-  debug = false
+  debug = false,
+  interactionMode = 'cube'
 }) => {
   const [hasInteractedLocal, setHasInteractedLocal] = useState(false);
   const { notifyTutorial } = useTutorial();
@@ -35,14 +39,17 @@ export const Grid: React.FC<GridProps> = ({
   }, [grid, hasInteractedLocal, setHasInteracted]);
 
   const handleCellClick = (rowIndex: number, colIndex: number) => {
+    // Only allow cube toggling in cube mode
+    if (interactionMode !== 'cube') return;
+
     setHasInteractedLocal(true);
     if (setHasInteracted) setHasInteracted(true);
-    
+
     // Log for tutorial debugging
     console.log(`Grid cell clicked: [${rowIndex}, ${colIndex}], currently has cube: ${grid[rowIndex][colIndex].hasCube}`);
-    
+
     onToggleCell(rowIndex, colIndex);
-    
+
     // Notify tutorial system directly
     notifyTutorial({
       type: 'CUBE_TOGGLED',
@@ -101,7 +108,7 @@ export const Grid: React.FC<GridProps> = ({
   };
 
   return (
-    <div className="relative grid grid-cols-3 gap-1.5 sm:gap-3 md:gap-4 bg-gray-100 p-4 sm:p-5 md:p-6 rounded-xl shadow-md z-10">
+    <div className="relative grid grid-cols-3 gap-2 sm:gap-4 md:gap-5 bg-gradient-to-br from-gray-50 to-gray-100 p-5 sm:p-6 md:p-8 rounded-2xl shadow-lg z-10">
       {!hasInteractedLocal && (
         <div className="absolute inset-0 flex items-center justify-center z-10 bg-black/5 backdrop-blur-[1px] rounded-xl">
           <div className="bg-blue-600/90 px-5 py-3 rounded-lg text-white text-center font-medium shadow-lg animate-pulse">
@@ -112,19 +119,19 @@ export const Grid: React.FC<GridProps> = ({
       
       {grid.map((row, rowIndex) => (
         row.map((cell, colIndex) => (
-          <div 
+          <div
             key={`${rowIndex}-${colIndex}`}
             data-testid={`grid-cell-${rowIndex}-${colIndex}`}
             data-has-cube={cell.hasCube.toString()}
             className={`
-              relative aspect-square cursor-pointer
-              ${cell.hasCube 
-                ? 'bg-cover bg-center bg-no-repeat hover:brightness-95 active:brightness-90 z-1' 
-                : 'bg-white hover:bg-gray-100 active:bg-gray-200'
+              relative aspect-square cursor-pointer group
+              ${cell.hasCube
+                ? 'bg-cover bg-center bg-no-repeat hover:brightness-95 active:brightness-90 z-1 animate-in fade-in zoom-in duration-300'
+                : 'bg-white hover:bg-gray-50 active:bg-gray-100'
               }
-              border-2 sm:border-3 border-gray-300 sm:border-gray-200 rounded-lg
-              transition-all duration-200 shadow-sm hover:shadow-md
-              transform active:scale-[0.98]
+              border-2 sm:border-3 border-gray-300 sm:border-gray-200 rounded-xl
+              transition-all duration-300 ease-out shadow-sm hover:shadow-lg
+              transform hover:scale-[1.02] active:scale-[0.98]
             `}
             style={{
               backgroundImage: cell.hasCube 
@@ -158,6 +165,7 @@ export const Grid: React.FC<GridProps> = ({
                     W: !hasAdjacentCube(grid, rowIndex, colIndex, 'W')
                   }}
                   registerEdgeRef={registerEdgeRef}
+                  interactionMode={interactionMode}
                 />
                 
                 {/* Debug info */}
