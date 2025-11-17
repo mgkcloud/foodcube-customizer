@@ -155,7 +155,6 @@ export const CladdingVisualizer = ({
               }, null, 2));
               onToggle(edge);
             }}
-            data-testid={`grid-cell-${row}-${col}-edge-${edge}`}
           />
         ))}
       </div>

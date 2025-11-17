@@ -5,6 +5,7 @@ import { componentTagger } from "lovable-tagger";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
+  publicDir: 'public',
   server: {
     host: '0.0.0.0',
     port: 8082,
@@ -36,8 +37,9 @@ export default defineConfig(({ mode }) => ({
   build: {
     outDir: 'dist',
     emptyOutDir: true,
+    copyPublicDir: true,
     lib: {
-      entry: path.resolve(__dirname, 'src/embed.tsx'),
+      entry: path.resolve(__dirname, 'src/standalone.tsx'),
       name: 'FoodcubeConfigurator',
       formats: ['iife'],
       fileName: 'foodcube-configurator',
@@ -47,6 +49,13 @@ export default defineConfig(({ mode }) => ({
         globals: {
           react: 'React',
           'react-dom': 'ReactDOM',
+        },
+        assetFileNames: (assetInfo) => {
+          // Ensure the bundled stylesheet is named for the Shopify theme include
+          if ((assetInfo.name || '').endsWith('.css')) {
+            return 'foodcube-configurator.css';
+          }
+          return 'assets/[name]-[hash][extname]';
         },
       },
     },
