@@ -79,24 +79,14 @@ export const CladdingVisualizer = ({
     }
   }, [registerEdgeRef, row, col, cell.hasCube, isEdgeExposed]);
 
-  // Render subgrid highlighting for irrigation flow
-  const renderSubgridHighlight = () => {
-    return (
-      <div className="absolute inset-0 grid grid-cols-2 grid-rows-2">
-        <div className="bg-blue-200 opacity-50" />
-        <div className="bg-transparent" />
-        <div className="bg-blue-200 opacity-50" />
-        <div className="bg-transparent" />
-      </div>
-    );
-  };
-
   if (!cell?.hasCube) {
     return null;
   }
 
   // Get entry/exit from cell's connections
   const { entry, exit } = cell.connections;
+  // Allow cladding strips to slightly overlap cube boundaries so they're still visible with tighter spacing
+  const edgeOverlap = interactionMode === 'cladding' ? 8 : 4;
   
   const getEdgeStyle = (edge: EdgeType): React.CSSProperties => {
     const isSelected = cell.claddingEdges.has(edge);
@@ -117,6 +107,10 @@ export const CladdingVisualizer = ({
         : interactionMode === 'cladding'
         ? '0 1px 3px rgba(0, 0, 0, 0.1)'
         : 'none', // No shadow in cube mode for less visual weight
+      ...(edge === 'N' ? { top: -edgeOverlap } : {}),
+      ...(edge === 'S' ? { bottom: -edgeOverlap } : {}),
+      ...(edge === 'W' ? { left: -edgeOverlap } : {}),
+      ...(edge === 'E' ? { right: -edgeOverlap } : {}),
     };
   };
 

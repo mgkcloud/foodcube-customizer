@@ -108,19 +108,23 @@
   position: relative;
   width: 100%;
   height: 100%;
+  overflow: visible;
 }
 
 /* Flow position indicators */
 .flow-start .pipe-subgrid {
-  border: 2px solid hsl(var(--flow-start));
+  /* disabled for cube mode clarity */
+  border: none;
 }
 
 .flow-middle .pipe-subgrid {
-  border: 2px solid hsl(var(--flow-middle));
+  /* disabled for cube mode clarity */
+  border: none;
 }
 
 .flow-end .pipe-subgrid {
-  border: 2px solid hsl(var(--flow-end));
+  /* disabled for cube mode clarity */
+  border: none;
 }
 
 /* Flow direction indicators */
@@ -183,72 +187,72 @@
 
 /* Flow direction highlights */
 .flow-from-n .pipe-subgrid {
-  box-shadow: 0 -4px 0 -2px rgba(0, 255, 0, 0.5);
+  box-shadow: none;
 }
 
 .flow-from-s .pipe-subgrid {
-  box-shadow: 0 4px 0 -2px rgba(0, 255, 0, 0.5);
+  box-shadow: none;
 }
 
 .flow-from-e .pipe-subgrid {
-  box-shadow: 4px 0 0 -2px rgba(0, 255, 0, 0.5);
+  box-shadow: none;
 }
 
 .flow-from-w .pipe-subgrid {
-  box-shadow: -4px 0 0 -2px rgba(0, 255, 0, 0.5);
+  box-shadow: none;
 }
 
 .flow-to-n .pipe-subgrid {
-  box-shadow: 0 -4px 0 -2px rgba(255, 0, 0, 0.5);
+  box-shadow: none;
 }
 
 .flow-to-s .pipe-subgrid {
-  box-shadow: 0 4px 0 -2px rgba(255, 0, 0, 0.5);
+  box-shadow: none;
 }
 
 .flow-to-e .pipe-subgrid {
-  box-shadow: 4px 0 0 -2px rgba(255, 0, 0, 0.5);
+  box-shadow: none;
 }
 
 .flow-to-w .pipe-subgrid {
-  box-shadow: -4px 0 0 -2px rgba(255, 0, 0, 0.5);
+  box-shadow: none;
 }
 
 /* Combined shadows for both entry and exit */
 .flow-from-n.flow-to-s .pipe-subgrid,
 .flow-from-s.flow-to-n .pipe-subgrid {
-  box-shadow: 0 -4px 0 -2px rgba(0, 255, 0, 0.5), 0 4px 0 -2px rgba(255, 0, 0, 0.5);
+  box-shadow: none;
 }
 
 .flow-from-e.flow-to-w .pipe-subgrid,
 .flow-from-w.flow-to-e .pipe-subgrid {
-  box-shadow: 4px 0 0 -2px rgba(0, 255, 0, 0.5), -4px 0 0 -2px rgba(255, 0, 0, 0.5);
+  box-shadow: none;
 }
 
 .flow-from-n.flow-to-e .pipe-subgrid,
 .flow-from-e.flow-to-n .pipe-subgrid {
-  box-shadow: 0 -4px 0 -2px rgba(0, 255, 0, 0.5), 4px 0 0 -2px rgba(255, 0, 0, 0.5);
+  box-shadow: none;
 }
 
 .flow-from-n.flow-to-w .pipe-subgrid,
 .flow-from-w.flow-to-n .pipe-subgrid {
-  box-shadow: 0 -4px 0 -2px rgba(0, 255, 0, 0.5), -4px 0 0 -2px rgba(255, 0, 0, 0.5);
+  box-shadow: none;
 }
 
 .flow-from-s.flow-to-e .pipe-subgrid,
 .flow-from-e.flow-to-s .pipe-subgrid {
-  box-shadow: 0 4px 0 -2px rgba(0, 255, 0, 0.5), 4px 0 0 -2px rgba(255, 0, 0, 0.5);
+  box-shadow: none;
 }
 
 .flow-from-s.flow-to-w .pipe-subgrid,
 .flow-from-w.flow-to-s .pipe-subgrid {
-  box-shadow: 0 4px 0 -2px rgba(0, 255, 0, 0.5), -4px 0 0 -2px rgba(255, 0, 0, 0.5);
+  box-shadow: none;
 }
 
 /* Flow connector overlays */
 .flow-connector {
   position: absolute;
-  z-index: 20;
+  z-index: 50; /* ensure connector pills sit above dogleg lines and pipes */
   border-radius: 999px;
   border: 2px solid rgba(0, 0, 0, 0.8);
   background: linear-gradient(135deg, #1f1f1f 0%, #090909 100%);
@@ -292,33 +296,203 @@
 
 .flow-connector.axis-vertical,
 .connector-preview.axis-vertical {
-  width: 18px;
-  height: 48px;
-  border-radius: 10px;
+  width: 26px;
+  height: 62px;
+  border-radius: 14px;
 }
 
 .flow-connector.axis-horizontal,
 .connector-preview.axis-horizontal {
-  width: 48px;
-  height: 18px;
-  border-radius: 10px;
+  width: 62px;
+  height: 26px;
+  border-radius: 14px;
 }
 
 .flow-connector.corner.axis-vertical,
 .flow-connector.corner.axis-horizontal,
 .connector-preview.corner.axis-vertical,
 .connector-preview.corner.axis-horizontal {
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
 }
 
 .flow-connector.corner.axis-vertical::after,
 .flow-connector.corner.axis-horizontal::after,
 .connector-preview.corner.axis-vertical::after,
 .connector-preview.corner.axis-horizontal::after {
-  inset: 3px;
-  border-radius: 6px;
+  inset: 4px;
+  border-radius: 10px;
+}
+
+/* Corner dog-leg visualization: show entry -> bend -> exit */
+.corner-dogleg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 30; /* above pipes/preview; below pills is fine because we extend to them */
+  transform: scaleY(-1); /* mirror vertically to align with actual entry/exit edges */
+  transform-origin: center;
+}
+
+.corner-dogleg::before,
+.corner-dogleg::after {
+  content: "";
+  position: absolute;
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-image: linear-gradient(135deg, #ffba5d 0%, #c96d00 100%),
+    linear-gradient(135deg, #1f1f1f 0%, #090909 100%);
+  background-origin: border-box;
+  background-clip: padding-box, border-box; /* inner orange with dark shell to mirror the pill */
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.85), 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+
+:root {
+  --dogleg-thickness: 12px; /* thicker line so the corner legs visually match the pill size */
+  --dogleg-overhang: 2px; /* minimal overhang; keep the leg flush with the pill */
+  --dogleg-offset: calc(var(--dogleg-thickness) / 2);
+  --dogleg-edge-offset: 0px; /* hug the cube edge to connect without overshoot */
+}
+
+/* N → E */
+.corner-dogleg.from-n.to-e::before {
+  top: var(--dogleg-edge-offset);
+  left: 50%;
+  width: calc(50% + var(--dogleg-overhang));
+  height: var(--dogleg-thickness);
+}
+.corner-dogleg.from-n.to-e::after {
+  right: var(--dogleg-edge-offset);
+  top: var(--dogleg-edge-offset);
+  height: calc(50% + var(--dogleg-overhang));
+  width: var(--dogleg-thickness);
+}
+
+/* N → W */
+.corner-dogleg.from-n.to-w::before {
+  top: var(--dogleg-edge-offset);
+  left: var(--dogleg-edge-offset);
+  width: calc(50% + var(--dogleg-overhang));
+  height: var(--dogleg-thickness);
+}
+.corner-dogleg.from-n.to-w::after {
+  left: var(--dogleg-edge-offset);
+  top: var(--dogleg-edge-offset);
+  height: calc(50% + var(--dogleg-overhang));
+  width: var(--dogleg-thickness);
+}
+
+/* E → S */
+.corner-dogleg.from-e.to-s::before {
+  right: var(--dogleg-edge-offset);
+  top: 50%;
+  height: calc(50% + var(--dogleg-overhang));
+  width: var(--dogleg-thickness);
+}
+.corner-dogleg.from-e.to-s::after {
+  right: var(--dogleg-edge-offset);
+  bottom: var(--dogleg-edge-offset);
+  width: calc(50% + var(--dogleg-overhang));
+  height: var(--dogleg-thickness);
+}
+
+/* E → N */
+.corner-dogleg.from-e.to-n::before {
+  right: var(--dogleg-edge-offset);
+  top: var(--dogleg-edge-offset);
+  height: calc(50% + var(--dogleg-overhang));
+  width: var(--dogleg-thickness);
+}
+.corner-dogleg.from-e.to-n::after {
+  right: var(--dogleg-edge-offset);
+  top: var(--dogleg-edge-offset);
+  width: calc(50% + var(--dogleg-overhang));
+  height: var(--dogleg-thickness);
+}
+
+/* S → W */
+.corner-dogleg.from-s.to-w::before {
+  top: auto;
+  bottom: var(--dogleg-edge-offset);
+  left: var(--dogleg-edge-offset);
+  width: calc(50% + var(--dogleg-overhang));
+  height: var(--dogleg-thickness);
+}
+.corner-dogleg.from-s.to-w::after {
+  left: var(--dogleg-edge-offset);
+  top: auto;
+  bottom: var(--dogleg-edge-offset);
+  height: calc(50% + var(--dogleg-overhang));
+  width: var(--dogleg-thickness);
+}
+
+/* S → E */
+.corner-dogleg.from-s.to-e::before {
+  top: auto;
+  bottom: var(--dogleg-edge-offset);
+  left: 50%;
+  width: calc(50% + var(--dogleg-overhang));
+  height: var(--dogleg-thickness);
+}
+.corner-dogleg.from-s.to-e::after {
+  right: var(--dogleg-edge-offset);
+  top: auto;
+  bottom: var(--dogleg-edge-offset);
+  height: calc(50% + var(--dogleg-overhang));
+  width: var(--dogleg-thickness);
+}
+
+/* W → N */
+.corner-dogleg.from-w.to-n::before {
+  left: var(--dogleg-edge-offset);
+  top: var(--dogleg-edge-offset);
+  height: calc(50% + var(--dogleg-overhang));
+  width: var(--dogleg-thickness);
+}
+.corner-dogleg.from-w.to-n::after {
+  left: var(--dogleg-edge-offset);
+  top: var(--dogleg-edge-offset);
+  width: calc(50% + var(--dogleg-overhang));
+  height: var(--dogleg-thickness);
+}
+
+/* W → S */
+.corner-dogleg.from-w.to-s::before {
+  left: var(--dogleg-edge-offset);
+  top: 50%;
+  height: calc(50% + var(--dogleg-overhang));
+  width: var(--dogleg-thickness);
+}
+.corner-dogleg.from-w.to-s::after {
+  left: var(--dogleg-edge-offset);
+  bottom: var(--dogleg-edge-offset);
+  width: calc(50% + var(--dogleg-overhang));
+  height: var(--dogleg-thickness);
+}
+
+/* Zoom-out shell for configurator */
+.foodcube-zoom-frame {
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.foodcube-zoom-scale {
+  /* Base dimensions tuned for full-screen fit; scale clamped to avoid shrinking too far */
+  --fc-base-width: 1280px;
+  --fc-base-height: 1000px;
+  --fc-scale-x: calc(100vw / var(--fc-base-width));
+  --fc-scale-y: calc(100vh / var(--fc-base-height));
+  --fc-scale: clamp(0.9, min(var(--fc-scale-x), var(--fc-scale-y)), 1);
+  transform: scale(var(--fc-scale));
+  transform-origin: top center;
+  width: var(--fc-base-width);
+  min-height: var(--fc-base-height);
+  margin: 0 auto;
 }
 
 .connector-preview {
@@ -336,36 +510,36 @@
 }
 
 .connector-preview.corner {
-  width: 28px;
-  height: 28px;
+  width: 46px;
+  height: 46px;
 }
 
 /* Positioning for connector indicators */
 .entry-n,
 .exit-n {
   top: -26px;
-  left: 50%;
+  left: var(--connector-x, 50%);
   transform: translateX(-50%);
 }
 
 .entry-s,
 .exit-s {
   bottom: -26px;
-  left: 50%;
+  left: var(--connector-x, 50%);
   transform: translateX(-50%);
 }
 
 .entry-e,
 .exit-e {
   right: -26px;
-  top: 50%;
+  top: var(--connector-y, 50%);
   transform: translateY(-50%);
 }
 
 .entry-w,
 .exit-w {
   left: -26px;
-  top: 50%;
+  top: var(--connector-y, 50%);
   transform: translateY(-50%);
 }
 
@@ -400,12 +574,12 @@
 
 /* Special styling for corners */
 .connector-corner .pipe-subgrid {
-  border: 2px solid #FF9800;
+  border: none;
 }
 
 /* Special styling for straight connections */
 .connector-straight .pipe-subgrid {
-  border: 2px solid #2196F3;
+  border: none;
 }
 
 /* Debug labels */
@@ -438,13 +612,19 @@
 
 /* Enhanced styling for flow types */
 .flow-start .connector-visual {
-  border-color: #4CAF50;
-  color: #4CAF50;
+  border-color: transparent;
+  color: inherit;
 }
 
 .flow-end .connector-visual {
-  border-color: #F44336;
-  color: #F44336;
+  border-color: transparent;
+  color: inherit;
+}
+
+/* Neutralize connector-visual default border/color */
+.connector-visual {
+  border-color: transparent;
+  color: inherit;
 }
 
 /* Corner visualization overrides */

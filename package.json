@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite --port ${VITE_PORT:-8082} --host poseidon.centaur-cloud.ts.net",
     "build": "vite build",
+    "postbuild": "npm run copy:shopify",
+    "copy:shopify": "cp -f dist/embed.html dist/foodcube-configurator.css dist/foodcube-configurator.iife.js /home/mgk/code/foodcube-shopify/assets",
     "build:dev": "vite build --mode development",
     "clean": "rm -rf dist",
     "build:clean": "npm run clean && npm run build",

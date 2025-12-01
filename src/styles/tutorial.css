@@ -80,6 +80,20 @@
   /* Remove z-index and transition which cause recalculation */
 }
 
+/* Ensure spotlighted elements sit above all other content and are not clipped */
+body.tutorial-active .spotlight-target {
+  position: relative !important;
+  z-index: 2147483647 !important;
+  overflow: visible !important;
+}
+
+/* Loosen overflow on primary containers during tutorial to prevent clipping */
+body.tutorial-active .foodcube-configurator-embed,
+body.tutorial-active [data-testid="configurator-title"],
+body.tutorial-active [data-testid="grid-wrapper"] {
+  overflow: visible !important;
+}
+
 /* Tutorial pointer styling */
 .tutorial-pointer {
   position: absolute;

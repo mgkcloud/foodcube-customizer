@@ -319,8 +319,7 @@ export const CladdingKey: React.FC<CladdingKeyProps> = ({
     ]);
 
     const hasRequirements =
-        Object.values(requirements).some((val) => val > 0) ||
-        spacerCount > 0;
+        Object.values(requirements).some((val) => val > 0) || spacerCount > 0;
 
     // Group all products (packages, panels, connectors) into a single list
     const allProducts = [
@@ -388,28 +387,28 @@ export const CladdingKey: React.FC<CladdingKeyProps> = ({
                   },
               ]
             : []),
-    ...(requirements.cornerConnectors > 0
-        ? [
-              {
-                  label: "Corner Connector",
-                  count: requirements.cornerConnectors,
-                  description:
-                      "Creates 90° turns for L-shaped and U-shaped designs",
-              },
-          ]
-        : []),
-    ...(spacerCount > 0
-        ? [
-              {
-                  label: "Height Spacer Set",
-                  count: spacerCount,
-                  description:
-                      heightOption === "700mm"
-                          ? "Required when using 700mm cladding height (one set per cube)"
-                          : undefined,
-              },
-          ]
-        : []),
+        ...(requirements.cornerConnectors > 0
+            ? [
+                  {
+                      label: "Corner Connector",
+                      count: requirements.cornerConnectors,
+                      description:
+                          "Creates 90° turns for L-shaped and U-shaped designs",
+                  },
+              ]
+            : []),
+        ...(spacerCount > 0
+            ? [
+                  {
+                      label: "Height Spacer Set",
+                      count: spacerCount,
+                      description:
+                          heightOption === "700mm"
+                              ? "Required when using 700mm cladding height (one set per cube)"
+                              : undefined,
+                  },
+              ]
+            : []),
     ];
 
     // Calculate total panel counts for the tooltip
@@ -421,7 +420,7 @@ export const CladdingKey: React.FC<CladdingKeyProps> = ({
             data-testid="cladding-key"
         >
             {/* Header with title */}
-            <div className="flex items-center justify-between mb-3 sm:mb-4">
+            <div className="flex items-center justify-around mb-3 sm:mb-4">
                 <div className="flex items-center gap-3">
                     {/* Icon */}
                     <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center">
@@ -756,6 +755,33 @@ export const CladdingKey: React.FC<CladdingKeyProps> = ({
                                             </span>
                                         </div>
                                     )}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Spacers for 700mm height */}
+                        {spacerCount > 0 && (
+                            <div>
+                                <div className="text-sm font-medium text-gray-500 px-1 mb-0.5">
+                                    Height Accessories:
+                                </div>
+                                <div
+                                    className="bg-white rounded-md p-1.5 shadow-sm flex items-center justify-between"
+                                    data-testid="spacer-item"
+                                >
+                                    <div className="flex items-center gap-2">
+                                        <div className="flex flex-col leading-tight">
+                                            <span className="text-sm font-medium">
+                                                Height Spacer Set
+                                            </span>
+                                            <span className="text-xs text-gray-500">
+                                                Required for {heightOption} (one per cube)
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <span className="text-sm font-semibold px-2 py-0.5 bg-blue-50 rounded-full text-blue-700 min-w-[2rem] text-center">
+                                        {spacerCount}x
+                                    </span>
                                 </div>
                             </div>
                         )}

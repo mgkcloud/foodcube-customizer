@@ -92,41 +92,41 @@ const EmbeddedApp = ({ variants, onUpdate, onApply, onClose }) => {
         font-size: 16px !important;
       }
       
-      /* Override common Tailwind text classes with pixel values within the embed */
-      .foodcube-configurator-embed .text-xs { font-size: 12px !important; }
-      .foodcube-configurator-embed .text-sm { font-size: 14px !important; }
-      .foodcube-configurator-embed .text-base { font-size: 16px !important; }
-      .foodcube-configurator-embed .text-lg { font-size: 18px !important; }
-      .foodcube-configurator-embed .text-xl { font-size: 20px !important; }
-      .foodcube-configurator-embed .text-2xl { font-size: 24px !important; }
-      .foodcube-configurator-embed .text-3xl { font-size: 30px !important; }
-      .foodcube-configurator-embed .text-4xl { font-size: 36px !important; }
-      .foodcube-configurator-embed .text-5xl { font-size: 48px !important; }
-      .foodcube-configurator-embed .text-6xl { font-size: 60px !important; }
+      /* Override common Tailwind text classes with slightly smaller pixel values for the embed */
+      .foodcube-configurator-embed .text-xs { font-size: 11px !important; }
+      .foodcube-configurator-embed .text-sm { font-size: 13px !important; }
+      .foodcube-configurator-embed .text-base { font-size: 15px !important; }
+      .foodcube-configurator-embed .text-lg { font-size: 17px !important; }
+      .foodcube-configurator-embed .text-xl { font-size: 19px !important; }
+      .foodcube-configurator-embed .text-2xl { font-size: 22px !important; }
+      .foodcube-configurator-embed .text-3xl { font-size: 28px !important; }
+      .foodcube-configurator-embed .text-4xl { font-size: 32px !important; }
+      .foodcube-configurator-embed .text-5xl { font-size: 44px !important; }
+      .foodcube-configurator-embed .text-6xl { font-size: 56px !important; }
       
       /* Override button and input text sizes specifically within the embed */
-      .foodcube-configurator-embed button { font-size: 14px !important; }
-      .foodcube-configurator-embed input { font-size: 14px !important; }
-      .foodcube-configurator-embed label { font-size: 14px !important; }
-      .foodcube-configurator-embed select { font-size: 14px !important; }
-      .foodcube-configurator-embed textarea { font-size: 14px !important; }
+      .foodcube-configurator-embed button { font-size: 13px !important; }
+      .foodcube-configurator-embed input { font-size: 13px !important; }
+      .foodcube-configurator-embed label { font-size: 13px !important; }
+      .foodcube-configurator-embed select { font-size: 13px !important; }
+      .foodcube-configurator-embed textarea { font-size: 13px !important; }
       
       /* Override specific UI component text sizes */
-      .foodcube-configurator-embed .text-muted-foreground { font-size: 13px !important; }
-      .foodcube-configurator-embed h1 { font-size: 32px !important; }
-      .foodcube-configurator-embed h2 { font-size: 24px !important; }
-      .foodcube-configurator-embed h3 { font-size: 20px !important; }
-      .foodcube-configurator-embed h4 { font-size: 18px !important; }
-      .foodcube-configurator-embed h5 { font-size: 16px !important; }
-      .foodcube-configurator-embed h6 { font-size: 14px !important; }
-      .foodcube-configurator-embed p { font-size: 16px !important; }
+      .foodcube-configurator-embed .text-muted-foreground { font-size: 12px !important; }
+      .foodcube-configurator-embed h1 { font-size: 30px !important; }
+      .foodcube-configurator-embed h2 { font-size: 22px !important; }
+      .foodcube-configurator-embed h3 { font-size: 18px !important; }
+      .foodcube-configurator-embed h4 { font-size: 17px !important; }
+      .foodcube-configurator-embed h5 { font-size: 15px !important; }
+      .foodcube-configurator-embed h6 { font-size: 13px !important; }
+      .foodcube-configurator-embed p { font-size: 15px !important; }
       .foodcube-configurator-embed span { font-size: inherit !important; }
       
       /* Ensure tooltips and dropdowns have proper sizing */
-      .foodcube-configurator-embed [data-testid*="tooltip"] { font-size: 14px !important; }
-      .foodcube-configurator-embed [role="tooltip"] { font-size: 14px !important; }
-      .foodcube-configurator-embed [role="menu"] { font-size: 14px !important; }
-      .foodcube-configurator-embed [role="menuitem"] { font-size: 14px !important; }
+      .foodcube-configurator-embed [data-testid*="tooltip"] { font-size: 13px !important; }
+      .foodcube-configurator-embed [role="tooltip"] { font-size: 13px !important; }
+      .foodcube-configurator-embed [role="menu"] { font-size: 13px !important; }
+      .foodcube-configurator-embed [role="menuitem"] { font-size: 13px !important; }
     `;
     
     document.head.appendChild(fontSizeOverrideStyle);
@@ -215,11 +215,11 @@ document.addEventListener("DOMContentLoaded", () => {
     // Get variant data
     let variantDataRaw: any = externalVariants || {};
     let variantData: any = {};
-    const parseAndNormalize = (raw: any, source: string) => {
-      try {
-        const { normalizedVariants, format } = normalizeProductData(raw);
-        variantData = normalizedVariants;
-        console.log(`Parsed variant data from ${source}:`, { format, normalizedVariants });
+  const parseAndNormalize = (raw: any, source: string) => {
+    try {
+      const { normalizedVariants, format } = normalizeProductData(raw);
+      variantData = normalizedVariants;
+      console.log(`Parsed variant data from ${source}:`, { format, normalizedVariants });
         if (format === 'unknown') {
           console.warn('Variant data format not recognized. Expecting legacy object or Shopify array.');
         }
@@ -233,7 +233,8 @@ document.addEventListener("DOMContentLoaded", () => {
       parseAndNormalize(variantDataRaw, 'caller');
     } else {
       try {
-        const jsonScript = calculator?.querySelector("script[type=\"application/json\"]");
+        const jsonScript = calculator?.querySelector("script[type=\"application/json\"]") || 
+                          document.getElementById("foodcube-customizer-product-data");
         console.log('Found JSON script:', jsonScript?.textContent);
         if (jsonScript?.textContent) {
           const rawText = jsonScript.textContent;
@@ -267,6 +268,12 @@ document.addEventListener("DOMContentLoaded", () => {
         window.parent?.postMessage({ type: 'configurator-warning', message }, '*');
       } catch (err) {
         console.warn('Failed to post warning message to parent', err);
+      }
+    } else {
+      try {
+        window.parent?.postMessage({ type: 'configurator-variants-ready', payload: { keys: Object.keys(variantData) } }, '*');
+      } catch (err) {
+        console.warn('Failed to post variants-ready message to parent', err);
       }
     }
 

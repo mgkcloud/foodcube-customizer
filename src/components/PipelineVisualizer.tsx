@@ -118,6 +118,10 @@ export const PipelineVisualizer: React.FC<PipelineVisualizerProps> = ({
     return getVisualConnections(grid, row, col, cell);
   }, [gridKey, row, col, cell]);
 
+  // Prefer the actual stored connections for physical orientation; fall back to visual mapping
+  const doglegEntry = cell.connections?.entry || visualEntry;
+  const doglegExit = cell.connections?.exit || visualExit;
+
   const hasNeighborInExitDirection = useMemo(() => {
     if (!visualExit) return false;
     return hasAdjacentCube(grid, row, col, visualExit);
@@ -225,8 +229,16 @@ export const PipelineVisualizer: React.FC<PipelineVisualizerProps> = ({
     );
   }, [grid, row, col, cell, connectedCubes, visualEntry, visualExit, gridKey]);
 
-  const { subgrid } = pipeConfig;
+  const { subgrid, verticalLinePosition } = pipeConfig;
   const connectorLabel = formatConnectorLabel(visualEntry, visualExit);
+
+  // Align connector pills to the active flow leg (left/right column or bottom row)
+  const connectorOffsets = useMemo(() => {
+    const horizontal = verticalLinePosition === 'west' ? '34%' : verticalLinePosition === 'east' ? '66%' : '50%';
+    const hasHorizontalFlow = visualEntry === 'E' || visualEntry === 'W' || visualExit === 'E' || visualExit === 'W';
+    const vertical = hasHorizontalFlow ? '66%' : '50%'; // horizontal pipes use the lower row in the subgrid
+    return { horizontal, vertical };
+  }, [verticalLinePosition, visualEntry, visualExit]);
 
   // Log the subgrid state for debugging - moved to effect to prevent re-renders
   useEffect(() => {
@@ -324,8 +336,28 @@ export const PipelineVisualizer: React.FC<PipelineVisualizerProps> = ({
   }, [showDebug, isEndCube, row, col, pathPosition, connectedCubes.length, visualExit, shouldShowExitArrow]);
 
   return (
-    <div className={`pipe-container ${flowClasses.join(' ')}`}>
+    <div
+      className={`pipe-container ${flowClasses.join(' ')}`}
+      style={
+        {
+          '--connector-x': connectorOffsets.horizontal,
+          '--connector-y': connectorOffsets.vertical,
+        } as React.CSSProperties
+      }
+    >
       <PipeRenderer subgrid={subgrid} />
+
+      {/* Visualize corner dog-leg (entry -> bend -> exit) without affecting logic */}
+      {isCorner && doglegEntry && doglegExit && (
+        <div
+          className={[
+            'corner-dogleg',
+            `from-${doglegEntry.toLowerCase()}`,
+            `to-${doglegExit.toLowerCase()}`,
+          ].join(' ')}
+          aria-hidden="true"
+        />
+      )}
       
       {/* Entry connectors for corners only */}
       {shouldShowEntryArrow && (
@@ -342,7 +374,7 @@ export const PipelineVisualizer: React.FC<PipelineVisualizerProps> = ({
           aria-hidden="true"
         />
       )}
-      
+
       {/* Exit connectors for both straight and corner connectors */}
       {shouldShowExitArrow && (
         <div
@@ -379,17 +411,6 @@ export const PipelineVisualizer: React.FC<PipelineVisualizerProps> = ({
         </div>
       )}
       
-      {/* Debug flow labels */}
-      {showDebug && (
-        <div className="debug-labels">
-          <div className="debug-label cube-type">
-            {cubeType.toUpperCase()}
-          </div>
-          <div className="debug-label position">
-            [{row},{col}]
-          </div>
-        </div>
-      )}
     </div>
   );
 };
