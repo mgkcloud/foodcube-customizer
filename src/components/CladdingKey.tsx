@@ -320,11 +320,18 @@ export const CladdingKey: React.FC<CladdingKeyProps> = ({
 
     const hasRequirements =
         Object.values(requirements).some((val) => val > 0) || spacerCount > 0;
+    const hasFourPack = requirements.fourPackRegular > 0;
+    const hasTwoPack = requirements.twoPackRegular > 0;
+    const hasSidePanelSingles = requirements.sidePanels > 0;
+    const hasLeftPanelSingles = requirements.leftPanels > 0;
+    const hasRightPanelSingles = requirements.rightPanels > 0;
+    const hasStraightConnectors = requirements.straightCouplings > 0;
+    const hasCornerConnectors = requirements.cornerConnectors > 0;
 
     // Group all products (packages, panels, connectors) into a single list
     const allProducts = [
         // Packages first
-        ...(requirements.fourPackRegular > 0
+        ...(hasFourPack
             ? [
                   {
                       label: "Foundation Set (4-Pack)",
@@ -345,7 +352,7 @@ export const CladdingKey: React.FC<CladdingKeyProps> = ({
             : []),
 
         // Individual panels (only show if there are individual panels needed)
-        ...(requirements.sidePanels > 0
+        ...(hasSidePanelSingles
             ? [
                   {
                       label: "Side Panel",
@@ -355,7 +362,7 @@ export const CladdingKey: React.FC<CladdingKeyProps> = ({
                   },
               ]
             : []),
-        ...(requirements.leftPanels > 0
+        ...(hasLeftPanelSingles
             ? [
                   {
                       label: "Left Panel",
@@ -365,7 +372,7 @@ export const CladdingKey: React.FC<CladdingKeyProps> = ({
                   },
               ]
             : []),
-        ...(requirements.rightPanels > 0
+        ...(hasRightPanelSingles
             ? [
                   {
                       label: "Right Panel",
@@ -377,7 +384,7 @@ export const CladdingKey: React.FC<CladdingKeyProps> = ({
             : []),
 
         // Connectors
-        ...(requirements.straightCouplings > 0
+        ...(hasStraightConnectors
             ? [
                   {
                       label: "Straight Connector",
@@ -387,7 +394,7 @@ export const CladdingKey: React.FC<CladdingKeyProps> = ({
                   },
               ]
             : []),
-        ...(requirements.cornerConnectors > 0
+        ...(hasCornerConnectors
             ? [
                   {
                       label: "Corner Connector",
@@ -416,7 +423,7 @@ export const CladdingKey: React.FC<CladdingKeyProps> = ({
 
     return (
         <div
-            className="bg-white p-3 sm:p-4 md:p-5 rounded-2xl shadow-md border border-gray-50 cladding-key-container transition-all duration-300"
+            className="bg-white p-3 sm:p-4 md:p-5 rounded-2xl shadow-md border border-gray-50 cladding-key-container transition-all duration-300 !mt-0"
             data-testid="cladding-key"
         >
             {/* Header with title */}
@@ -440,21 +447,13 @@ export const CladdingKey: React.FC<CladdingKeyProps> = ({
                         </svg>
                     </div>
                     <h3
-                        className="text-xl sm:text-2xl font-semibold text-gray-900 tracking-tight"
+                        className="text-md sm:text-2xl font-semibold text-gray-900 tracking-tight"
                         data-testid="products-heading"
                     >
                         Your Garden Materials
                     </h3>
                     {/* Smaller subtitle with Montserrat font and specified color */}
-                    <p
-                        className="text-sm font-medium mt-1"
-                        style={{
-                            fontFamily: "Montserrat, sans-serif",
-                            color: "#374151 !important",
-                        }}
-                    >
-                        Create your perfect garden configuration
-                    </p>
+
                     <span className="text-xs font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full">
                         Height: {heightOption}
                     </span>
@@ -485,7 +484,7 @@ export const CladdingKey: React.FC<CladdingKeyProps> = ({
                         </svg>
                     </button>
                     <div
-                        className="hidden group-hover:block absolute right-0 top-full mt-1 bg-gray-800 text-white text-sm sm:text-md p-2 rounded-md z-10 w-[220px] sm:w-[250px] shadow-lg"
+                        className="hidden group-hover:block absolute right-0 top-full bg-gray-800 text-white text-sm sm:text-md p-2 rounded-md z-10 w-[220px] sm:w-[250px] shadow-lg"
                         data-testid="total-panels-tooltip"
                     >
                         <p className="mb-1 font-semibold !text-white">
@@ -517,32 +516,87 @@ export const CladdingKey: React.FC<CladdingKeyProps> = ({
 
             {/* Improved product list with clear categorization - optimized for mobile */}
             <div
-                className="w-fit space-y-2 sm:space-y-3 bg-gray-50/70 rounded-lg p-1.5 sm:p-2.5"
+                className="w-full flex flex-wrap items-stretch gap-2 sm:gap-3 bg-gray-50/70 rounded-lg p-1.5 sm:p-2.5"
                 data-testid="all-products-container"
             >
                 {allProducts.length > 0 ? (
                     <>
                         {/* Panel Packs Section - more compact */}
-                        {(requirements.fourPackRegular > 0 ||
-                            requirements.twoPackRegular > 0) && (
-                            <div className="space-y-1 sm:space-y-2">
-                                {/* 4-Pack with color indicators - more compact */}
-                                {requirements.fourPackRegular > 0 && (
-                                    <div className="bg-white rounded-md p-1.5 sm:p-2.5 shadow-sm">
-                                        <div className="flex items-center justify-between mb-0.5 sm:mb-1">
+                        {(hasFourPack || hasTwoPack) && (
+                            <div className="w-[calc(50%-0.25rem)] sm:w-full h-full flex flex-col space-y-1 sm:space-y-2">
+                                <div className="grid grid-cols-2 gap-2 sm:gap-2 auto-rows-fr items-stretch h-full">
+                                    {/* 4-Pack with color indicators - more compact */}
+                                    {hasFourPack && (
+                                        <div
+                                            className={`bg-white rounded-md p-1.5 sm:p-2.5 shadow-sm h-full flex flex-col justify-between gap-1 sm:gap-1.5 ${
+                                                hasTwoPack
+                                                    ? ""
+                                                    : "col-span-2 sm:col-span-1"
+                                            }`}
+                                        >
                                             <span className="text-sm sm:text-md font-semibold text-gray-800">
                                                 4-Pack
                                             </span>
-                                            <span className="text-sm sm:text-md font-semibold px-2 py-0.5 bg-blue-50 rounded-full text-blue-700 min-w-[2.5rem] sm:min-w-[3rem] text-center">
+                                            <div className="flex flex-wrap gap-1 sm:gap-2 items-center">
+                                                <div className="flex flex-wrap gap-1.5 sm:gap-2">
+                                                    <div className="flex items-center gap-1">
+                                                        <div
+                                                            className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-sm"
+                                                            style={{
+                                                                backgroundColor:
+                                                                    PANEL_COLORS.side,
+                                                            }}
+                                                        ></div>
+                                                        <span className="text-sm sm:text-md">
+                                                            2 side
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex items-center gap-1">
+                                                        <div
+                                                            className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-sm"
+                                                            style={{
+                                                                backgroundColor:
+                                                                    PANEL_COLORS.left,
+                                                            }}
+                                                        ></div>
+                                                        <span className="text-sm sm:text-md">
+                                                            1 left
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex items-center gap-1">
+                                                        <div
+                                                            className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-sm"
+                                                            style={{
+                                                                backgroundColor:
+                                                                    PANEL_COLORS.right,
+                                                            }}
+                                                        ></div>
+                                                        <span className="text-sm sm:text-md">
+                                                            1 right
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <span className="text-sm sm:text-md font-semibold px-2 py-0.5 bg-blue-50 rounded-full text-blue-700 min-w-[2.5rem] sm:min-w-[3rem] text-center w-full sm:w-auto sm:self-start">
                                                 {requirements.fourPackRegular}x
                                             </span>
                                         </div>
-                                        <div className="flex flex-wrap gap-1 sm:gap-2 items-center">
-                                            <span className="text-sm sm:text-md text-gray-500">
-                                                Contains:
+                                    )}
+
+                                    {/* 2-Pack with color indicators - more compact */}
+                                    {hasTwoPack && (
+                                        <div
+                                            className={`bg-white rounded-md p-1.5 sm:p-2.5 shadow-sm h-full flex flex-col justify-between gap-1 sm:gap-1.5 ${
+                                                hasFourPack
+                                                    ? ""
+                                                    : "col-span-2 sm:col-span-1"
+                                            }`}
+                                        >
+                                            <span className="text-sm sm:text-md font-semibold text-gray-800">
+                                                2-Pack
                                             </span>
-                                            <div className="flex flex-wrap gap-1.5 sm:gap-2">
-                                                <div className="flex items-center gap-1">
+                                            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-1 sm:gap-2">
+                                                <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
                                                     <div
                                                         className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-sm"
                                                         style={{
@@ -550,83 +604,31 @@ export const CladdingKey: React.FC<CladdingKeyProps> = ({
                                                                 PANEL_COLORS.side,
                                                         }}
                                                     ></div>
-                                                    <span className="text-sm sm:text-md">
+                                                    <span className="text-sm sm:text-sm">
                                                         2 side
                                                     </span>
                                                 </div>
-                                                <div className="flex items-center gap-1">
-                                                    <div
-                                                        className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-sm"
-                                                        style={{
-                                                            backgroundColor:
-                                                                PANEL_COLORS.left,
-                                                        }}
-                                                    ></div>
-                                                    <span className="text-sm sm:text-md">
-                                                        1 left
-                                                    </span>
-                                                </div>
-                                                <div className="flex items-center gap-1">
-                                                    <div
-                                                        className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-sm"
-                                                        style={{
-                                                            backgroundColor:
-                                                                PANEL_COLORS.right,
-                                                        }}
-                                                    ></div>
-                                                    <span className="text-sm sm:text-md">
-                                                        1 right
-                                                    </span>
-                                                </div>
                                             </div>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* 2-Pack with color indicators - more compact */}
-                                {requirements.twoPackRegular > 0 && (
-                                    <div className="bg-white rounded-md p-1.5 sm:p-2.5 shadow-sm">
-                                        <div className="flex items-center justify-between mb-0.5 sm:mb-1">
-                                            <span className="text-sm sm:text-md font-semibold text-gray-800">
-                                                2-Pack
-                                            </span>
-                                            <span className="text-sm sm:text-md font-semibold px-2 py-0.5 bg-blue-50 rounded-full text-blue-700 min-w-[2.5rem] sm:min-w-[3rem] text-center">
+                                            <span className="text-sm sm:text-md font-semibold px-2 py-0.5 bg-blue-50 rounded-full text-blue-700 min-w-[2.5rem] sm:min-w-[3rem] text-center w-full sm:w-auto sm:self-start">
                                                 {requirements.twoPackRegular}x
                                             </span>
                                         </div>
-                                        <div className="flex items-center gap-1 sm:gap-2">
-                                            <span className="text-sm sm:text-sm text-gray-500">
-                                                Contains:
-                                            </span>
-                                            <div className="flex items-center gap-1 sm:gap-2">
-                                                <div
-                                                    className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-sm"
-                                                    style={{
-                                                        backgroundColor:
-                                                            PANEL_COLORS.side,
-                                                    }}
-                                                ></div>
-                                                <span className="text-sm sm:text-sm">
-                                                    2 side panels
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
+                                    )}
+                                </div>
                             </div>
                         )}
 
                         {/* Additional Individual Panels Section - more compact */}
-                        {(requirements.sidePanels > 0 ||
-                            requirements.leftPanels > 0 ||
-                            requirements.rightPanels > 0) && (
-                            <div>
+                        {(hasSidePanelSingles ||
+                            hasLeftPanelSingles ||
+                            hasRightPanelSingles) && (
+                            <div className="w-[calc(50%-0.25rem)] sm:w-full h-full flex flex-col space-y-1 sm:space-y-2">
                                 <div className="text-sm font-medium text-gray-500 px-1 mb-0.5">
                                     Additional Panels:
                                 </div>
-                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-1">
-                                    {requirements.sidePanels > 0 && (
-                                        <div className="bg-white rounded-md p-1.5 shadow-sm flex items-center">
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 auto-rows-fr items-stretch flex-1">
+                                    {hasSidePanelSingles && (
+                                        <div className="bg-white rounded-md p-1.5 shadow-sm flex flex-col sm:flex-row items-start sm:items-center gap-1.5 sm:gap-2 h-full justify-between">
                                             <div className="flex items-center gap-1.5 flex-1">
                                                 <div
                                                     className="w-2.5 h-2.5 rounded-sm"
@@ -645,13 +647,13 @@ export const CladdingKey: React.FC<CladdingKeyProps> = ({
                                                     </span>
                                                 </div>
                                             </div>
-                                            <span className="text-sm font-semibold px-2 py-0.5 bg-blue-50 rounded-full text-blue-700 min-w-[2rem] text-center">
+                                            <span className="text-sm font-semibold px-2 py-0.5 bg-blue-50 rounded-full text-blue-700 min-w-[2rem] text-center w-full sm:w-auto sm:ml-auto">
                                                 {requirements.sidePanels}x
                                             </span>
                                         </div>
                                     )}
-                                    {requirements.leftPanels > 0 && (
-                                        <div className="bg-white rounded-md p-1.5 shadow-sm flex items-center">
+                                    {hasLeftPanelSingles && (
+                                        <div className="bg-white rounded-md p-1.5 shadow-sm flex flex-col sm:flex-row items-start sm:items-center gap-1.5 sm:gap-2 h-full justify-between">
                                             <div className="flex items-center gap-1.5 flex-1">
                                                 <div
                                                     className="w-2.5 h-2.5 rounded-sm"
@@ -670,13 +672,13 @@ export const CladdingKey: React.FC<CladdingKeyProps> = ({
                                                     </span>
                                                 </div>
                                             </div>
-                                            <span className="text-sm font-semibold px-2 py-0.5 bg-blue-50 rounded-full text-blue-700 min-w-[2rem] text-center">
+                                            <span className="text-sm font-semibold px-2 py-0.5 bg-blue-50 rounded-full text-blue-700 min-w-[2rem] text-center w-full sm:w-auto sm:ml-auto">
                                                 {requirements.leftPanels}x
                                             </span>
                                         </div>
                                     )}
-                                    {requirements.rightPanels > 0 && (
-                                        <div className="bg-white rounded-md p-1.5 shadow-sm flex items-center">
+                                    {hasRightPanelSingles && (
+                                        <div className="bg-white rounded-md p-1.5 shadow-sm flex flex-col sm:flex-row items-start sm:items-center gap-1.5 sm:gap-2 h-full justify-between">
                                             <div className="flex items-center gap-1.5 flex-1">
                                                 <div
                                                     className="w-2.5 h-2.5 rounded-sm"
@@ -695,7 +697,7 @@ export const CladdingKey: React.FC<CladdingKeyProps> = ({
                                                     </span>
                                                 </div>
                                             </div>
-                                            <span className="text-sm font-semibold px-2 py-0.5 bg-blue-50 rounded-full text-blue-700 min-w-[2rem] text-center">
+                                            <span className="text-sm font-semibold px-2 py-0.5 bg-blue-50 rounded-full text-blue-700 min-w-[2rem] text-center w-full sm:w-auto sm:ml-auto">
                                                 {requirements.rightPanels}x
                                             </span>
                                         </div>
@@ -705,16 +707,18 @@ export const CladdingKey: React.FC<CladdingKeyProps> = ({
                         )}
 
                         {/* Connectors Section - more compact, no colors */}
-                        {(requirements.straightCouplings > 0 ||
-                            requirements.cornerConnectors > 0) && (
-                            <div>
-                                <div className="text-sm font-medium text-gray-500 px-1 mb-0.5">
-                                    Connectors:
-                                </div>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1">
-                                    {requirements.straightCouplings > 0 && (
-                                        <div className="bg-white rounded-md p-1.5 shadow-sm flex items-center justify-between">
-                                            <div className="flex items-center gap-2">
+                        {(hasStraightConnectors || hasCornerConnectors) && (
+                            <div className="w-[calc(50%-0.25rem)] sm:w-full h-full flex flex-col space-y-1 sm:space-y-2">
+                                <div className="grid grid-cols-2 sm:grid-cols-2 gap-2 auto-rows-fr items-stretch flex-1">
+                                    {hasStraightConnectors && (
+                                        <div
+                                            className={`bg-white rounded-md p-1.5 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-1.5 sm:gap-2 h-full ${
+                                                hasCornerConnectors
+                                                    ? ""
+                                                    : "col-span-2 sm:col-span-1"
+                                            }`}
+                                        >
+                                            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-1.5 sm:gap-2">
                                                 <div
                                                     className="connector-preview straight axis-horizontal"
                                                     aria-hidden="true"
@@ -724,19 +728,25 @@ export const CladdingKey: React.FC<CladdingKeyProps> = ({
                                                         Straight Connector
                                                     </span>
                                                     <span className="text-xs text-gray-500">
-                                                        Coupling (top view)
+                                                        Coupling
                                                     </span>
                                                 </div>
                                             </div>
-                                            <span className="text-sm font-semibold px-2 py-0.5 bg-blue-50 rounded-full text-blue-700 min-w-[2rem] text-center">
+                                            <span className="text-sm font-semibold px-2 py-0.5 bg-blue-50 rounded-full text-blue-700 min-w-[2rem] text-center w-full sm:w-auto sm:ml-auto">
                                                 {requirements.straightCouplings}
                                                 x
                                             </span>
                                         </div>
                                     )}
-                                    {requirements.cornerConnectors > 0 && (
-                                        <div className="bg-white rounded-md p-1.5 shadow-sm flex items-center justify-between">
-                                            <div className="flex items-center gap-2">
+                                    {hasCornerConnectors && (
+                                        <div
+                                            className={`bg-white rounded-md p-1.5 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-1.5 sm:gap-2 h-full ${
+                                                hasStraightConnectors
+                                                    ? ""
+                                                    : "col-span-2 sm:col-span-1"
+                                            }`}
+                                        >
+                                            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-1.5 sm:gap-2">
                                                 <div
                                                     className="connector-preview corner axis-horizontal"
                                                     aria-hidden="true"
@@ -746,11 +756,11 @@ export const CladdingKey: React.FC<CladdingKeyProps> = ({
                                                         Corner Connector
                                                     </span>
                                                     <span className="text-xs text-gray-500">
-                                                        Elbow (top view)
+                                                        Elbow
                                                     </span>
                                                 </div>
                                             </div>
-                                            <span className="text-sm font-semibold px-2 py-0.5 bg-blue-50 rounded-full text-blue-700 min-w-[2rem] text-center">
+                                            <span className="text-sm font-semibold px-2 py-0.5 bg-blue-50 rounded-full text-blue-700 min-w-[2rem] text-center w-full sm:w-auto sm:ml-auto">
                                                 {requirements.cornerConnectors}x
                                             </span>
                                         </div>
@@ -761,12 +771,9 @@ export const CladdingKey: React.FC<CladdingKeyProps> = ({
 
                         {/* Spacers for 700mm height */}
                         {spacerCount > 0 && (
-                            <div>
-                                <div className="text-sm font-medium text-gray-500 px-1 mb-0.5">
-                                    Height Accessories:
-                                </div>
+                            <div className="w-[calc(50%-0.25rem)] sm:w-full h-full flex flex-col space-y-1 sm:space-y-2">
                                 <div
-                                    className="bg-white rounded-md p-1.5 shadow-sm flex items-center justify-between"
+                                    className="bg-white rounded-md p-1.5 shadow-sm flex flex-col sm:flex-row items-start sm:items-center gap-1.5 sm:gap-2 justify-between h-full"
                                     data-testid="spacer-item"
                                 >
                                     <div className="flex items-center gap-2">
@@ -775,11 +782,12 @@ export const CladdingKey: React.FC<CladdingKeyProps> = ({
                                                 Height Spacer Set
                                             </span>
                                             <span className="text-xs text-gray-500">
-                                                Required for {heightOption} (one per cube)
+                                                Required for {heightOption} (one
+                                                per cube)
                                             </span>
                                         </div>
                                     </div>
-                                    <span className="text-sm font-semibold px-2 py-0.5 bg-blue-50 rounded-full text-blue-700 min-w-[2rem] text-center">
+                                    <span className="text-sm font-semibold px-2 py-0.5 bg-blue-50 rounded-full text-blue-700 min-w-[2rem] text-center w-full sm:w-auto sm:ml-auto">
                                         {spacerCount}x
                                     </span>
                                 </div>

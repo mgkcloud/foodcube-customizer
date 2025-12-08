@@ -287,6 +287,58 @@ export const FoodcubeConfigurator: React.FC<FoodcubeConfiguratorProps> = ({
         }
     }, [heightOption, hasInteracted]);
 
+    // Listen for tutorial-driven interaction mode changes (from OptimizedTutorialTooltip)
+    useEffect(() => {
+        const handleTutorialModeChange = (event: Event) => {
+            const detail = (event as CustomEvent<{ mode: InteractionMode }>)
+                .detail;
+            if (!detail?.mode) return;
+            setInteractionMode(detail.mode);
+        };
+
+        window.addEventListener(
+            "tutorial-interaction-mode",
+            handleTutorialModeChange as EventListener,
+        );
+        return () => {
+            window.removeEventListener(
+                "tutorial-interaction-mode",
+                handleTutorialModeChange as EventListener,
+            );
+        };
+    }, []);
+
+    // React to tutorial-driven bottom sheet toggles (e.g., "try another layout" step)
+    useEffect(() => {
+        const handleTutorialBottomSheet = (event: Event) => {
+            const detail = (event as CustomEvent<{ open?: boolean }>).detail;
+            if (!detail) return;
+
+            if (detail.open) {
+                if (typeof window === "undefined") return;
+                const isMobile =
+                    typeof window !== "undefined" &&
+                    window.matchMedia("(max-width: 1023px)").matches;
+                if (isMobile) {
+                    setIsBottomSheetOpen(true);
+                }
+            } else {
+                setIsBottomSheetOpen(false);
+            }
+        };
+
+        window.addEventListener(
+            "tutorial-bottomsheet",
+            handleTutorialBottomSheet as EventListener,
+        );
+        return () => {
+            window.removeEventListener(
+                "tutorial-bottomsheet",
+                handleTutorialBottomSheet as EventListener,
+            );
+        };
+    }, []);
+
     // Handle toggling a cell in the grid with improved debounce protection
     const handleToggleCell = useCallback(
         (rowIndex: number, colIndex: number) => {
@@ -628,7 +680,7 @@ export const FoodcubeConfigurator: React.FC<FoodcubeConfiguratorProps> = ({
 
     return (
         <div className="foodcube-zoom-frame">
-            <div className="foodcube-zoom-scale">
+            <div className="foodcube-zoom-scale w-[100vw] h-[100vh]">
                 <div
                     className="relative flex h-full w-full max-w-[1440px] mx-auto"
                     data-testid="foodcube-configurator"
@@ -678,7 +730,8 @@ export const FoodcubeConfigurator: React.FC<FoodcubeConfiguratorProps> = ({
                                     <h2
                                         className="text-xl font-bold tracking-tight"
                                         style={{
-                                            fontFamily: "Montserrat, sans-serif",
+                                            fontFamily:
+                                                "Montserrat, sans-serif",
                                             color: "#374151 !important",
                                         }}
                                     >
@@ -703,8 +756,8 @@ export const FoodcubeConfigurator: React.FC<FoodcubeConfiguratorProps> = ({
                                 />
                             )}
                         </div>
-                        <div className="flex-1 min-h-0 px-4 pb-4 sm:px-6 sm:pb-6">
-                            <div className="h-full min-h-0 overflow-y-auto lg:overflow-hidden">
+                        <div className="flex-1 min-h-0 pb-4 sm:px-6 sm:pb-6">
+                            <div className="h-full min-h-0 overflow-y-auto lg:overflow-hidden p-2">
                                 <div className="grid h-full min-h-0 grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-12">
                                     {/* Grid takes up more space */}
                                     <div
@@ -753,11 +806,7 @@ export const FoodcubeConfigurator: React.FC<FoodcubeConfiguratorProps> = ({
                                                                 }
                                                             />
                                                         </div>
-                                                        <div className="flex justify-between items-center">
-                                                            <p className="text-xs text-gray-500">
-                                                                First time? Try the
-                                                                L-Shape!
-                                                            </p>
+                                                        <div className="flex justify-center items-center">
                                                             <button
                                                                 className="text-xs text-blue-600 hover:text-blue-800 font-medium flex items-center"
                                                                 onClick={() =>
@@ -801,7 +850,9 @@ export const FoodcubeConfigurator: React.FC<FoodcubeConfiguratorProps> = ({
                                                 <div className="flex flex-wrap items-center justify-around gap-3 py-3">
                                                     <div className="flex items-center gap-3">
                                                         <ModeToggle
-                                                            mode={interactionMode}
+                                                            mode={
+                                                                interactionMode
+                                                            }
                                                             onChange={
                                                                 setInteractionMode
                                                             }
@@ -849,66 +900,87 @@ export const FoodcubeConfigurator: React.FC<FoodcubeConfiguratorProps> = ({
                                                 </div>
                                             )}
 
-                                            <div className="h-full overflow-auto p-3 sm:p-4">
-                                                <Grid
-                                                    grid={grid}
-                                                    onToggleCell={(row, col) => {
-                                                        console.log(
-                                                            `Toggling cell at [${row}, ${col}]`,
-                                                        );
-                                                        handleToggleCell(row, col);
-                                                    }}
-                                                    onToggleCladding={(
-                                                        row,
-                                                        col,
-                                                        edge,
-                                                    ) => {
-                                                        console.log(
-                                                            `Toggling cladding at [${row}, ${col}], edge: ${edge}`,
-                                                        );
-                                                        updateLastInteraction(); // Mark cladding toggle as an interaction
-                                                        toggleCladding(
+                                            {hasInteracted ? (
+                                                <div className="h-full overflow-auto p-3 sm:p-4">
+                                                    <Grid
+                                                        grid={grid}
+                                                        onToggleCell={(
+                                                            row,
+                                                            col,
+                                                        ) => {
+                                                            console.log(
+                                                                `Toggling cell at [${row}, ${col}]`,
+                                                            );
+                                                            handleToggleCell(
+                                                                row,
+                                                                col,
+                                                            );
+                                                        }}
+                                                        onToggleCladding={(
                                                             row,
                                                             col,
                                                             edge,
-                                                        );
-                                                    }}
-                                                    setHasInteracted={
-                                                        setHasInteracted
-                                                    }
-                                                    debug={debugMode}
-                                                    interactionMode={
-                                                        interactionMode
-                                                    }
+                                                        ) => {
+                                                            console.log(
+                                                                `Toggling cladding at [${row}, ${col}], edge: ${edge}`,
+                                                            );
+                                                            updateLastInteraction(); // Mark cladding toggle as an interaction
+                                                            toggleCladding(
+                                                                row,
+                                                                col,
+                                                                edge,
+                                                            );
+                                                        }}
+                                                        setHasInteracted={
+                                                            setHasInteracted
+                                                        }
+                                                        debug={debugMode}
+                                                        interactionMode={
+                                                            interactionMode
+                                                        }
+                                                    />
+                                                </div>
+                                            ) : (
+                                                // Reserve space but keep the grid unmounted until a preset/manual start
+                                                <div
+                                                    className="h-full overflow-auto p-3 sm:p-4"
+                                                    aria-hidden="true"
                                                 />
-                                            </div>
+                                            )}
                                         </div>
                                     </div>
 
-                                    {/* Requirements panel */}
-                                    <div
-                                        className="lg:col-span-6 flex flex-col min-h-0"
-                                        data-testid="requirements-panel"
-                                    >
-                                        <div className="hidden md:flex lg:flex-1 lg:flex-col lg:space-y-3 lg:overflow-y-auto lg:pr-1">
-                                            <div className="transition-all duration-300 ease-in-out">
-                                                <CladdingKey
-                                                    requirements={requirements}
-                                                    showDebug={debugMode}
-                                                    heightOption={heightOption}
-                                                    spacerCount={
-                                                        heightOption === "700mm"
-                                                            ? grid
-                                                                  .flat()
-                                                                  .filter(
-                                                                      (cell) =>
-                                                                          cell.hasCube,
-                                                                  ).length
-                                                            : 0
-                                                    }
-                                                />
-                                            </div>
-                                            {hasInteracted && (
+                                    {/* Requirements panel - only render after preset/manual interaction */}
+                                    {hasInteracted && (
+                                        <div
+                                            className="lg:col-span-6 flex flex-col min-h-0"
+                                            data-testid="requirements-panel"
+                                        >
+                                            <div className="hidden md:flex lg:flex-1 lg:flex-col lg:space-y-3 lg:overflow-y-auto lg:pr-1">
+                                                <div className="transition-all duration-300 ease-in-out p-2">
+                                                    <CladdingKey
+                                                        requirements={
+                                                            requirements
+                                                        }
+                                                        showDebug={debugMode}
+                                                        heightOption={
+                                                            heightOption
+                                                        }
+                                                        spacerCount={
+                                                            heightOption ===
+                                                            "700mm"
+                                                                ? grid
+                                                                      .flat()
+                                                                      .filter(
+                                                                          (
+                                                                              cell,
+                                                                          ) =>
+                                                                              cell.hasCube,
+                                                                      ).length
+                                                                : 0
+                                                        }
+                                                    />
+                                                </div>
                                                 <div
                                                     className="bg-white p-3 sm:p-4 rounded-xl shadow-sm border border-gray-100"
                                                     data-testid="side-presets-desktop"
@@ -953,7 +1025,8 @@ export const FoodcubeConfigurator: React.FC<FoodcubeConfiguratorProps> = ({
                                                                     ></line>
                                                                 </svg>
                                                             </span>
-                                                            Preset Configurations
+                                                            Preset
+                                                            Configurations
                                                         </h3>
                                                     </div>
                                                     <div className="bg-gray-50/70 rounded-lg p-1.5 sm:p-2.5 flex flex-col gap-1.5 sm:gap-2.5">
@@ -964,11 +1037,11 @@ export const FoodcubeConfigurator: React.FC<FoodcubeConfiguratorProps> = ({
                                                         />
                                                     </div>
                                                 </div>
-                                            )}
-                                        </div>
+                                            </div>
 
-                                        {/* Mobile: Bottom Sheet (replaces inline requirements) */}
-                                    </div>
+                                            {/* Mobile: Bottom Sheet (replaces inline requirements) */}
+                                        </div>
+                                    )}
                                 </div>{" "}
                                 {/* end grid layout */}
                             </div>{" "}
@@ -978,7 +1051,9 @@ export const FoodcubeConfigurator: React.FC<FoodcubeConfiguratorProps> = ({
                         {/* Hidden element for testing that contains all requirements as data attributes */}
                         <div
                             data-testid="requirements-data"
-                            data-four-pack-regular={requirements.fourPackRegular}
+                            data-four-pack-regular={
+                                requirements.fourPackRegular
+                            }
                             data-four-pack-extra-tall={
                                 requirements.fourPackExtraTall
                             }
@@ -1066,7 +1141,9 @@ export const FoodcubeConfigurator: React.FC<FoodcubeConfiguratorProps> = ({
                                         </svg>
                                         Preset Layouts
                                     </h3>
-                                    <PresetConfigs onApply={handlePresetApply} />
+                                    <PresetConfigs
+                                        onApply={handlePresetApply}
+                                    />
                                 </div>
 
                                 {/* Requirements section */}
@@ -1078,8 +1155,9 @@ export const FoodcubeConfigurator: React.FC<FoodcubeConfiguratorProps> = ({
                                         heightOption === "700mm"
                                             ? grid
                                                   .flat()
-                                                  .filter((cell) => cell.hasCube)
-                                                  .length
+                                                  .filter(
+                                                      (cell) => cell.hasCube,
+                                                  ).length
                                             : 0
                                     }
                                 />

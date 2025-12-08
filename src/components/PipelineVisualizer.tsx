@@ -160,6 +160,84 @@ export const PipelineVisualizer: React.FC<PipelineVisualizerProps> = ({
   }, [connectedCubes, row, col, visualEntry, visualExit]);
 
   const { isCubeInPath, pathPosition, isStartCube, isEndCube, isCorner, cubeType } = pathInfo;
+
+  // Build a stable, ordered path following visual exits so we can alternate corner visuals in sequence
+  const pathOrder = useMemo(() => {
+    if (!connectedCubes.length) return { ordered: [] as [number, number][], infoMap: new Map<string, { entry: CompassDirection | null; exit: CompassDirection | null; isCorner: boolean }>() };
+
+    const key = (r: number, c: number) => `${r},${c}`;
+    const keySet = new Set(connectedCubes.map(([r, c]) => key(r, c)));
+
+    const infoMap = new Map<string, { entry: CompassDirection | null; exit: CompassDirection | null; isCorner: boolean }>();
+    connectedCubes.forEach(([r, c]) => {
+      const cellAt = grid[r][c];
+      const { visualEntry: e, visualExit: x } = getVisualConnections(grid, r, c, cellAt);
+      infoMap.set(key(r, c), { entry: e, exit: x, isCorner: isCornerConnection(e, x) });
+    });
+
+    const delta = (dir: CompassDirection | null): [number, number] => {
+      switch (dir) {
+        case 'N': return [-1, 0];
+        case 'S': return [1, 0];
+        case 'E': return [0, 1];
+        case 'W': return [0, -1];
+        default: return [0, 0];
+      }
+    };
+
+    // Find a start: a cube whose entry points out of the component/bounds
+    const findStart = () => {
+      for (const [r, c] of connectedCubes) {
+        const info = infoMap.get(key(r, c));
+        if (!info) continue;
+        const [dr, dc] = delta(info.entry);
+        const upstreamKey = key(r + dr, c + dc);
+        if (!keySet.has(upstreamKey)) {
+          return [r, c] as [number, number];
+        }
+      }
+      return connectedCubes[0];
+    };
+
+    const ordered: [number, number][] = [];
+    const visited = new Set<string>();
+    let current: [number, number] | null = findStart();
+
+    while (current) {
+      const k = key(current[0], current[1]);
+      if (visited.has(k)) break;
+      visited.add(k);
+      ordered.push(current);
+
+      const info = infoMap.get(k);
+      if (!info) break;
+      const [dr, dc] = delta(info.exit);
+      const nextKey = key(current[0] + dr, current[1] + dc);
+      if (!keySet.has(nextKey)) break;
+      current = [current[0] + dr, current[1] + dc];
+    }
+
+    return { ordered, infoMap };
+  }, [connectedCubes, grid, gridKey]);
+
+  // Corner/straight display override based purely on corner index in flow order.
+  const displayIsCorner = useMemo(() => {
+    if (!isCorner) return false;
+    const cornersInOrder = pathOrder.ordered.filter(([r, c]) => {
+      const info = pathOrder.infoMap.get(`${r},${c}`);
+      return info?.isCorner;
+    });
+
+    // For simple shapes (like the U-shape) where we only have a couple of corners,
+    // keep the visual type faithful to the actual flow. The alternating override
+    // was hiding the second corner and made the visual look like straight→corner
+    // instead of corner→straight on the bottom row.
+    if (cornersInOrder.length <= 2) return true;
+
+    const idx = cornersInOrder.findIndex(([r, c]) => r === row && c === col);
+    if (idx === -1) return isCorner;
+    return idx % 2 === 0; // 0th, 2nd, ... stay corner; 1st, 3rd, ... flip to straight
+  }, [isCorner, pathOrder, row, col]);
   
   // Enhanced logging for cube status - throttled to prevent log flooding
   useEffect(() => {
@@ -180,23 +258,16 @@ export const PipelineVisualizer: React.FC<PipelineVisualizerProps> = ({
           exit: cell.connections.exit,
           visualEntry,
           visualExit
+        },
+        connector: {
+          verticalLinePosition,
+          displayIsCorner,
+          offsets: connectorOffsets,
+          cornerSequenceIndex: pathOrder.ordered.findIndex(([r, c]) => r === row && c === col)
         }
       };
       
       debug.debug(`Cube [${row},${col}] in path`, cubeInfo);
-
-      // TEMP DEBUG for bottom-right corner
-      if (row === 2 && col === 2) {
-        console.log('🔍 DEBUG PipelineVisualizer [2,2]:', {
-          rawConnections: cell.connections,
-          visualEntry,
-          visualExit,
-          isCorner,
-          pathPosition,
-          isInPath: isCubeInPath,
-          turn: `${visualEntry}→${visualExit}`
-        });
-      }
 
       // Only log neighbors at trace level to reduce token usage
       if (isCubeInPath) {
@@ -247,7 +318,8 @@ export const PipelineVisualizer: React.FC<PipelineVisualizerProps> = ({
         entry: visualEntry,
         exit: visualExit,
         type: isCorner ? 'Corner' : 'Straight',
-        blockCount: subgrid.flat().filter(Boolean).length
+        blockCount: subgrid.flat().filter(Boolean).length,
+        connectorOffsets
       });
       
       // Only show full subgrid at trace level
@@ -255,7 +327,7 @@ export const PipelineVisualizer: React.FC<PipelineVisualizerProps> = ({
         grid: subgrid.map(row => row.map(cell => cell ? 'R' : '.'))
       });
     }
-  }, [showDebug, row, col, visualEntry, visualExit, subgrid, isCorner, gridKey]);
+  }, [showDebug, row, col, visualEntry, visualExit, subgrid, isCorner, gridKey, connectorOffsets, displayIsCorner, verticalLinePosition, pathOrder]);
 
   // Determine CSS classes based on flow direction and position
   const flowClasses = [];
@@ -273,7 +345,7 @@ export const PipelineVisualizer: React.FC<PipelineVisualizerProps> = ({
   flowClasses.push(`flow-${cubeType}`);
   
   // Add corner connector classes if applicable
-  if (isCorner) {
+  if (displayIsCorner) {
     flowClasses.push('connector-corner');
     
     // Add specific corner type
@@ -288,7 +360,7 @@ export const PipelineVisualizer: React.FC<PipelineVisualizerProps> = ({
   
   // For entry arrows: show only if NOT the start cube, and only for corners
   // This ensures corners get proper visualization
-  const shouldShowEntryArrow = Boolean(visualEntry) && isCorner && !isStartCube;
+  const shouldShowEntryArrow = Boolean(visualEntry) && displayIsCorner && !isStartCube;
   
   // For exit arrows: complete rewrite of logic to ensure end cube arrows are never shown
   // Use multiple checks to be extremely defensive
@@ -385,7 +457,7 @@ export const PipelineVisualizer: React.FC<PipelineVisualizerProps> = ({
             getAxisClass(visualExit),
             isCorner ? 'corner' : 'straight'
           ].filter(Boolean).join(' ')}
-          title={isCorner ? 
+          title={displayIsCorner ? 
             `Corner Connector${connectorLabel ? ` (${connectorLabel})` : ''}` : 
             `Straight Connector${connectorLabel ? ` (${connectorLabel})` : ''}`}
           role="presentation"
@@ -397,10 +469,10 @@ export const PipelineVisualizer: React.FC<PipelineVisualizerProps> = ({
       <div
           className={[
             'connector-visual',
-            isCorner ? 'corner' : 'straight',
-            !isCorner ? `straight-${getStraightOrientation(visualEntry, visualExit)}` : '',
+            displayIsCorner ? 'corner' : 'straight',
+            !displayIsCorner ? `straight-${getStraightOrientation(visualEntry, visualExit)}` : '',
           ].filter(Boolean).join(' ')}
-          title={isCorner ? 'Corner Connector' : 'Straight Coupling'}
+          title={displayIsCorner ? 'Corner Connector' : 'Straight Coupling'}
           aria-hidden="true"
         />
       

@@ -2,10 +2,10 @@ import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from
 import { useTutorial, TutorialTargetId } from '@/contexts/TutorialContext';
 import { tutorialManager } from '@/utils/tutorial';
 import { PositionResult, RecalculationTrigger } from '@/utils/tutorial/types';
-import { Button } from "@/components/ui/button";
-import { createPortal } from 'react-dom';
+import { toast } from "@/components/ui/use-toast";
 
 interface OptimizedTutorialTooltipProps {
+  stepId?: string;
   title: string;
   content: string;
   isVisible: boolean;
@@ -83,6 +83,7 @@ const computeArrowBorderWidth = (position: string) => {
  * that uses direct positioning and minimal recalculation.
  */
 export const OptimizedTutorialTooltip: React.FC<OptimizedTutorialTooltipProps> = ({
+  stepId,
   title,
   content,
   isVisible,
@@ -145,6 +146,91 @@ export const OptimizedTutorialTooltip: React.FC<OptimizedTutorialTooltipProps> =
   useEffect(() => {
     fallbackTargetsRef.current = fallbackTargetIds;
   }, [fallbackTargetIds, fallbackKey]);
+
+  // Notify host app about tutorial-specific mode changes (e.g., cladding step)
+  useEffect(() => {
+    if (!isVisible || !stepId) return;
+
+    const mode = stepId === 'toggle-cladding' ? 'cladding' : 'cube';
+    window.dispatchEvent(
+      new CustomEvent('tutorial-interaction-mode', {
+        detail: { mode }
+      })
+    );
+  }, [isVisible, stepId]);
+
+  // Signal bottom sheet toggle for the "try another layout" step
+  useEffect(() => {
+    if (!stepId) return;
+    const open = isVisible && stepId === 'try-another-preset';
+    window.dispatchEvent(
+      new CustomEvent('tutorial-bottomsheet', { detail: { open } })
+    );
+  }, [isVisible, stepId]);
+
+  // Render tutorial steps as toast panels instead of anchored tooltips
+  const lastToastRef = useRef<{ dismiss: () => void } | null>(null);
+  useEffect(() => {
+    if (!isVisible || !stepId) return;
+    // Dismiss previous tutorial toast to avoid stacking
+    lastToastRef.current?.dismiss?.();
+    const handlePrevClick = () => {
+      lastToastRef.current?.dismiss?.();
+      onPrev?.();
+    };
+    const handleNextClick = () => {
+      lastToastRef.current?.dismiss?.();
+      if (isInteractive) {
+        manuallyAdvanceStep();
+      } else {
+        onNext();
+      }
+    };
+    const handleSkipClick = () => {
+      lastToastRef.current?.dismiss?.();
+      onSkip?.();
+    };
+
+    lastToastRef.current = toast({
+      title,
+      description: (
+        <div className="space-y-3">
+          <p className="text-sm text-gray-800">{content}</p>
+          <div className="flex justify-between items-center gap-2">
+            {onPrev ? (
+              <button
+                onClick={handlePrevClick}
+                className="px-3 py-1.5 text-xs font-semibold rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100"
+              >
+                Back
+              </button>
+            ) : (
+              <span />
+            )}
+            <div className="flex gap-2">
+              {showSkipButton && onSkip && (
+                <button
+                  onClick={handleSkipClick}
+                  className="px-3 py-1.5 text-xs font-semibold rounded-md border border-gray-200 text-gray-500 hover:bg-gray-100"
+                >
+                  Skip
+                </button>
+              )}
+              {showNextButton && (
+                <button
+                  onClick={handleNextClick}
+                  className="px-4 py-1.5 text-xs font-semibold rounded-md bg-blue-600 text-white hover:bg-blue-700"
+                >
+                  {isLastStep ? "Finish" : isInteractive ? "Skip" : "Next"}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      ),
+      duration: 10000,
+    });
+  }, [isVisible, stepId, title, content, onPrev, onNext, onSkip, isInteractive, showNextButton, showSkipButton, isLastStep, manuallyAdvanceStep]);
   
   const handlePositionChange = useCallback((result: PositionResult) => {
     setResolvedPosition(result.position);
@@ -220,93 +306,8 @@ export const OptimizedTutorialTooltip: React.FC<OptimizedTutorialTooltipProps> =
     }
   };
   
-  // Don't render anything if not visible or container not ready
-  if (!isVisible || !tooltipContainer) return null;
-  
-  // The tooltip content is rendered using a portal
-  return createPortal(
-    <div
-      ref={tooltipRef}
-      className="fixed backdrop-blur-xl bg-white/90 rounded-2xl shadow-2xl border border-white/20 p-7 w-80 max-w-[90vw] pointer-events-auto transition-all duration-500 ease-out"
-      style={{
-        zIndex,
-        opacity: hasResolvedPosition ? 1 : 0,
-        transform: hasResolvedPosition ? 'scale(1) translateY(0)' : 'scale(0.95) translateY(-8px)',
-        boxShadow: '0 20px 60px -12px rgba(0, 0, 0, 0.12), 0 8px 24px -8px rgba(0, 0, 0, 0.08)',
-      }}
-      data-testid={`tutorial-tooltip-${targetId}`}
-      data-position={resolvedPosition}
-    >
-      {/* Subtle gradient overlay for depth */}
-      <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-white/40 via-transparent to-transparent pointer-events-none" />
-
-      <div className="relative flex flex-col space-y-5">
-        {/* Title section with icon */}
-        <div className="flex items-start space-x-3">
-          <div className="flex-shrink-0 w-9 h-9 rounded-full bg-gradient-to-br from-blue-500/10 to-indigo-500/10 flex items-center justify-center">
-            <svg
-              className="w-5 h-5 text-blue-600"
-              fill="none"
-              strokeWidth="2.5"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 001.5-.189m-1.5.189a6.01 6.01 0 01-1.5-.189m3.75 7.478a12.06 12.06 0 01-4.5 0m3.75 2.383a14.406 14.406 0 01-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 10-7.517 0c.85.493 1.509 1.333 1.509 2.316V18" />
-            </svg>
-          </div>
-          <h3 className="flex-1 font-semibold text-gray-900 text-lg leading-tight tracking-tight">
-            {title}
-          </h3>
-        </div>
-
-        {/* Content with better typography */}
-        <p className="text-base leading-relaxed text-gray-700 font-normal">
-          {content}
-        </p>
-
-        {/* Action buttons with refined styling */}
-        <div className="flex justify-between items-center pt-3">
-          {showBackButton && onPrev ? (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onPrev}
-              className="text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100/50 transition-colors px-4 py-2"
-            >
-              Back
-            </Button>
-          ) : (
-            <div></div>
-          )}
-
-          <div className="flex gap-2">
-            {showNextButton && (
-              <Button
-                size="sm"
-                onClick={handleNext}
-                className="text-sm font-medium bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-sm hover:shadow-md transition-all duration-200 px-5 py-2"
-              >
-                {isLastStep ? 'Finish' : (isInteractive ? 'Skip' : 'Next')}
-              </Button>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Refined arrow with glass effect */}
-      <div
-        className="absolute w-3 h-3 backdrop-blur-xl bg-white/90 transform rotate-45 border-white/20"
-        style={{
-          ...arrowPositionStyles,
-          borderWidth: arrowBorderWidth,
-          zIndex: 1,
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
-        }}
-        data-testid={`tutorial-tooltip-arrow-${targetId}`}
-      ></div>
-    </div>,
-    tooltipContainer
-  );
+  // Don't render any anchored tooltip UI; the tutorial messaging is delivered via toast
+  return null;
 };
 
 export default OptimizedTutorialTooltip;

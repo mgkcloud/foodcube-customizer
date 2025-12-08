@@ -79,9 +79,7 @@ const useGridState = () => {
   });
 
   const logGridState = (grid: GridCell[][], requirements: Requirements) => {
-    // Clear console before logging new state
-    console.clear();
-    
+    // Do not clear the console here to preserve connector/debug logs during presets
     const gridState = grid.map(row => row.map(cell => {
       return {
         hasCube: cell.hasCube,
@@ -123,9 +121,6 @@ const useGridState = () => {
   // Calculate panel requirements based on the current grid
   const calculateRequirements = useCallback((grid: GridCell[][]) => {
     try {
-      // Clear console before calculating new requirements
-      console.clear();
-      
       // Clear caches to ensure fresh calculation
       clearConnectedCubesCache();
       
@@ -176,8 +171,6 @@ const useGridState = () => {
   // Toggle a cell's cube state
   const toggleCell = useCallback((row: number, col: number) => {
     // Don't clear the console - needed for tutorial debugging
-    // console.clear();
-    
     // Log the action for debugging the tutorial
     console.log(`Grid action: ${grid[row][col].hasCube ? 'REMOVING' : 'ADDING'} cube at [${row}, ${col}]`);
     
@@ -300,9 +293,7 @@ const useGridState = () => {
 
   // Toggle cladding at a specific edge
   const toggleCladding = useCallback((row: number, col: number, edge: CompassDirection) => {
-    // Clear console before toggling cladding
-    console.clear();
-    
+    // Do not clear the console to preserve connector/debug logs
     console.log(`Starting toggleCladding at [${row},${col}], edge: ${edge}`);
     console.log(`Initial cell state:`, {
       hasCube: grid[row][col].hasCube,
@@ -364,9 +355,7 @@ const useGridState = () => {
 
   // Apply a preset configuration
   const applyPreset = useCallback((preset: string) => {
-    // Clear console before applying preset
-    console.clear();
-    
+    // Do not clear the console to preserve connector/debug logs
     console.log(`Applying preset: ${preset}`);
     // Initialize a fresh grid with no cubes
     const newGrid = initializeGrid();
@@ -474,9 +463,6 @@ const useGridState = () => {
 
   // Update requirements whenever the grid changes
   useEffect(() => {
-    // Clear console before updating requirements on grid change
-    console.clear();
-    
     const newRequirements = calculateRequirements(grid);
     setRequirements(newRequirements);
     logGridState(grid, newRequirements);

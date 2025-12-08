@@ -112,7 +112,6 @@ body.tutorial-active a,
 body.tutorial-active input,
 body.tutorial-active select {
   pointer-events: auto !important;
-  z-index: 10000 !important; /* High enough to be clickable */
 }
 
 /* Special highlight for elements being specifically targeted in tutorial steps */
