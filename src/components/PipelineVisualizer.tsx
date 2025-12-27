@@ -238,6 +238,49 @@ export const PipelineVisualizer: React.FC<PipelineVisualizerProps> = ({
     if (idx === -1) return isCorner;
     return idx % 2 === 0; // 0th, 2nd, ... stay corner; 1st, 3rd, ... flip to straight
   }, [isCorner, pathOrder, row, col]);
+
+  // Swap connector visuals for the second U-shape corner with its preceding straight cube.
+  const connectorSwap = useMemo(() => {
+    const ordered = pathOrder.ordered;
+    if (!ordered.length) return null;
+
+    const cornersInOrder = ordered.filter(([r, c]) => {
+      const info = pathOrder.infoMap.get(`${r},${c}`);
+      return info?.isCorner;
+    });
+
+    if (cornersInOrder.length !== 2) return null;
+
+    const start = ordered[0];
+    const end = ordered[ordered.length - 1];
+    const endpointsAligned = start[0] === end[0] || start[1] === end[1];
+    if (!endpointsAligned) return null;
+
+    const secondCorner = cornersInOrder[1];
+    const secondCornerIndex = ordered.findIndex(
+      ([r, c]) => r === secondCorner[0] && c === secondCorner[1]
+    );
+    if (secondCornerIndex === -1) return null;
+
+    const prev = ordered[secondCornerIndex - 1];
+    if (!prev) return null;
+
+    const prevInfo = pathOrder.infoMap.get(`${prev[0]},${prev[1]}`);
+    if (prevInfo?.isCorner) return null;
+
+    return {
+      cornerKey: `${secondCorner[0]},${secondCorner[1]}`,
+      nextKey: `${prev[0]},${prev[1]}`
+    };
+  }, [pathOrder]);
+
+  const connectorDisplayIsCorner = useMemo(() => {
+    if (!connectorSwap) return displayIsCorner;
+    const currentKey = `${row},${col}`;
+    if (currentKey === connectorSwap.cornerKey) return false;
+    if (currentKey === connectorSwap.nextKey) return true;
+    return displayIsCorner;
+  }, [connectorSwap, displayIsCorner, row, col]);
   
   // Enhanced logging for cube status - throttled to prevent log flooding
   useEffect(() => {
@@ -439,7 +482,7 @@ export const PipelineVisualizer: React.FC<PipelineVisualizerProps> = ({
             'entry',
             `entry-${visualEntry?.toLowerCase()}`,
             getAxisClass(visualEntry),
-            isCorner ? 'corner' : 'straight'
+            connectorDisplayIsCorner ? 'corner' : 'straight'
           ].filter(Boolean).join(' ')}
           title={`Corner Connector${connectorLabel ? ` (${connectorLabel})` : ''}`}
           role="presentation"
@@ -455,9 +498,9 @@ export const PipelineVisualizer: React.FC<PipelineVisualizerProps> = ({
             'exit',
             `exit-${visualExit?.toLowerCase()}`,
             getAxisClass(visualExit),
-            isCorner ? 'corner' : 'straight'
+            connectorDisplayIsCorner ? 'corner' : 'straight'
           ].filter(Boolean).join(' ')}
-          title={displayIsCorner ? 
+          title={connectorDisplayIsCorner ? 
             `Corner Connector${connectorLabel ? ` (${connectorLabel})` : ''}` : 
             `Straight Connector${connectorLabel ? ` (${connectorLabel})` : ''}`}
           role="presentation"
@@ -469,10 +512,10 @@ export const PipelineVisualizer: React.FC<PipelineVisualizerProps> = ({
       <div
           className={[
             'connector-visual',
-            displayIsCorner ? 'corner' : 'straight',
-            !displayIsCorner ? `straight-${getStraightOrientation(visualEntry, visualExit)}` : '',
+            connectorDisplayIsCorner ? 'corner' : 'straight',
+            !connectorDisplayIsCorner ? `straight-${getStraightOrientation(visualEntry, visualExit)}` : '',
           ].filter(Boolean).join(' ')}
-          title={displayIsCorner ? 'Corner Connector' : 'Straight Coupling'}
+          title={connectorDisplayIsCorner ? 'Corner Connector' : 'Straight Coupling'}
           aria-hidden="true"
         />
       
