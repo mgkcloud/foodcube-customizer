@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Requirements } from './types';
 import { validateAgainstTemplate, detectConfigurationType } from '@/utils/validation/configurationTemplates';
+import { normalizeProductData } from '@/utils/productSchema';
 
 interface SummaryProps {
   requirements: Requirements;
@@ -13,6 +14,10 @@ export const Summary: React.FC<SummaryProps> = ({ requirements, variants }) => {
   const [showValidation, setShowValidation] = useState(false);
   const validation = validateAgainstTemplate(requirements);
   const configurationType = detectConfigurationType(requirements);
+  const normalizedVariants = React.useMemo(
+    () => normalizeProductData(variants || {}).normalizedVariants,
+    [variants]
+  );
 
   React.useEffect(() => {
     if (!variants) return;
@@ -27,7 +32,8 @@ export const Summary: React.FC<SummaryProps> = ({ requirements, variants }) => {
       rightPanels: requirements.rightPanels || 0,
       sidePanels: requirements.sidePanels || 0,
       cornerConnectors: requirements.cornerConnectors || 0,
-      straightCouplings: requirements.straightCouplings || 0
+      straightCouplings: requirements.straightCouplings || 0,
+      spacers: requirements.spacers || 0
     };
 
     const variantIds: Record<string, string> = {
@@ -39,32 +45,53 @@ export const Summary: React.FC<SummaryProps> = ({ requirements, variants }) => {
       rightPanels: '',
       sidePanels: '',
       cornerConnectors: '',
-      straightCouplings: ''
+      straightCouplings: '',
+      spacers: ''
     };
 
     // Map variant IDs from variants data
-    if (variants['4_pack_cladding']?.variants) {
-      const fourPackVariants = variants['4_pack_cladding'].variants;
-      const regularVariant = fourPackVariants.find((v: any) => v.title?.toLowerCase().includes('regular'));
-      const tallVariant = fourPackVariants.find((v: any) => v.title?.toLowerCase().includes('tall'));
+    if (normalizedVariants['4_pack_cladding']?.variants) {
+      const fourPackVariants = normalizedVariants['4_pack_cladding'].variants;
+      const regularVariant = fourPackVariants.find(
+        (v: any) =>
+          v.option1?.toLowerCase().includes('500') ||
+          v.title?.toLowerCase().includes('500')
+      );
+      const tallVariant = fourPackVariants.find(
+        (v: any) =>
+          v.option1?.toLowerCase().includes('700') ||
+          v.title?.toLowerCase().includes('700')
+      );
       if (regularVariant?.id) variantIds.fourPackRegular = regularVariant.id;
       if (tallVariant?.id) variantIds.fourPackExtraTall = tallVariant.id;
     }
 
-    if (variants['2_pack_cladding']?.variants) {
-      const twoPackVariants = variants['2_pack_cladding'].variants;
-      const regularVariant = twoPackVariants.find((v: any) => v.title?.toLowerCase().includes('regular'));
-      const tallVariant = twoPackVariants.find((v: any) => v.title?.toLowerCase().includes('tall'));
+    if (normalizedVariants['2_pack_cladding']?.variants) {
+      const twoPackVariants = normalizedVariants['2_pack_cladding'].variants;
+      const regularVariant = twoPackVariants.find(
+        (v: any) =>
+          v.option1?.toLowerCase().includes('500') ||
+          v.title?.toLowerCase().includes('500')
+      );
+      const tallVariant = twoPackVariants.find(
+        (v: any) =>
+          v.option1?.toLowerCase().includes('700') ||
+          v.title?.toLowerCase().includes('700')
+      );
       if (regularVariant?.id) variantIds.twoPackRegular = regularVariant.id;
       if (tallVariant?.id) variantIds.twoPackExtraTall = tallVariant.id;
     }
 
-    if (variants['corner_connectors']?.variants?.[0]?.id) {
-      variantIds.cornerConnectors = variants['corner_connectors'].variants[0].id;
+    if (normalizedVariants['corner_connectors']?.variants?.[0]?.id) {
+      variantIds.cornerConnectors = normalizedVariants['corner_connectors'].variants[0].id;
     }
 
-    if (variants['straight_couplings']?.variants?.[0]?.id) {
-      variantIds.straightCouplings = variants['straight_couplings'].variants[0].id;
+    if (normalizedVariants['straight_couplings']?.variants?.[0]?.id) {
+      variantIds.straightCouplings = normalizedVariants['straight_couplings'].variants[0].id;
+    }
+
+    if (normalizedVariants['spacers']?.variants?.[0]?.id) {
+      variantIds.spacers = normalizedVariants['spacers'].variants[0].id;
     }
 
     // Dispatch events with updated data

@@ -76,6 +76,10 @@ export interface PositionParams {
   alignment?: 'start' | 'center' | 'end';
   padding?: number;
   offset?: number;
+  elementDimensions?: {
+    width: number;
+    height: number;
+  };
 }
 
 /**
@@ -109,12 +113,23 @@ export interface StyleDefinition {
  */
 export interface TutorialElement {
   id: string;
+  /**
+   * Element that should be measured/observed (typically the tutorial target)
+   */
   element: HTMLElement;
+  /**
+   * Optional element that receives the calculated styles. Defaults to `element`.
+   */
+  styleElement?: HTMLElement;
   type: 'spotlight' | 'tooltip';
   isActive: boolean;
   needsUpdate: boolean;
   lastMeasurement?: ElementMeasurements;
   calculateStyles: (measurement: ElementMeasurements) => StyleDefinition;
+  /**
+   * Optional callback invoked with the latest calculated position result.
+   */
+  onPositionChange?: (result: PositionResult) => void;
 }
 
 /**
@@ -132,4 +147,12 @@ export interface TutorialElementConfig {
   zIndex?: number;
   isActive: boolean;
   isInteractive?: boolean;
+  /**
+   * Optional element that should receive styles (used for tooltips rendered via React).
+   */
+  styleElement?: HTMLElement;
+  /**
+   * Callback invoked when a new tooltip position has been calculated.
+   */
+  onPositionChange?: (result: PositionResult) => void;
 }

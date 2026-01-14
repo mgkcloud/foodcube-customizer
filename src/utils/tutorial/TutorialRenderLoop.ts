@@ -8,6 +8,7 @@ import { PositionCalculator } from './PositionCalculator';
  */
 export class TutorialRenderLoop {
   private pendingUpdates: Set<TutorialElement> = new Set();
+  private activeElements: Set<TutorialElement> = new Set();
   private frameRequest: number | null = null;
   private isRunning: boolean = false;
   private lastFrameTime: number = 0;
@@ -126,19 +127,39 @@ export class TutorialRenderLoop {
     
     // Process updates only if there are elements to update
     if (this.pendingUpdates.size > 0) {
+      // Only process elements that actually need an update
+      const elementsToProcess = Array.from(this.pendingUpdates).filter(
+        (element) => element.isActive && element.needsUpdate
+      );
+
+      if (elementsToProcess.length === 0) {
+        // Nothing needs to be updated right now
+        if (this.isRunning && this.pendingUpdates.size > 0) {
+          this.scheduleUpdate();
+        }
+        return;
+      }
+
       // 1. Batch all DOM reads first to avoid layout thrashing
       const measurements = new Map<TutorialElement, ElementMeasurements>();
       
-      for (const element of this.pendingUpdates) {
-        if (!element.isActive || !element.element.isConnected) {
+      for (const element of elementsToProcess) {
+        const measurementTarget = element.element;
+        const styleTarget = element.styleElement || element.element;
+        
+        if (!element.isActive || !measurementTarget || !measurementTarget.isConnected) {
           // Skip inactive or disconnected elements
           this.pendingUpdates.delete(element);
           continue;
         }
         
+        // If the style target (the actual tooltip element) isn't mounted yet, defer measurement
+        if (!styleTarget || !styleTarget.isConnected) {
+          continue;
+        }
+        
         // Measure the element
-        const targetElement = element.element;
-        measurements.set(element, this.positionCalculator.measureElement(targetElement));
+        measurements.set(element, this.positionCalculator.measureElement(measurementTarget));
       }
       
       // 2. Then batch all DOM writes
@@ -146,11 +167,14 @@ export class TutorialRenderLoop {
         if (!element.isActive) continue;
         
         try {
-          // Skip position styling for elements with data-tutorial-no-position attribute
-          if (element.element.hasAttribute('data-tutorial-no-position')) {
+          const styleTarget = element.styleElement || element.element;
+          const measurementTarget = element.element;
+          
+          // Skip layout styling for spotlight elements flagged with data-tutorial-no-position
+          if (element.type === 'spotlight' && measurementTarget.hasAttribute('data-tutorial-no-position')) {
             // For these elements, only apply visual effects like outline and box-shadow
             // but not any position/layout changing styles
-            this.styleManager.applyVisualEffectsOnly(element.element);
+            this.styleManager.applyVisualEffectsOnly(styleTarget);
             element.needsUpdate = false;
             continue;
           }
@@ -166,13 +190,14 @@ export class TutorialRenderLoop {
           }
           
           // Apply styles using the style manager
-          this.styleManager.applyStyles(element.element, styles);
+          this.styleManager.applyStyles(styleTarget, styles);
           
           // Store last measurement for reference
           element.lastMeasurement = measurement;
           
           // Mark as updated
           element.needsUpdate = false;
+          this.pendingUpdates.delete(element);
         } catch (error) {
           console.error(`[TutorialRenderLoop] Error updating element ${element.id}:`, error);
         }
@@ -180,7 +205,7 @@ export class TutorialRenderLoop {
     }
     
     // Schedule next frame if still running
-    if (this.isRunning) {
+    if (this.isRunning && this.pendingUpdates.size > 0) {
       this.scheduleUpdate();
     }
     
@@ -227,7 +252,7 @@ export class TutorialRenderLoop {
     }
     
     // Request update for all active elements
-    for (const element of this.pendingUpdates) {
+    for (const element of this.activeElements) {
       if (element.isActive) {
         this.requestUpdate(element);
       }
@@ -240,7 +265,7 @@ export class TutorialRenderLoop {
    */
   addElement(element: TutorialElement): void {
     if (element.isActive) {
-      this.requestUpdate(element);
+      this.activeElements.add(element);
     }
   }
   
@@ -249,10 +274,12 @@ export class TutorialRenderLoop {
    * @param element The element to remove
    */
   removeElement(element: TutorialElement): void {
+    this.activeElements.delete(element);
     this.pendingUpdates.delete(element);
     
     // Restore original styles
-    this.styleManager.restoreStyles(element.element);
+    const styleTarget = element.styleElement || element.element;
+    this.styleManager.restoreStyles(styleTarget);
   }
   
   /**
@@ -268,14 +295,17 @@ export class TutorialRenderLoop {
     element.isActive = isActive;
     
     if (isActive) {
+      this.activeElements.add(element);
       // Add to pending updates if active
       this.requestUpdate(element);
     } else {
       // Remove from pending updates if inactive
       this.pendingUpdates.delete(element);
+      this.activeElements.delete(element);
       
       // Restore original styles
-      this.styleManager.restoreStyles(element.element);
+      const styleTarget = element.styleElement || element.element;
+      this.styleManager.restoreStyles(styleTarget);
     }
   }
   
@@ -288,6 +318,7 @@ export class TutorialRenderLoop {
     
     // Clear pending updates
     this.pendingUpdates.clear();
+    this.activeElements.clear();
     
     if (this.debugMode) {
       console.log('[TutorialRenderLoop] Cleanup completed');

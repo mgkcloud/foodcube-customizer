@@ -82,7 +82,7 @@ export class TutorialManager {
     if (!this.isTutorialActive) return;
     
     // Check if this element is an active target
-    let affectedElements: TutorialElement[] = [];
+    const affectedElements: TutorialElement[] = [];
     
     // Find tutorial elements affected by this change
     for (const [targetId, targetElement] of this.activeTargets.entries()) {
@@ -208,7 +208,9 @@ export class TutorialManager {
       position = 'top',
       alignment = 'center',
       zIndex = 10001,
-      isActive = false
+      isActive = false,
+      styleElement,
+      onPositionChange
     } = config;
     
     // Find target element
@@ -227,16 +229,25 @@ export class TutorialManager {
     const tutorialElement: TutorialElement = {
       id: elementId,
       element: targetElement,
+      styleElement,
       type: 'tooltip',
       isActive,
       needsUpdate: true,
       calculateStyles: (measurement) => {
         // Calculate tooltip position
+        const tooltipRect = styleElement?.getBoundingClientRect();
+        const tooltipDimensions = tooltipRect && tooltipRect.width > 0 && tooltipRect.height > 0
+          ? { width: tooltipRect.width, height: tooltipRect.height }
+          : undefined;
         const positionResult = this.positionCalculator.calculatePosition({
           targetElement,
           preferredPosition: position as any,
-          alignment: alignment as any
+          alignment: alignment as any,
+          elementDimensions: tooltipDimensions
         });
+        
+        // Notify listeners about the resolved position so the React tooltip can update arrow state
+        onPositionChange?.(positionResult);
         
         // Convert to styles
         return this.styleManager.generateTooltipStyles({
@@ -244,7 +255,8 @@ export class TutorialManager {
           left: positionResult.left,
           transform: positionResult.transform
         }, zIndex);
-      }
+      },
+      onPositionChange
     };
     
     // Store element

@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Foodcube Configurator</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+      background: transparent;
+      min-height: 100vh;
+    }
+    #foodcube-root {
+      min-height: 100vh;
+    }
+  </style>
+</head>
+<body>
+  <cladding-calculator id="foodcube-calculator">
+    <div id="foodcube-root">
+      <div id="loading-state" style="padding: 2rem; text-align: center; font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; color: #444;">
+        Loading configurator...
+      </div>
+    </div>
+  </cladding-calculator>
+
+  <script>
+    // Dynamically load assets from a provided base URL (Shopify asset_url)
+    (function() {
+      const params = new URLSearchParams(window.location.search);
+      // Preferred: pass explicit urls (?cssUrl=...&jsUrl=...); fallback to assetBase (?assetBase=https://cdn.../assets)
+      const cssUrl = params.get('cssUrl') ? decodeURIComponent(params.get('cssUrl')) : null;
+      const jsUrl = params.get('jsUrl') ? decodeURIComponent(params.get('jsUrl')) : null;
+      const assetBase = params.get('assetBase') || '.';
+
+      const resolvedCssUrl = cssUrl || `${assetBase}/foodcube-configurator.css`;
+      const resolvedJsUrl = jsUrl || `${assetBase}/foodcube-configurator.iife.js`;
+
+      // Send diagnostics to both parent and console for easier debugging
+      function report(type, payload = {}) {
+        const message = { type, payload };
+        console.log('[Embed]', message);
+        try {
+          window.parent?.postMessage(message, '*');
+        } catch (err) {
+          console.warn('[Embed] Failed posting message to parent', err);
+        }
+      }
+
+      function injectStylesheet() {
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = resolvedCssUrl;
+        document.head.appendChild(link);
+      }
+
+      function injectScript(onLoad) {
+        const script = document.createElement('script');
+        script.src = resolvedJsUrl;
+        script.onload = onLoad;
+        script.onerror = () => {
+          const message = `Failed to load configurator script from: ${script.src}`;
+          console.error(message);
+          const loading = document.getElementById('loading-state');
+          if (loading) {
+            loading.textContent = 'Failed to load configurator assets. Please refresh.';
+          }
+          report('configurator-error', { message });
+        };
+        document.body.appendChild(script);
+      }
+
+      injectStylesheet();
+      injectScript(() => {
+        report('configurator-assets-loaded', { hasInit: typeof window.initFoodcubeConfigurator === 'function' });
+        if (typeof window.initFoodcubeConfigurator !== 'function') {
+          report('configurator-error', { message: 'Configurator script loaded but init global missing' });
+        }
+        initializeEmbed();
+      });
+
+      // Core embed logic is wrapped so it only runs after script load
+      function initializeEmbed() {
+        let initialized = false;
+        let pendingProductData = null;
+        let initAttempts = 0;
+        const MAX_ATTEMPTS = 20;
+        const ATTEMPT_DELAY = 300; // ms
+        let eagerInterval = null;
+        let lastWaitLog = 0;
+
+        function sendReady() {
+          report('configurator-ready');
+        }
+
+        function postResize() {
+          const height = Math.max(document.body.scrollHeight, window.innerHeight);
+          report('resize', { height });
+        }
+
+        function applyProductData(data) {
+          const scriptTag = document.getElementById('foodcube-customizer-product-data');
+          if (scriptTag) {
+            scriptTag.textContent = JSON.stringify(data || {});
+          }
+        }
+
+        function initConfiguratorIfNeeded() {
+          if (initialized) return;
+          const root = document.getElementById('foodcube-root');
+          if (!root) return;
+
+          const hasProductData = pendingProductData && Object.keys(pendingProductData || {}).length > 0;
+
+          // Do not boot until product data is present; otherwise the catalog is empty and cart build fails
+          if (!hasProductData) {
+            initAttempts += 1;
+            if (initAttempts === 1 || initAttempts - lastWaitLog >= 5) {
+              lastWaitLog = initAttempts;
+              report('configurator-waiting-for-data', { attempt: initAttempts });
+              console.log('[Embed] Waiting for product data before init', { attempt: initAttempts });
+            }
+            if (initAttempts <= MAX_ATTEMPTS) {
+              setTimeout(initConfiguratorIfNeeded, ATTEMPT_DELAY);
+            } else {
+              const loading = document.getElementById('loading-state');
+              if (loading) {
+                loading.textContent = 'Still loading product data...';
+              }
+              console.warn('[Embed] Product data not received after max attempts; still waiting');
+              setTimeout(initConfiguratorIfNeeded, ATTEMPT_DELAY * 2);
+            }
+            return;
+          }
+
+          // Ensure the data script is populated before init
+          applyProductData(pendingProductData);
+          if (typeof window.initFoodcubeConfigurator === 'function') {
+            console.log('[Embed] Calling initFoodcubeConfigurator with product data keys:', Object.keys(pendingProductData || {}));
+            const args = { container: root, variants: pendingProductData };
+            window.initFoodcubeConfigurator(args);
+            initialized = true;
+            const loading = document.getElementById('loading-state');
+            if (loading) loading.remove();
+            console.log('[Embed] Init complete, loader removed');
+            const resizeObserver = new ResizeObserver(postResize);
+            resizeObserver.observe(document.body);
+            postResize();
+            if (eagerInterval) clearInterval(eagerInterval);
+            report('configurator-initialized');
+
+          } else {
+            initAttempts += 1;
+            if (initAttempts <= MAX_ATTEMPTS) {
+              setTimeout(initConfiguratorIfNeeded, ATTEMPT_DELAY);
+            } else {
+              const message = 'Configurator script loaded but init function not found';
+              report('configurator-error', { message, attempts: initAttempts });
+              console.error('Foodcube configurator failed to initialize: init function missing');
+              const loading = document.getElementById('loading-state');
+              if (loading) {
+                loading.textContent = 'Failed to load configurator. Please refresh.';
+              }
+            }
+          }
+        }
+
+        // Listen for messages from parent
+        window.addEventListener('message', (e) => {
+          const { type, payload } = e.data || {};
+          switch (type) {
+            case 'set-product-data': {
+              pendingProductData = payload;
+              applyProductData(payload);
+              initConfiguratorIfNeeded();
+              break;
+            }
+            case 'reset': {
+              if (typeof window.resetConfigurator === 'function') {
+                window.resetConfigurator();
+              }
+              break;
+            }
+            default:
+              break;
+          }
+        });
+
+        // Forward cart events if raised by the configurator
+        window.addEventListener('foodcube-cart-update', (e) => {
+          window.parent.postMessage({ type: 'add-to-cart', payload: e.detail }, '*');
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+          sendReady();
+          initConfiguratorIfNeeded();
+          setTimeout(initConfiguratorIfNeeded, 2000);
+        });
+
+        // Kick off an eager interval in case DOMContentLoaded/ready timing is odd in the sandbox
+        eagerInterval = setInterval(() => {
+          if (initialized) {
+            clearInterval(eagerInterval);
+          } else {
+            initConfiguratorIfNeeded();
+          }
+        }, 300);
+        setTimeout(() => {
+          if (!initialized && eagerInterval) clearInterval(eagerInterval);
+        }, 5000);
+      }
+    })();
+  </script>
+</body>
+</html>

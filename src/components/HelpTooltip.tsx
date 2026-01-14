@@ -58,7 +58,7 @@ export const HelpTooltip = () => {
           <ol className="space-y-2 text-sm">
             <li>1. Click any cell to add/remove a foodcube</li>
             <li>2. When a cube is placed, hover over its edges to see cladding options</li>
-            <li>3. Click an edge to add/remove cladding panels</li>
+            <li>3. Click an edge to add a panel, then click again to remove it when a side faces a fence</li>
             <li>4. Use preset configurations for common setups</li>
             <li>5. Click "Select Components" when done to apply your selection</li>
           </ol>

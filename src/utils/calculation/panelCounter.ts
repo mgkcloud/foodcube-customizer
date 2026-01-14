@@ -31,7 +31,8 @@ export const countPanels = (grid: GridCell[][]): Requirements => {
       twoPackRegular: 0,
       twoPackExtraTall: 0,
       straightCouplings: 0,
-      cornerConnectors: 0
+      cornerConnectors: 0,
+      spacers: 0
     };
   }
   

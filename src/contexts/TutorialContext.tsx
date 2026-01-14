@@ -119,16 +119,24 @@ export const TutorialProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   // Get cookie value helper
   const getCookie = (name: string): string | null => {
-    const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
-    return match ? match[2] : null;
+    try {
+      const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+      return match ? match[2] : null;
+    } catch {
+      return null;
+    }
   };
   
-  // Set cookie helper
+  // Set cookie helper (no-op if sandboxed)
   const setCookie = (name: string, value: string, days: number = 365): void => {
-    const date = new Date();
-    date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
-    const expires = "; expires=" + date.toUTCString();
-    document.cookie = name + "=" + value + expires + "; path=/";
+    try {
+      const date = new Date();
+      date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+      const expires = "; expires=" + date.toUTCString();
+      document.cookie = name + "=" + value + expires + "; path=/";
+    } catch {
+      // ignore in sandbox
+    }
   };
   
   // Check if this is the first visit
@@ -138,8 +146,14 @@ export const TutorialProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const welcomeModalShownCookie = getCookie(WELCOME_MODAL_SHOWN_KEY);
     
     // Fallback to localStorage (for backwards compatibility)
-    const tutorialCompletedStorage = localStorage.getItem(TUTORIAL_COMPLETED_KEY);
-    const welcomeModalShownStorage = localStorage.getItem(WELCOME_MODAL_SHOWN_KEY);
+    let tutorialCompletedStorage: string | null = null;
+    let welcomeModalShownStorage: string | null = null;
+    try {
+      tutorialCompletedStorage = localStorage.getItem(TUTORIAL_COMPLETED_KEY);
+      welcomeModalShownStorage = localStorage.getItem(WELCOME_MODAL_SHOWN_KEY);
+    } catch {
+      // ignore storage errors in sandbox
+    }
     
     const tutorialCompleted = tutorialCompletedCookie || tutorialCompletedStorage;
     const welcomeModalShown = welcomeModalShownCookie || welcomeModalShownStorage;
@@ -151,7 +165,11 @@ export const TutorialProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       
       // Store in both cookie and localStorage
       setCookie(WELCOME_MODAL_SHOWN_KEY, 'true');
-      localStorage.setItem(WELCOME_MODAL_SHOWN_KEY, 'true');
+      try {
+        localStorage.setItem(WELCOME_MODAL_SHOWN_KEY, 'true');
+      } catch {
+        // ignore storage errors in sandbox
+      }
     }
   }, []);
 

@@ -327,8 +327,7 @@ export class StyleManager {
       left: `${position.left}px`,
       transform: position.transform,
       zIndex: String(zIndex),
-      transition: 'all 0.3s ease-out',
-      opacity: '1'
+      transition: 'all 0.3s ease-out'
     };
   }
   

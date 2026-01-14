@@ -269,7 +269,7 @@ const tracePathAndSetConnections = (
       
       // For the first cube, we need to pick an entry that creates a straight-through flow
       // This means the entry should be opposite to the exit
-      let entryDir = getOppositeDirection(exitDir);
+      const entryDir = getOppositeDirection(exitDir);
       
       cube.connections = {
         entry: entryDir,
@@ -291,7 +291,7 @@ const tracePathAndSetConnections = (
       
       // For the last cube, we need to pick an exit that creates a straight-through flow
       // This means the exit should be opposite to the entry
-      let exitDir = getOppositeDirection(entryDir);
+      const exitDir = getOppositeDirection(entryDir);
       
       cube.connections = {
         entry: entryDir,

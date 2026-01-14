@@ -178,7 +178,7 @@ const analyzeEdgeForPanelType = (
   // console.log(`E${edge}:${leftCell[0]}-${rightCell[0]}`);
   
   // Determine panel type
-  let panelType = 'S'; // Default to side panel
+  const panelType = 'S'; // Default to side panel
   
   if (leftCell === 'RED' && rightCell === 'RED') {
     console.log(`E${edge}:BOTH→S`);
@@ -243,10 +243,11 @@ export const calculateFlowPathPanels = (
         rightPanels: 0,
         sidePanels: 0,
         cornerConnectors: 0,
-        straightCouplings: 0
+        straightCouplings: 0,
+        spacers: 0
       };
     }
-    
+
     // Track visited cells to find all connected components
     const visited = new Set<string>();
     const components: [number, number][][] = [];
@@ -324,7 +325,7 @@ export const calculateFlowPathPanels = (
           }
           
           // Get exposed edges (panels)
-          for (let edge of ['N', 'S', 'E', 'W'] as CompassDirection[]) {
+          for (const edge of ['N', 'S', 'E', 'W'] as CompassDirection[]) {
             // Only consider edges that are in the claddingEdges set
             // This respects when users toggle cladding off on specific edges
             if (grid[row][col].claddingEdges.has(edge)) {
@@ -432,7 +433,8 @@ export const calculateFlowPathPanels = (
       rightPanels: 0,
       sidePanels: 0,
       cornerConnectors: 0,
-      straightCouplings: 0
+      straightCouplings: 0,
+      spacers: 0
     };
   }
 };
@@ -461,8 +463,9 @@ const packPanelsByCount = (
     twoPackExtraTall: 0,
     straightCouplings: straightConnectors,
     cornerConnectors: cornerConnectors,
+    spacers: 0,
   };
-  
+
   // First try to fit into four-packs (2 side + 1 left + 1 right)
   while (sidePanels >= 2 && leftPanels >= 1 && rightPanels >= 1) {
     requirements.fourPackRegular++;

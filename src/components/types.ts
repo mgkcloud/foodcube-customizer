@@ -28,4 +28,5 @@ export interface Requirements {
   sidePanels: number;
   cornerConnectors: number;
   straightCouplings: number;
+  spacers: number;
 }

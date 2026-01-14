@@ -5709,8 +5709,8 @@ interface KeyItemProps {
 const KeyItem: React.FC<KeyItemProps> = ({ color, label, count, icon, description }) => (
   <div className="flex items-center gap-2 text-sm group relative">
     {color ? (
-      <div 
-        className="w-4 h-4 rounded-sm" 
+      <div
+        className="w-4 h-4 rounded-sm"
         style={{ backgroundColor: color }}
       />
     ) : icon ? (
@@ -5755,33 +5755,33 @@ export const CladdingKey: React.FC<CladdingKeyProps> = ({ requirements }) => {
     <div className="bg-white p-4 rounded-lg shadow-sm">
       <h3 className="text-lg font-semibold mb-3">Required Packages</h3>
       <div className="space-y-1 mb-4">
-        <PackageItem 
-          label="4-Pack Regular" 
+        <PackageItem
+          label="4-Pack Regular"
           count={requirements.fourPackRegular}
           description="2 side + 1 left + 1 right"
         />
-        <PackageItem 
-          label="2-Pack Regular" 
+        <PackageItem
+          label="2-Pack Regular"
           count={requirements.twoPackRegular}
           description="2 side panels"
         />
       </div>
       <h3 className="text-lg font-semibold mb-3">Panel Types</h3>
       <div className="space-y-2 mb-4">
-        <KeyItem 
-          color={PANEL_COLORS.side} 
+        <KeyItem
+          color={PANEL_COLORS.side}
           label="Side Panel"
           count={requirements.sidePanels}
           description="Blue - Standard side panels"
         />
-        <KeyItem 
-          color={PANEL_COLORS.left} 
+        <KeyItem
+          color={PANEL_COLORS.left}
           label="Left Panel"
           count={requirements.leftPanels}
           description="Green - Left-facing panels"
         />
-        <KeyItem 
-          color={PANEL_COLORS.right} 
+        <KeyItem
+          color={PANEL_COLORS.right}
           label="Right Panel"
           count={requirements.rightPanels}
           description="Purple - Right-facing panels"
@@ -5789,13 +5789,13 @@ export const CladdingKey: React.FC<CladdingKeyProps> = ({ requirements }) => {
       </div>
       <h3 className="text-lg font-semibold mb-3">Connectors</h3>
       <div className="space-y-2">
-        <KeyItem 
+        <KeyItem
           icon="⌟"
           label="Corner Connector"
           count={requirements.cornerConnectors}
           description="Connects panels at 90° angles"
         />
-        <KeyItem 
+        <KeyItem
           icon="━"
           label="Straight Coupling"
           count={requirements.straightCouplings}
@@ -5874,8 +5874,8 @@ export const CladdingVisualizer = ({ cell, row, col, grid, onToggle, isEdgeExpos
       isExposed: isEdgeExposed[edge]
     }, null, 2));
     return {
-      backgroundColor: isSelected 
-        ? baseColor 
+      backgroundColor: isSelected
+        ? baseColor
         : `${baseColor}40`, // 40 = 25% opacity for unselected edges
       transition: 'background-color 0.2s ease-in-out',
       // Hover handled by CSS classes
@@ -5979,7 +5979,7 @@ export const FoodcubeConfigurator: React.FC<FoodcubeConfiguratorProps> = ({ vari
         <h2 className="text-3xl p-4 m-auto text-center font-bold">Cladding Configurator</h2>
         <div className='flex justify-center items-center gap-2 mb-4'>
           <h4 className="text-sm my-2 text-center font-semibold">Preset Configurations</h4>
-          <PresetConfigs 
+          <PresetConfigs
             onApply={(preset) => {
               applyPreset(preset);
               setHasInteracted(true);
@@ -6009,8 +6009,8 @@ export const FoodcubeConfigurator: React.FC<FoodcubeConfiguratorProps> = ({ vari
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-2 bg-white p-6 rounded-lg shadow">
-          <Grid 
-            grid={grid} 
+          <Grid
+            grid={grid}
             onToggleCell={(row, col) => {
               toggleCell(row, col);
               setHasInteracted(true);
@@ -6042,10 +6042,10 @@ interface GridProps {
   setHasInteracted?: (value: boolean) => void;
   debug?: boolean;
 }
-export const Grid: React.FC<GridProps> = ({ 
-  grid, 
-  onToggleCell, 
-  onToggleCladding, 
+export const Grid: React.FC<GridProps> = ({
+  grid,
+  onToggleCell,
+  onToggleCladding,
   setHasInteracted,
   debug = false
 }) => {
@@ -6088,26 +6088,26 @@ export const Grid: React.FC<GridProps> = ({
   const renderCell = (rowIndex: number, colIndex: number) => {
     const cell = grid[rowIndex][colIndex];
     return (
-      <div 
+      <div
         key={`${rowIndex}-${colIndex}`}
         className={`relative w-full h-full border-gray-200 ${cell.hasCube ? 'bg-gray-100' : 'bg-white'}`}
         onClick={() => handleCellClick(rowIndex, colIndex)}
         data-testid={`grid-cell-${rowIndex}-${colIndex}`}
       >
         {cell.hasCube && (
-          <PipelineVisualizer 
-            cell={cell} 
-            row={rowIndex} 
-            col={colIndex} 
+          <PipelineVisualizer
+            cell={cell}
+            row={rowIndex}
+            col={colIndex}
             grid={grid}
             debug={debug}
           />
         )}
         {cell.hasCube && (
-          <CladdingVisualizer 
-            cell={cell} 
-            row={rowIndex} 
-            col={colIndex} 
+          <CladdingVisualizer
+            cell={cell}
+            row={rowIndex}
+            col={colIndex}
             grid={grid}
             onToggleCladding={handleCladdingToggle}
           />
@@ -6127,21 +6127,21 @@ export const Grid: React.FC<GridProps> = ({
       )}
       {grid.map((row, rowIndex) => (
         row.map((cell, colIndex) => (
-          <div 
+          <div
             key={`${rowIndex}-${colIndex}`}
             data-testid={`grid-cell-${rowIndex}-${colIndex}`}
             data-has-cube={cell.hasCube.toString()}
             className={`
               relative aspect-square cursor-pointer
-              ${cell.hasCube 
-                ? 'bg-cover bg-center bg-no-repeat hover:brightness-90' 
+              ${cell.hasCube
+                ? 'bg-cover bg-center bg-no-repeat hover:brightness-90'
                 : 'bg-white hover:bg-gray-200'
               }
               border-2 border-gray-300 rounded
               transition-all duration-200
             `}
             style={{
-              backgroundImage: cell.hasCube 
+              backgroundImage: cell.hasCube
                 ? 'url("https://foodcube.myshopify.com/cdn/shop/files/1_Top_View_-_Foodcube.png?v=1736309048&width=1206")'
                 : 'none'
             }}
@@ -6222,15 +6222,15 @@ export const HelpTooltip = () => {
     <TooltipProvider>
       <Tooltip open={isOpen} onOpenChange={setIsOpen}>
         <TooltipTrigger asChild>
-          <button 
+          <button
             className="help-tooltip fixed top-4 right-4 p-2 rounded-full bg-white shadow-md hover:bg-gray-50 transition-colors"
             onClick={() => setIsOpen(!isOpen)}
           >
             <QuestionMarkIcon />
           </button>
         </TooltipTrigger>
-        <TooltipContent 
-          side="left" 
+        <TooltipContent
+          side="left"
           className="help-tooltip max-w-[300px] p-4 space-y-2 bg-white shadow-lg rounded-lg border border-gray-200"
           onClick={(e) => e.stopPropagation()}
         >
@@ -6297,7 +6297,7 @@ export const PipelineVisualizer: React.FC<PipelineVisualizerProps> = ({
 }) => {
   // Memoize the grid to prevent unnecessary recalculations
   const gridKey = useMemo(() => {
-    return JSON.stringify(grid.map(row => 
+    return JSON.stringify(grid.map(row =>
       row.map(cell => ({
         hasCube: cell.hasCube,
         connections: cell.connections
@@ -6321,8 +6321,8 @@ export const PipelineVisualizer: React.FC<PipelineVisualizerProps> = ({
   const pathInfo = useMemo(() => {
     const isCubeInPath = connectedCubes.some(([r, c]) => r === row && c === col);
     // Get the position of this cube in the path
-    const pathPosition = isCubeInPath 
-      ? connectedCubes.findIndex(([r, c]) => r === row && c === col) 
+    const pathPosition = isCubeInPath
+      ? connectedCubes.findIndex(([r, c]) => r === row && c === col)
       : -1;
     // Determine if this is a start, end, or middle cube
     const isStartCube = pathPosition === 0;
@@ -6377,7 +6377,7 @@ export const PipelineVisualizer: React.FC<PipelineVisualizerProps> = ({
       }
       console.groupEnd();
     }
-  }, [debug, isCubeInPath, row, col, pathPosition, connectedCubes.length, isValidPath, 
+  }, [debug, isCubeInPath, row, col, pathPosition, connectedCubes.length, isValidPath,
       isStartCube, isEndCube, isCorner, cubeType, cell.connections, pathInfo, gridKey]);
   if (!isCubeInPath || !cell.hasCube) {
     return null;
@@ -6435,9 +6435,9 @@ export const PipelineVisualizer: React.FC<PipelineVisualizerProps> = ({
       <PipeRenderer subgrid={subgrid} />
       {/* Flow direction arrows - always visible */}
       {cell.connections.entry && (
-        <div 
+        <div
           className={`flow-arrow entry entry-${cell.connections.entry.toLowerCase()}`}
-          style={{ 
+          style={{
             transform: `rotate(${getArrowRotation(cell.connections.entry)}deg)`,
             backgroundColor: isStartCube ? '#4CAF50' : isCorner ? '#FF9800' : '#2196F3'
           }}
@@ -6447,9 +6447,9 @@ export const PipelineVisualizer: React.FC<PipelineVisualizerProps> = ({
         </div>
       )}
       {cell.connections.exit && (
-        <div 
+        <div
           className={`flow-arrow exit exit-${cell.connections.exit.toLowerCase()}`}
-          style={{ 
+          style={{
             transform: `rotate(${getArrowRotation(cell.connections.exit)}deg)`,
             backgroundColor: isEndCube ? '#F44336' : isCorner ? '#FF9800' : '#2196F3'
           }}
@@ -6459,7 +6459,7 @@ export const PipelineVisualizer: React.FC<PipelineVisualizerProps> = ({
         </div>
       )}
       {/* Connection type indicator */}
-      <div 
+      <div
         className={`connector-type ${isCorner ? 'corner' : 'straight'}`}
         title={isCorner ? 'Corner Connector' : 'Straight Coupling'}
       >
@@ -6495,8 +6495,8 @@ interface PipeRendererProps {
 }
 export const PipeRenderer: React.FC<PipeRendererProps> = ({ subgrid }) => {
   return (
-    <div 
-      className="pipe-subgrid absolute inset-0 grid grid-cols-2 gap-0.5 pointer-events-none" 
+    <div
+      className="pipe-subgrid absolute inset-0 grid grid-cols-2 gap-0.5 pointer-events-none"
       data-testid="pipe-subgrid"
     >
       {subgrid.map((row, rowIndex) =>
@@ -6536,21 +6536,21 @@ interface PresetConfigsProps {
 export const PresetConfigs: React.FC<PresetConfigsProps> = ({ onApply }) => {
   return (
     <div className="flex flex-wrap gap-4">
-      <Button 
+      <Button
         variant="outline"
         className='text-xs md:text-sm font-semibold bg-white '
         onClick={() => onApply(PRESETS.straight)}
       >
         Straight (3x1)
       </Button>
-      <Button 
+      <Button
         variant="outline"
         className='text-xs md:text-sm font-semibold bg-white'
         onClick={() => onApply(PRESETS.L)}
       >
         L-Shape
       </Button>
-      <Button 
+      <Button
         variant="outline"
         className='text-xs md:text-sm font-semibold bg-white'
         onClick={() => onApply(PRESETS.U)}
@@ -6679,7 +6679,7 @@ export const Summary: React.FC<SummaryProps> = ({ requirements, variants }) => {
         </div>
         {/* Configuration validation section */}
         <div className="border-t mt-4 pt-2">
-          <button 
+          <button
             onClick={() => setShowValidation(!showValidation)}
             className="text-xs text-blue-600 flex items-center"
           >
@@ -6689,8 +6689,8 @@ export const Summary: React.FC<SummaryProps> = ({ requirements, variants }) => {
             <div className="mt-2 text-xs">
               <div className="font-semibold mb-1">Configuration: {configurationType}</div>
               <div className={`px-2 py-1 rounded ${validation.isValid ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}`}>
-                {validation.isValid 
-                  ? '✓ Matches PRD requirements' 
+                {validation.isValid
+                  ? '✓ Matches PRD requirements'
                   : '✗ Does not match PRD requirements'}
               </div>
               {!validation.isValid && (
@@ -6981,7 +6981,7 @@ const useGridState = () => {
   });
   // Debug logging helper
   const logGridState = (grid: GridCell[][], requirements: Requirements) => {
-    const gridState = grid.map((row, rowIndex) => 
+    const gridState = grid.map((row, rowIndex) =>
       row.map((cell, colIndex) => ({
         position: `[${rowIndex},${colIndex}]`,
         hasCube: cell.hasCube,
@@ -7021,7 +7021,7 @@ const useGridState = () => {
     clearConnectedCubesCache();
     setGrid(prevGrid => {
       // Create a deep copy of the grid that preserves the GridCell structure
-      const newGrid = prevGrid.map((gridRow, rowIndex) => 
+      const newGrid = prevGrid.map((gridRow, rowIndex) =>
         gridRow.map((cell, colIndex) => {
           // Convert Set to array and back to handle JSON serialization
           const claddingEdges = new Set([...cell.claddingEdges]);
@@ -7092,7 +7092,7 @@ const useGridState = () => {
       W: 270  // Flow from West to East
     } as const;
     // Create a new grid with all required properties
-    const newGrid: GridCell[][] = preset.map((row, rowIndex) => 
+    const newGrid: GridCell[][] = preset.map((row, rowIndex) =>
       row.map((cell, colIndex) => ({
         id: `cell-${rowIndex}-${colIndex}`,
         row: rowIndex,
@@ -7189,7 +7189,7 @@ import { validateIrrigationPath } from '@/utils/validation/irrigationValidator';
 import { toast } from '@/hooks/use-toast';
 function useGridState() {
   const [grid, setGrid] = useState<GridCell[][]>(
-    Array(3).fill(null).map(() => 
+    Array(3).fill(null).map(() =>
       Array(3).fill(null).map(() => createEmptyCell())
     )
   );
@@ -7220,7 +7220,7 @@ function useGridState() {
     console.log(`Toggled height at ${row},${col}`);
   };
   const applyPreset = (preset: 'straight' | 'L' | 'U') => {
-    const newGrid = Array(3).fill(null).map(() => 
+    const newGrid = Array(3).fill(null).map(() =>
       Array(3).fill(null).map(() => createEmptyCell())
     );
     switch (preset) {
@@ -7333,8 +7333,8 @@ const Index = () => {
   };
   return (
     <div className="min-h-screen bg-gray-50 py-8">
-      <FoodcubeConfigurator 
-        variants={variants} 
+      <FoodcubeConfigurator
+        variants={variants}
         onUpdate={handleUpdate}
       />
     </div>
@@ -7375,7 +7375,7 @@ import { detectConnections } from '../connectionDetector';
 import { packPanels } from '../panelPacker';
 import { GridCell } from '../../components/types';
 const createTestGrid = (config: 'single' | 'line' | 'L' | 'U'): GridCell[][] => {
-  const grid: GridCell[][] = Array(3).fill(null).map(() => 
+  const grid: GridCell[][] = Array(3).fill(null).map(() =>
     Array(3).fill(null).map(() => ({ hasCube: false, claddingEdges: new Set() }))
   );
   // Place cubes based on configuration
@@ -7524,7 +7524,7 @@ describe('calculateRequirements', () => {
     edges.forEach(edge => grid[row][col].claddingEdges.add(edge));
   };
   const createEmptyGrid = (): GridCell[][] => {
-    return Array(3).fill(null).map(() => 
+    return Array(3).fill(null).map(() =>
       Array(3).fill(null).map(() => ({ hasCube: false, claddingEdges: new Set() }))
     );
   };
@@ -7670,9 +7670,9 @@ import { PathCube } from '../../calculation/flowAnalyzer';
 import { CompassDirection } from '@/components/types';
 // Helper to create a test PathCube with required properties
 const createTestCube = (
-  row: number, 
-  col: number, 
-  entry: CompassDirection | null, 
+  row: number,
+  col: number,
+  entry: CompassDirection | null,
   exit: CompassDirection | null
 ): PathCube => ({
   row,
@@ -8216,8 +8216,8 @@ describe('packPanels', () => {
         fourPackExtraTall: 0,
         twoPackRegular: 2,      // Uses remaining 6 side + 1 left + 1 right panels
         twoPackExtraTall: 0,
-        leftPanels: 0,         
-        rightPanels: 0,      
+        leftPanels: 0,
+        rightPanels: 0,
         sidePanels: 0,
         straightCouplings: 2,    // Two straight couplings
         cornerConnectors: 2      // Two corner connectors
@@ -8693,8 +8693,8 @@ function createPacks(sidePanels: number, leftPanels: number, rightPanels: number
 }
 // Helper function to visualize the grid
 function visualizeGrid(grid: GridCell[][]) {
-  return grid.map(row => 
-    row.map(cell => 
+  return grid.map(row =>
+    row.map(cell =>
       cell.hasCube ? 'X' : '.'
     ).join('')
   ).join('\n');
@@ -9130,10 +9130,10 @@ function processLinearConfiguration(cubes: PathCube[], orientation: 'horizontal'
  * Check if the configuration forms a U-shape
  */
 function isUShapedConfiguration(
-  cubes: PathCube[], 
-  minRow: number, 
-  maxRow: number, 
-  minCol: number, 
+  cubes: PathCube[],
+  minRow: number,
+  maxRow: number,
+  minCol: number,
   maxCol: number
 ): boolean {
   // A U-shape typically has width >= 3 and cubes in at least two rows
@@ -9174,10 +9174,10 @@ function isUShapedConfiguration(
  * Process a U-shaped configuration
  */
 function processUShapedConfiguration(
-  cubes: PathCube[], 
-  minRow: number, 
-  maxRow: number, 
-  minCol: number, 
+  cubes: PathCube[],
+  minRow: number,
+  maxRow: number,
+  minCol: number,
   maxCol: number
 ): PathCube[] {
   // Create a map for quick lookup
@@ -9340,7 +9340,7 @@ function traceUShapePath(
         cube.entry = 'N';
       } else {
         // Next cube is in same column, entry from E or W
-        cube.entry = 'E'; 
+        cube.entry = 'E';
       }
       // Exit is toward the next cube
       cube.exit = dirToNext;
@@ -9501,9 +9501,9 @@ function traceUShapePath(
   // Debug output of final path
   console.log("Analyzed path:", orderedPath.map(cube => ({
     id: `${cube.row},${cube.col}`,
-    row: cube.row, 
-    col: cube.col, 
-    entry: cube.entry, 
+    row: cube.row,
+    col: cube.col,
+    entry: cube.entry,
     exit: cube.exit
   })));
   // Update the original cubes with the new path information
@@ -9522,10 +9522,10 @@ function traceUShapePath(
  * Check if the configuration forms an L-shape
  */
 function isLShapedConfiguration(
-  cubes: PathCube[], 
-  minRow: number, 
-  maxRow: number, 
-  minCol: number, 
+  cubes: PathCube[],
+  minRow: number,
+  maxRow: number,
+  minCol: number,
   maxCol: number
 ): boolean {
   // An L-shape typically has width and height >= 2 and a single corner
@@ -9566,10 +9566,10 @@ function isLShapedConfiguration(
  * Process an L-shaped configuration
  */
 function processLShapedConfiguration(
-  cubes: PathCube[], 
-  minRow: number, 
-  maxRow: number, 
-  minCol: number, 
+  cubes: PathCube[],
+  minRow: number,
+  maxRow: number,
+  minCol: number,
   maxCol: number
 ): PathCube[] {
   // Create a map for quick lookup
@@ -9850,7 +9850,7 @@ function validateFlow(cubes: PathCube[]): void {
       const nextCube = cubeMap.get(exitKey)!;
       const expectedEntry = getOppositeDirection(cube.exit);
       if (nextCube.entry !== expectedEntry) {
-        console.warn(`Connection mismatch: Cube at [${cube.row},${cube.col}] exits ${cube.exit}, 
+        console.warn(`Connection mismatch: Cube at [${cube.row},${cube.col}] exits ${cube.exit},
           but cube at [${exitRow},${exitCol}] enters ${nextCube.entry} instead of ${expectedEntry}`);
       }
     } else if (i < cubes.length - 1) {
@@ -9903,7 +9903,7 @@ export const getPanelType = (
     }
     const turnType = VALID_TURNS.get(flow);
     const outsideDir = getOutsideOfTurn(entry, exit);
-    return direction === outsideDir ? 
+    return direction === outsideDir ?
       (turnType === 'corner-right' ? 'right' : 'left') :
       (turnType === 'corner-right' ? 'left' : 'right');
   }
@@ -9943,11 +9943,11 @@ export const getOutsideOfTurn = (entry: CompassDirection, exit: CompassDirection
 import { Requirements, CompassDirection } from '@/components/types';
 import { PathCube } from './flowAnalyzer';
 import { STRAIGHT_PATHS, VALID_TURNS } from '../core/irrigationRules';
-import { 
-  isCorner, 
-  isStraightFlow, 
-  isUShapedConfiguration, 
-  isLShapedConfiguration, 
+import {
+  isCorner,
+  isStraightFlow,
+  isUShapedConfiguration,
+  isLShapedConfiguration,
   getAngleBetweenDirections,
   countCornerConnectors
 } from './configurationDetector';
@@ -10066,7 +10066,7 @@ export const calculateFlowPathPanels = (cubes: PathCube[]): Requirements => {
       rightPanelCount++;
     }
     // Count exposed edges for side panels (excluding entry/exit points)
-    const connectedEdgesCount = 
+    const connectedEdgesCount =
       (cube.entry ? 1 : 0) + (cube.exit ? 1 : 0);
     // Assuming 4 edges per cube, subtract connected edges to get side panel count
     sidePanelCount += 4 - connectedEdgesCount;
@@ -10161,8 +10161,8 @@ function isLShape(cubes: PathCube[]): boolean {
     };
     // A 90-degree turn means the dot product is zero (vectors are perpendicular)
     const dotProduct = prevDirection.dx * nextDirection.dx + prevDirection.dy * nextDirection.dy;
-    if (dotProduct === 0 && 
-        (prevDirection.dx !== 0 || prevDirection.dy !== 0) && 
+    if (dotProduct === 0 &&
+        (prevDirection.dx !== 0 || prevDirection.dy !== 0) &&
         (nextDirection.dx !== 0 || nextDirection.dy !== 0)) {
       cornerCount++;
     }
@@ -10196,7 +10196,7 @@ export const countPanels = (grid: GridCell[][]): Requirements => {
   // Find the first cube with a connection
   for (let i = 0; i < grid.length && !startCube; i++) {
     for (let j = 0; j < grid[0].length && !startCube; j++) {
-      if (grid[i][j].hasCube && 
+      if (grid[i][j].hasCube &&
           (grid[i][j].connections.entry || grid[i][j].connections.exit)) {
         startCube = [i, j];
         break;
@@ -10259,7 +10259,7 @@ import { CONFIGURATION_RULES } from '../core/rules';
 export const packPanels = (requirements: Requirements): Requirements => {
   console.log("Packing panels for raw requirements:", requirements);
   // Calculate total panels for configuration identification
-  const totalPanels = 
+  const totalPanels =
     requirements.sidePanels +
     requirements.leftPanels +
     requirements.rightPanels;
@@ -10332,7 +10332,7 @@ export const packPanels = (requirements: Requirements): Requirements => {
  */
 export const validateConfiguration = (requirements: Requirements): boolean => {
   // Count total panels across all pack types
-  const totalPanels = 
+  const totalPanels =
     requirements.sidePanels +
     requirements.leftPanels +
     requirements.rightPanels +
@@ -10481,7 +10481,7 @@ export const visualizeFlow = (grid: GridCell[][]): FlowVisualization => {
   });
   // Follow the path through connected cubes
   while (currentCell) {
-    const currentPos = grid.findIndex(row => 
+    const currentPos = grid.findIndex(row =>
       row.findIndex(cell => cell === currentCell) !== -1
     );
     const currentRow = Math.floor(currentPos / grid.length);
@@ -10517,7 +10517,7 @@ export const visualizeFlow = (grid: GridCell[][]): FlowVisualization => {
   console.log('Red Cube Locations:', redCubes);
   console.log('Continuous Flow Path:', flowPath);
   // Visual representation in console
-  const visualGrid = Array(grid.length * 2 + 1).fill('.').map(() => 
+  const visualGrid = Array(grid.length * 2 + 1).fill('.').map(() =>
     Array(grid[0].length * 2 + 1).fill('.')
   );
   // Mark red cubes with 'R'
@@ -10574,10 +10574,10 @@ export const createFlowCell = (entry: CompassDirection, exit: CompassDirection):
   const edges: CompassDirection[] = ['N', 'S', 'E', 'W'];
   // Remove entry and exit directions from edges as they'll have connectors
   const claddingEdges = new Set(
-    edges.filter(edge => 
-      edge !== entry && 
-      edge !== exit && 
-      edge !== opposites[entry] && 
+    edges.filter(edge =>
+      edge !== entry &&
+      edge !== exit &&
+      edge !== opposites[entry] &&
       edge !== opposites[exit]
     )
   );
@@ -10882,9 +10882,9 @@ export const generateUShapePreset = (): GridCell[][] => {
 import { GridCell, CompassDirection } from '@/components/types';
 import { hasAdjacentCube } from '../shared/gridUtils';
 export const addCladdingToExposedEdges = (grid: GridCell[][]): GridCell[][] => {
-  const result: GridCell[][] = grid.map(row => 
-    row.map(cell => ({ 
-      ...cell, 
+  const result: GridCell[][] = grid.map(row =>
+    row.map(cell => ({
+      ...cell,
       claddingEdges: new Set<CompassDirection>()
     }))
   );
@@ -11204,7 +11204,7 @@ export function interceptConsole() {
   };
   // Intercept console.log
   console.log = function(...args) {
-    const message = args.map(arg => 
+    const message = args.map(arg =>
       typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
     ).join(' ');
     debugLogger.log('console.log', { args: message });
@@ -11212,7 +11212,7 @@ export function interceptConsole() {
   };
   // Intercept console.error
   console.error = function(...args) {
-    const message = args.map(arg => 
+    const message = args.map(arg =>
       typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
     ).join(' ');
     debugLogger.log('console.error', { args: message });
@@ -11220,7 +11220,7 @@ export function interceptConsole() {
   };
   // Intercept console.warn
   console.warn = function(...args) {
-    const message = args.map(arg => 
+    const message = args.map(arg =>
       typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
     ).join(' ');
     debugLogger.log('console.warn', { args: message });
@@ -11228,7 +11228,7 @@ export function interceptConsole() {
   };
   // Intercept console.info
   console.info = function(...args) {
-    const message = args.map(arg => 
+    const message = args.map(arg =>
       typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
     ).join(' ');
     debugLogger.log('console.info', { args: message });
@@ -11236,7 +11236,7 @@ export function interceptConsole() {
   };
   // Intercept console.debug
   console.debug = function(...args) {
-    const message = args.map(arg => 
+    const message = args.map(arg =>
       typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
     ).join(' ');
     debugLogger.log('console.debug', { args: message });
@@ -11275,7 +11275,7 @@ export const createTestGrid = (
       const key = `${row},${col}`;
       const cellConnections = connections[key];
       if (layout[row][col] === 1) {
-        grid[row][col] = cellConnections 
+        grid[row][col] = cellConnections
           ? createFlowCell(cellConnections.entry, cellConnections.exit)
           : createEmptyCell();
         grid[row][col].hasCube = true;
@@ -11483,18 +11483,18 @@ export function detectConfigurationType(requirements: Requirements): 'SINGLE_CUB
 /**
  * Validates if the requirements match the expected configuration
  */
-export function validateAgainstTemplate(requirements: Requirements): { 
-  isValid: boolean; 
+export function validateAgainstTemplate(requirements: Requirements): {
+  isValid: boolean;
   configurationType: string;
-  discrepancies: string[] 
+  discrepancies: string[]
 } {
   const configurationType = detectConfigurationType(requirements);
   const discrepancies: string[] = [];
   // For custom configurations, we don't have a template to validate against
   if (configurationType === 'CUSTOM') {
-    return { 
-      isValid: true, 
-      configurationType, 
+    return {
+      isValid: true,
+      configurationType,
       discrepancies: ['Custom configuration - no template available']
     };
   }
@@ -11516,9 +11516,9 @@ export function validateAgainstTemplate(requirements: Requirements): {
     discrepancies.push(`Corner connectors: expected ${template.connectors.corner}, got ${requirements.cornerConnectors}`);
   }
   // Calculate total panels
-  const calculatedPanels = 
-    requirements.sidePanels + 
-    requirements.leftPanels + 
+  const calculatedPanels =
+    requirements.sidePanels +
+    requirements.leftPanels +
     requirements.rightPanels +
     (requirements.fourPackRegular * 4) +
     (requirements.twoPackRegular * 2);
@@ -11560,8 +11560,8 @@ import { findConnectedCubes } from './flowValidator';
  * Validates if a cell has valid entry/exit points
  */
 export const hasValidConnections = (cell: GridCell): boolean => {
-  return cell.hasCube && 
-         cell.connections?.entry != null && 
+  return cell.hasCube &&
+         cell.connections?.entry != null &&
          cell.connections?.exit != null;
 };
 /**
@@ -11733,7 +11733,7 @@ const uShapeCache = new Map<string, boolean>();
  */
 const isUShape = (grid: GridCell[][], startRow: number, startCol: number): boolean => {
   // Create a cache key
-  const cacheKey = `${startRow},${startCol},${JSON.stringify(grid.map(row => 
+  const cacheKey = `${startRow},${startCol},${JSON.stringify(grid.map(row =>
     row.map(cell => cell.hasCube ? 1 : 0)))}`;
   // Return cached result if available
   if (uShapeCache.has(cacheKey)) {
@@ -11794,18 +11794,18 @@ const connectedCubesCache = new Map<string, [number, number][]>();
  * @param skipLogging Set to true to skip detailed logging (used in recursive calls)
  */
 export const findConnectedCubes = (
-  grid: GridCell[][], 
-  startRow: number, 
+  grid: GridCell[][],
+  startRow: number,
   startCol: number,
   skipLogging: boolean = false
 ): [number, number][] => {
   // Create a cache key based on the grid state and start position
-  const cacheKey = `${startRow},${startCol},${JSON.stringify(grid.map(row => 
+  const cacheKey = `${startRow},${startCol},${JSON.stringify(grid.map(row =>
     row.map(cell => ({
       hasCube: cell.hasCube,
-      connections: cell.connections ? { 
-        entry: cell.connections.entry, 
-        exit: cell.connections.exit 
+      connections: cell.connections ? {
+        entry: cell.connections.entry,
+        exit: cell.connections.exit
       } : null
     }))))}`;
   // Return cached result if available to prevent redundant calculations
@@ -11876,7 +11876,7 @@ export const findConnectedCubes = (
   try {
     // First identify the configuration type - with early exit if in recursive call
     const isUShapeConfig = skipLogging ? false : isUShape(grid, startRow, startCol);
-    const isLineConfig = connected.length > 1 && !isUShapeConfig && 
+    const isLineConfig = connected.length > 1 && !isUShapeConfig &&
                         (allSameRow(connected) || allSameCol(connected));
     if (!skipLogging) {
       console.log(`Configuration type: ${isUShapeConfig ? 'U-shape' : isLineConfig ? 'Line' : 'Other'}`);
@@ -12186,7 +12186,7 @@ const getAvailableDirections = (grid: GridCell[][], row: number, col: number): C
  * Finds endpoint cubes (those with only one connection)
  */
 const findEndpointCubes = (grid: GridCell[][], cubes: [number, number][]): [number, number][] => {
-  return cubes.filter(([row, col]) => 
+  return cubes.filter(([row, col]) =>
     getAvailableDirections(grid, row, col).length === 1
   );
 };
@@ -12222,7 +12222,7 @@ const allSameCol = (cubes: [number, number][]): boolean => {
  * Finds the leftmost cube in a set of cubes
  */
 const findLeftmostCube = (cubes: [number, number][]): [number, number] => {
-  return cubes.reduce((leftmost, current) => 
+  return cubes.reduce((leftmost, current) =>
     current[1] < leftmost[1] ? current : leftmost
   , cubes[0]);
 };
@@ -12230,7 +12230,7 @@ const findLeftmostCube = (cubes: [number, number][]): [number, number] => {
  * Finds the rightmost cube in a set of cubes
  */
 const findRightmostCube = (cubes: [number, number][]): [number, number] => {
-  return cubes.reduce((rightmost, current) => 
+  return cubes.reduce((rightmost, current) =>
     current[1] > rightmost[1] ? current : rightmost
   , cubes[0]);
 };
@@ -12238,7 +12238,7 @@ const findRightmostCube = (cubes: [number, number][]): [number, number] => {
  * Finds the topmost cube in a set of cubes
  */
 const findTopmostCube = (cubes: [number, number][]): [number, number] => {
-  return cubes.reduce((topmost, current) => 
+  return cubes.reduce((topmost, current) =>
     current[0] < topmost[0] ? current : topmost
   , cubes[0]);
 };
@@ -12246,7 +12246,7 @@ const findTopmostCube = (cubes: [number, number][]): [number, number] => {
  * Finds the bottommost cube in a set of cubes
  */
 const findBottommostCube = (cubes: [number, number][]): [number, number] => {
-  return cubes.reduce((bottommost, current) => 
+  return cubes.reduce((bottommost, current) =>
     current[0] > bottommost[0] ? current : bottommost
   , cubes[0]);
 };
@@ -12321,8 +12321,8 @@ export const validateIrrigationPath = (grid: GridCell[][]): boolean => {
     const cube = grid[row][col];
     // Single cube should have both entry and exit points set to opposites
     if (connectedCubes.length === 1) {
-      const isValid = cube.connections.entry !== null && 
-                      cube.connections.exit !== null && 
+      const isValid = cube.connections.entry !== null &&
+                      cube.connections.exit !== null &&
                       cube.connections.entry === getOppositeDirection(cube.connections.exit);
       if (!isValid) {
         console.error(`Single cube has invalid entry/exit configuration: entry=${cube.connections.entry}, exit=${cube.connections.exit}`);
@@ -12419,7 +12419,7 @@ const calculateVerticalLinePosition = (
   cell: GridCell
 ): 'east' | 'west' => {
   // For U-shape, place vertical lines on the inner side
-  const isUShape = connectedCubes.length >= 3 && 
+  const isUShape = connectedCubes.length >= 3 &&
     connectedCubes.some(([r, c]) => Math.abs(r - row) > 1 || Math.abs(c - col) > 1);
   if (isUShape) {
     // Find the center column of the U-shape
@@ -12505,7 +12505,7 @@ const configureStraightPipe = (
   return subgrid;
 };
 const configureCornerPipe = (
-  entry: CompassDirection, 
+  entry: CompassDirection,
   exit: CompassDirection,
   verticalLinePosition: 'east' | 'west'
 ): SubgridState => {
@@ -12696,7 +12696,7 @@ function determineVerticalLinePosition(
       }
     }
     // Check if any cube is more than 1 step away (indicating a U-shape)
-    return connectedCubes.length >= 3 && 
+    return connectedCubes.length >= 3 &&
       connectedCubes.some(([r, c]) => Math.abs(r - row) > 1 || Math.abs(c - col) > 1);
   };
   if (isUShape()) {
@@ -13020,7 +13020,7 @@ document.addEventListener("DOMContentLoaded", () => {
 }
 .entry-e, .exit-e {
   right: -2px;
-  top: 50%;
+  top: 65%;
   transform: translateY(-50%);
 }
 .entry-w, .exit-w {
@@ -14514,7 +14514,7 @@ def main():
     args = parser.parse_args()
     if not args.model:
         if args.provider == 'openai':
-            args.model = "gpt-4o" 
+            args.model = "gpt-4o"
         elif args.provider == "deepseek":
             args.model = "deepseek-chat"
         elif args.provider == 'anthropic':
@@ -14744,7 +14744,7 @@ def search_with_retry(query, max_results=10, max_retries=3):
     """
     for attempt in range(max_retries):
         try:
-            print(f"DEBUG: Searching for query: {query} (attempt {attempt + 1}/{max_retries})", 
+            print(f"DEBUG: Searching for query: {query} (attempt {attempt + 1}/{max_retries})",
                   file=sys.stderr)
             with DDGS() as ddgs:
                 results = list(ddgs.text(query, max_results=max_results))
@@ -15164,7 +15164,7 @@ def parse_html(html_content: Optional[str]) -> str:
         def should_skip_element(elem) -> bool:
             """Check if the element should be skipped."""
             # Skip script and style tags
-            if elem.tag in ['{http://www.w3.org/1999/xhtml}script', 
+            if elem.tag in ['{http://www.w3.org/1999/xhtml}script',
                           '{http://www.w3.org/1999/xhtml}style']:
                 return True
             # Skip empty elements or elements with only whitespace
@@ -15215,8 +15215,8 @@ def parse_html(html_content: Optional[str]) -> str:
         for line in result:
             # Skip lines that are likely to be noise
             if any(pattern in line.lower() for pattern in [
-                'var ', 
-                'function()', 
+                'var ',
+                'function()',
                 '.js',
                 '.css',
                 'google-analytics',
@@ -15346,7 +15346,7 @@ test_token_logs/
 <file path=".windsurfrules">
 # Instructions
 
-During you interaction with the user, if you find anything reusable in this project (e.g. version of a library, model name), especially about a fix to a mistake you made or a correction you received, you should take note in the `Lessons` section in the `scratchpad.md` file so you will not make the same mistake again. 
+During you interaction with the user, if you find anything reusable in this project (e.g. version of a library, model name), especially about a fix to a mistake you made or a correction you received, you should take note in the `Lessons` section in the `scratchpad.md` file so you will not make the same mistake again.
 
 You should also use the `scratchpad.md` file as a scratchpad to organize your thoughts. Especially when you receive a new task, you should first review the content of the scratchpad, clear old different task if necessary, first explain the task, and plan the steps you need to take to complete the task. You can use todo markers to indicate the progress, e.g.
 [X] Task 1
@@ -15516,7 +15516,7 @@ The goal is to develop a production-ready cladding and coupling calculator for a
 - Final documentation updates
 
 ❌ **Remaining Issues:**
-- Further performance optimizations for large grid configurations 
+- Further performance optimizations for large grid configurations
 - User experience improvements for invalid configurations
 - Potential edge cases in unusual configurations
 - Flow path visualization issues in straight and L-shaped configurations
@@ -16356,7 +16356,7 @@ Devin impressed many by acting like an intern who writes its own plan, updates t
 ## Key Highlights
 
 1.	Easy Setup
-   
+
    Copy the provided config files into your project folder. Cursor users only need the .cursorrules file. It takes about a minute, and you'll see the difference immediately.
 
 2.	Planner-Executor Multi-Agent (Experimental)
@@ -16366,7 +16366,7 @@ Devin impressed many by acting like an intern who writes its own plan, updates t
 3.	Extended Toolset
 
    Includes:
-   
+
    * Web scraping (Playwright)
    * Search engine integration (DuckDuckGo)
    * LLM-powered analysis
@@ -16376,7 +16376,7 @@ Devin impressed many by acting like an intern who writes its own plan, updates t
 4.	Self-Evolution
 
    Whenever you correct the AI, it can update its "lessons learned" in .cursorrules. Over time, it accumulates project-specific knowledge and gets smarter with each iteration. It makes AI a coachable and coach-worthy partner.
-	
+
 ## Usage
 
 1. Copy all files from this repository to your project folder
@@ -16721,7 +16721,7 @@ export default {
 // Create a simple test script
 const { execSync } = require('child_process');
 try {
-  const output = execSync('npx jest --config jest.config.cjs src/utils/__tests__/calculation/cornerDetection.test.ts', { 
+  const output = execSync('npx jest --config jest.config.cjs src/utils/__tests__/calculation/cornerDetection.test.ts', {
     encoding: 'utf-8',
     stdio: 'inherit'
   });

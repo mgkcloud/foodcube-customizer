@@ -9,6 +9,7 @@ import { getVisualConnections } from '@/utils/flowHelpers';
 import { useMemo, useRef, useEffect } from 'react';
 
 type EdgeType = 'N' | 'E' | 'S' | 'W';
+type InteractionMode = 'cube' | 'cladding';
 
 type CladdingVisualizerProps = {
   cell: GridCell;
@@ -18,16 +19,18 @@ type CladdingVisualizerProps = {
   onToggle: (edge: EdgeType) => void;
   isEdgeExposed: Record<EdgeType, boolean>;
   registerEdgeRef?: (row: number, col: number, edge: EdgeType, element: HTMLDivElement | null) => void;
+  interactionMode?: InteractionMode;
 };
 
-export const CladdingVisualizer = ({ 
-  cell, 
-  row, 
-  col, 
-  grid, 
-  onToggle, 
-  isEdgeExposed, 
-  registerEdgeRef
+export const CladdingVisualizer = ({
+  cell,
+  row,
+  col,
+  grid,
+  onToggle,
+  isEdgeExposed,
+  registerEdgeRef,
+  interactionMode = 'cube'
 }: CladdingVisualizerProps) => {
   // Refs for edge elements
   const edgeRefs = useRef<Record<EdgeType, HTMLDivElement | null>>({
@@ -76,36 +79,38 @@ export const CladdingVisualizer = ({
     }
   }, [registerEdgeRef, row, col, cell.hasCube, isEdgeExposed]);
 
-  // Render subgrid highlighting for irrigation flow
-  const renderSubgridHighlight = () => {
-    return (
-      <div className="absolute inset-0 grid grid-cols-2 grid-rows-2">
-        <div className="bg-blue-200 opacity-50" />
-        <div className="bg-transparent" />
-        <div className="bg-blue-200 opacity-50" />
-        <div className="bg-transparent" />
-      </div>
-    );
-  };
-
   if (!cell?.hasCube) {
     return null;
   }
 
   // Get entry/exit from cell's connections
   const { entry, exit } = cell.connections;
+  // Allow cladding strips to slightly overlap cube boundaries so they're still visible with tighter spacing
+  const edgeOverlap = interactionMode === 'cladding' ? 8 : 4;
   
   const getEdgeStyle = (edge: EdgeType): React.CSSProperties => {
     const isSelected = cell.claddingEdges.has(edge);
     // Use the subgrid-based panel type determination
     const panelType = getPanelType(edge as CompassDirection, entry, exit, subgrid.map(row => row.map(cell => Boolean(cell))));
     const baseColor = PANEL_COLORS[panelType];
-    
+
+    // Adjust opacity based on mode - more subtle in cube mode
+    const unselectedOpacity = interactionMode === 'cube' ? '40' : '80'; // 25% vs 50%
+
     return {
-      backgroundColor: isSelected 
-        ? baseColor 
-        : `${baseColor}40`, // 40 = 25% opacity for unselected edges
-      transition: 'background-color 0.2s ease-in-out',
+      backgroundColor: isSelected
+        ? baseColor
+        : `${baseColor}${unselectedOpacity}`,
+      transition: 'all 0.2s ease-in-out',
+      boxShadow: isSelected
+        ? '0 2px 8px rgba(0, 0, 0, 0.15)'
+        : interactionMode === 'cladding'
+        ? '0 1px 3px rgba(0, 0, 0, 0.1)'
+        : 'none', // No shadow in cube mode for less visual weight
+      ...(edge === 'N' ? { top: -edgeOverlap } : {}),
+      ...(edge === 'S' ? { bottom: -edgeOverlap } : {}),
+      ...(edge === 'W' ? { left: -edgeOverlap } : {}),
+      ...(edge === 'E' ? { right: -edgeOverlap } : {}),
     };
   };
 
@@ -120,10 +125,15 @@ export const CladdingVisualizer = ({
             data-edge={edge}
             style={getEdgeStyle(edge)}
             className={cn(
-              'absolute pointer-events-auto cursor-pointer',
+              'absolute pointer-events-auto cursor-pointer rounded-sm transition-all duration-200',
+              interactionMode === 'cladding' ? 'hover:scale-105 hover:brightness-110 active:scale-95' : 'hover:brightness-105',
               {
-                'w-2/3 h-4': ['N', 'S'].includes(edge),
-                'h-2/3 w-4': ['W', 'E'].includes(edge),
+                // Cube mode: smaller, less intrusive
+                'w-3/4 h-3': interactionMode === 'cube' && ['N', 'S'].includes(edge),
+                'h-3/4 w-3': interactionMode === 'cube' && ['W', 'E'].includes(edge),
+                // Cladding mode: larger, more prominent
+                'w-4/5 h-10': interactionMode === 'cladding' && ['N', 'S'].includes(edge),
+                'h-4/5 w-10': interactionMode === 'cladding' && ['W', 'E'].includes(edge),
                 'top-0': edge === 'N',
                 'bottom-0': edge === 'S',
                 'left-0': edge === 'W',
@@ -139,7 +149,6 @@ export const CladdingVisualizer = ({
               }, null, 2));
               onToggle(edge);
             }}
-            data-testid={`grid-cell-${row}-${col}-edge-${edge}`}
           />
         ))}
       </div>

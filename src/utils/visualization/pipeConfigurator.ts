@@ -276,12 +276,39 @@ const configureCornerPipe = (
     
     return subgrid;
   }
+  // Mirror handling for W→N (rotated N→E case) to keep connector on physical corner
+  else if (entry === 'W' && exit === 'N') {
+    console.log(`MIRRORING: Special handling for W→N turn`);
+    
+    // Mirror the N→W logic so the connector stays on the interior corner
+    // Activate the entire west column (top + bottom) to anchor the elbow correctly
+    subgrid[0][0] = true;  // Top-left quadrant (north-west)
+    subgrid[1][0] = true;  // Bottom-left quadrant (south-west)
+    
+    console.log(`MIRRORED SUBGRID (W→N): 
+    [${subgrid[0][0] ? 'X' : '.'}, ${subgrid[0][1] ? 'X' : '.'}]
+    [${subgrid[1][0] ? 'X' : '.'}, ${subgrid[1][1] ? 'X' : '.'}]`);
+    
+    return subgrid;
+  }
+  // Mirror handling for S→W (rotated N→E case) to keep connector on physical corner
+  else if (entry === 'S' && exit === 'W') {
+    console.log(`MIRRORING: Special handling for S→W turn`);
+    
+    // Activate the entire south row (left + right) so the elbow stays inside the U
+    subgrid[1][0] = true;  // Bottom-left quadrant (south-west)
+    subgrid[1][1] = true;  // Bottom-right quadrant (south-east)
+    
+    console.log(`MIRRORED SUBGRID (S→W): 
+    [${subgrid[0][0] ? 'X' : '.'}, ${subgrid[0][1] ? 'X' : '.'}]
+    [${subgrid[1][0] ? 'X' : '.'}, ${subgrid[1][1] ? 'X' : '.'}]`);
+    
+    return subgrid;
+  }
 
   // Standard corner configurations for other directions
-  if (entry === 'W' && exit === 'N') {
-    subgrid[1][0] = true; // Horizontal part (always from west)
-    subgrid[0][verticalCol] = true; // Vertical part (position based on parameter)
-  } else if (entry === 'W' && exit === 'S') {
+  // Note: W→N is handled by mirrored logic above (lines 280-292)
+  if (entry === 'W' && exit === 'S') {
     subgrid[1][0] = true; // Horizontal part (always from west)
     subgrid[1][verticalCol] = true; // Vertical part (position based on parameter)
   } else if (entry === 'E' && exit === 'N') {
@@ -303,10 +330,8 @@ const configureCornerPipe = (
   } else if (entry === 'S' && exit === 'E') {
     subgrid[1][verticalCol] = true; // Vertical part (position based on parameter)
     subgrid[1][1] = true; // Horizontal part (always to east)
-  } else if (entry === 'S' && exit === 'W') {
-    subgrid[1][verticalCol] = true; // Vertical part (position based on parameter)
-    subgrid[1][0] = true; // Horizontal part (always to west)
   }
+  // Note: S→W is handled by mirrored logic above (lines 295-306)
   
   // Log the resulting subgrid
   if (entry === 'N' && (exit === 'W' || exit === 'E')) {

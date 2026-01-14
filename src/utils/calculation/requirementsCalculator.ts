@@ -33,7 +33,8 @@ export const calculateRequirements = (path: PathCube[]): Requirements => {
       leftPanels: 0,
       rightPanels: 0,
       straightCouplings: 0,
-      cornerConnectors: 0
+      cornerConnectors: 0,
+      spacers: 0
     };
   }
 
@@ -115,7 +116,8 @@ export const calculateRequirements = (path: PathCube[]): Requirements => {
     fourPackExtraTall: 0,
     twoPackExtraTall: 0,
     straightCouplings,
-    cornerConnectors
+    cornerConnectors,
+    spacers: 0
   };
 };
 
