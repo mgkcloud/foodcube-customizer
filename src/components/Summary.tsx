@@ -32,7 +32,8 @@ export const Summary: React.FC<SummaryProps> = ({ requirements, variants }) => {
       rightPanels: requirements.rightPanels || 0,
       sidePanels: requirements.sidePanels || 0,
       cornerConnectors: requirements.cornerConnectors || 0,
-      straightCouplings: requirements.straightCouplings || 0
+      straightCouplings: requirements.straightCouplings || 0,
+      spacers: requirements.spacers || 0
     };
 
     const variantIds: Record<string, string> = {
@@ -44,7 +45,8 @@ export const Summary: React.FC<SummaryProps> = ({ requirements, variants }) => {
       rightPanels: '',
       sidePanels: '',
       cornerConnectors: '',
-      straightCouplings: ''
+      straightCouplings: '',
+      spacers: ''
     };
 
     // Map variant IDs from variants data
@@ -86,6 +88,10 @@ export const Summary: React.FC<SummaryProps> = ({ requirements, variants }) => {
 
     if (normalizedVariants['straight_couplings']?.variants?.[0]?.id) {
       variantIds.straightCouplings = normalizedVariants['straight_couplings'].variants[0].id;
+    }
+
+    if (normalizedVariants['spacers']?.variants?.[0]?.id) {
+      variantIds.spacers = normalizedVariants['spacers'].variants[0].id;
     }
 
     // Dispatch events with updated data

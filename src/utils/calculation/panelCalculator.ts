@@ -243,10 +243,11 @@ export const calculateFlowPathPanels = (
         rightPanels: 0,
         sidePanels: 0,
         cornerConnectors: 0,
-        straightCouplings: 0
+        straightCouplings: 0,
+        spacers: 0
       };
     }
-    
+
     // Track visited cells to find all connected components
     const visited = new Set<string>();
     const components: [number, number][][] = [];
@@ -432,7 +433,8 @@ export const calculateFlowPathPanels = (
       rightPanels: 0,
       sidePanels: 0,
       cornerConnectors: 0,
-      straightCouplings: 0
+      straightCouplings: 0,
+      spacers: 0
     };
   }
 };
@@ -461,8 +463,9 @@ const packPanelsByCount = (
     twoPackExtraTall: 0,
     straightCouplings: straightConnectors,
     cornerConnectors: cornerConnectors,
+    spacers: 0,
   };
-  
+
   // First try to fit into four-packs (2 side + 1 left + 1 right)
   while (sidePanels >= 2 && leftPanels >= 1 && rightPanels >= 1) {
     requirements.fourPackRegular++;

@@ -579,6 +579,8 @@ export const FoodcubeConfigurator: React.FC<FoodcubeConfiguratorProps> = ({
                         ) {
                             quantity = selections.cornerConnectors || 0;
                         }
+                    } else if (packType === "spacers") {
+                        quantity = selections.spacers || 0;
                     }
 
                     if (quantity > 0) {

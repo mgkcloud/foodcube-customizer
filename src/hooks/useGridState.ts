@@ -75,7 +75,8 @@ const useGridState = () => {
     rightPanels: 0,
     sidePanels: 0,
     cornerConnectors: 0,
-    straightCouplings: 0
+    straightCouplings: 0,
+    spacers: 0
   });
 
   const logGridState = (grid: GridCell[][], requirements: Requirements) => {
@@ -138,10 +139,11 @@ const useGridState = () => {
           rightPanels: 0,
           sidePanels: 0,
           cornerConnectors: 0,
-          straightCouplings: 0
+          straightCouplings: 0,
+          spacers: 0
         };
       }
-      
+
       setError(null);
       
       // Use the new universal rule-based approach from panelCalculator
@@ -163,7 +165,8 @@ const useGridState = () => {
         rightPanels: 0,
         sidePanels: 0,
         cornerConnectors: 0,
-        straightCouplings: 0
+        straightCouplings: 0,
+        spacers: 0
       };
     }
   }, []);
@@ -485,7 +488,8 @@ const useGridState = () => {
       rightPanels: 0,
       sidePanels: 0,
       cornerConnectors: 0,
-      straightCouplings: 0
+      straightCouplings: 0,
+      spacers: 0
     });
     // Clear any cached data
     clearConnectedCubesCache();

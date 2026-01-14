@@ -91,7 +91,6 @@ export const normalizeProductData = (input: any): NormalizationResult => {
   if (Array.isArray(input)) {
     const ignoreHandles = new Set([
       'trellis',
-      'foodcube-platforms',
       'foodcube-net-system',
       'premium-greenhouse-foodcube',
       'auto-watering-system',
@@ -132,6 +131,12 @@ export const normalizeProductData = (input: any): NormalizationResult => {
         return null;
       }
       console.warn(`[ProductSchema] Unmapped variant type in foodcube-slim-connectors: '${value ?? ''}'`);
+      return null;
+    };
+
+    const mapPlatformVariant = (value: string | undefined | null): string | null => {
+      const key = toKey(value);
+      if (key.includes('height pad')) return 'spacers';
       return null;
     };
 
@@ -197,6 +202,31 @@ export const normalizeProductData = (input: any): NormalizationResult => {
           // Preserve backward compatibility for connector subkeys
           if (mapped.type === 'straight') addVariant(normalized, 'straight_couplings', enriched);
           if (mapped.type === 'corner') addVariant(normalized, 'corner_connectors', enriched);
+        });
+        return;
+      }
+
+      if (handleKey === 'foodcube-platforms') {
+        product.variants.forEach((variant) => {
+          const packKey = mapPlatformVariant(variant.option1 ?? variant.title);
+          if (!packKey) return;
+
+          const enriched = {
+            id: variant.id,
+            title: variant.title,
+            price: variant.price,
+            sku: variant.sku,
+            available: variant.available,
+            option1: variant.option1,
+            option2: variant.option2,
+            option3: variant.option3,
+            product_handle: product.handle,
+            product_title: product.title,
+            product_tags: product.tags,
+            product_options: product.options,
+          };
+
+          addVariant(normalized, packKey, enriched);
         });
         return;
       }

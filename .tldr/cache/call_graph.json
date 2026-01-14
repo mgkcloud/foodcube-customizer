@@ -1,0 +1,674 @@
+{
+  "edges": [
+    {
+      "from_file": "tests/test_llm_api_live.py",
+      "from_func": "setUp",
+      "to_file": "tools/llm_api.py",
+      "to_func": "load_environment"
+    },
+    {
+      "from_file": "tests/test_web_scraper.py",
+      "from_func": "test_fetch_page",
+      "to_file": "tools/web_scraper.py",
+      "to_func": "fetch_page"
+    },
+    {
+      "from_file": "tools/screenshot_utils.py",
+      "from_func": "<module>",
+      "to_file": "tools/screenshot_utils.py",
+      "to_func": "take_screenshot_sync"
+    },
+    {
+      "from_file": "tools/llm_api.py",
+      "from_func": "main",
+      "to_file": "tools/llm_api.py",
+      "to_func": "query_llm"
+    },
+    {
+      "from_file": "tests/test_llm_api.py",
+      "from_func": "test_query_anthropic",
+      "to_file": "tools/llm_api.py",
+      "to_func": "query_llm"
+    },
+    {
+      "from_file": "tools/web_scraper.py",
+      "from_func": "parse_html",
+      "to_file": "tools/web_scraper.py",
+      "to_func": "should_skip_element"
+    },
+    {
+      "from_file": "tests/test_llm_api.py",
+      "from_func": "test_query_o1_model",
+      "to_file": "tools/llm_api.py",
+      "to_func": "query_llm"
+    },
+    {
+      "from_file": "tests/test_screenshot_verification.py",
+      "from_func": "test_screenshot_capture",
+      "to_file": "tests/test_screenshot_verification.py",
+      "to_func": "mock_browser"
+    },
+    {
+      "from_file": "tools/token_tracker.py",
+      "from_func": "main",
+      "to_file": "tools/token_tracker.py",
+      "to_func": "list_sessions"
+    },
+    {
+      "from_file": "tools/web_scraper.py",
+      "from_func": "parse_html",
+      "to_file": "tools/web_scraper.py",
+      "to_func": "process_element"
+    },
+    {
+      "from_file": "tools/token_tracker.py",
+      "from_func": "list_sessions",
+      "to_file": "tools/token_tracker.py",
+      "to_func": "load_session"
+    },
+    {
+      "from_file": "tests/test_llm_api_live.py",
+      "from_func": "test_openai_live",
+      "to_file": "tools/llm_api.py",
+      "to_func": "query_llm"
+    },
+    {
+      "from_file": "tools/plan_exec_llm.py",
+      "from_func": "query_llm",
+      "to_file": "tools/token_tracker.py",
+      "to_func": "TokenUsage"
+    },
+    {
+      "from_file": "tools/web_scraper.py",
+      "from_func": "main",
+      "to_file": "tools/web_scraper.py",
+      "to_func": "process_urls"
+    },
+    {
+      "from_file": "tools/token_tracker.py",
+      "from_func": "list_sessions",
+      "to_file": "tools/token_tracker.py",
+      "to_func": "format_duration"
+    },
+    {
+      "from_file": "tests/test_utils.py",
+      "from_func": "requires_azure",
+      "to_file": "tests/test_utils.py",
+      "to_func": "get_skip_reason"
+    },
+    {
+      "from_file": "tests/test_llm_api.py",
+      "from_func": "test_query_error",
+      "to_file": "tools/llm_api.py",
+      "to_func": "query_llm"
+    },
+    {
+      "from_file": "tests/test_llm_api.py",
+      "from_func": "test_create_deepseek_client",
+      "to_file": "tools/llm_api.py",
+      "to_func": "create_llm_client"
+    },
+    {
+      "from_file": "tools/token_tracker.py",
+      "from_func": "display_session_summary",
+      "to_file": "tools/token_tracker.py",
+      "to_func": "format_duration"
+    },
+    {
+      "from_file": "tests/test_llm_api.py",
+      "from_func": "test_query_with_custom_model",
+      "to_file": "tools/llm_api.py",
+      "to_func": "query_llm"
+    },
+    {
+      "from_file": "tools/llm_api.py",
+      "from_func": "query_llm",
+      "to_file": "tools/llm_api.py",
+      "to_func": "encode_image_file"
+    },
+    {
+      "from_file": "tools/token_tracker.py",
+      "from_func": "main",
+      "to_file": "tools/token_tracker.py",
+      "to_func": "logs_dir"
+    },
+    {
+      "from_file": "tests/test_llm_api.py",
+      "from_func": "test_create_anthropic_client",
+      "to_file": "tools/llm_api.py",
+      "to_func": "create_llm_client"
+    },
+    {
+      "from_file": "tools/search_engine.py",
+      "from_func": "search",
+      "to_file": "tools/search_engine.py",
+      "to_func": "search_with_retry"
+    },
+    {
+      "from_file": "tools/token_tracker.py",
+      "from_func": "get_token_tracker",
+      "to_file": "tools/token_tracker.py",
+      "to_func": "logs_dir"
+    },
+    {
+      "from_file": "tests/test_web_scraper.py",
+      "from_func": "test_process_urls",
+      "to_file": "tests/test_web_scraper.py",
+      "to_func": "mock_session"
+    },
+    {
+      "from_file": "tests/test_search_engine.py",
+      "from_func": "test_successful_search",
+      "to_file": "tools/search_engine.py",
+      "to_func": "search"
+    },
+    {
+      "from_file": "tools/token_tracker.py",
+      "from_func": "__init__",
+      "to_file": "tools/token_tracker.py",
+      "to_func": "logs_dir"
+    },
+    {
+      "from_file": "tests/test_screenshot_verification.py",
+      "from_func": "mock_browser",
+      "to_file": "tests/test_screenshot_verification.py",
+      "to_func": "mock_browser"
+    },
+    {
+      "from_file": "tests/test_llm_api.py",
+      "from_func": "test_create_invalid_provider",
+      "to_file": "tools/llm_api.py",
+      "to_func": "create_llm_client"
+    },
+    {
+      "from_file": "tools/token_tracker.py",
+      "from_func": "session_file",
+      "to_file": "tools/token_tracker.py",
+      "to_func": "session_file"
+    },
+    {
+      "from_file": "tests/test_llm_api.py",
+      "from_func": "test_create_openai_client",
+      "to_file": "tools/llm_api.py",
+      "to_func": "create_llm_client"
+    },
+    {
+      "from_file": "tests/test_token_tracker.py",
+      "from_func": "test_session_file_loading",
+      "to_file": "tools/token_tracker.py",
+      "to_func": "TokenTracker"
+    },
+    {
+      "from_file": "tests/test_screenshot_verification.py",
+      "from_func": "mock_page",
+      "to_file": "tests/test_screenshot_verification.py",
+      "to_func": "mock_page"
+    },
+    {
+      "from_file": "tools/llm_api.py",
+      "from_func": "main",
+      "to_file": "tools/llm_api.py",
+      "to_func": "create_llm_client"
+    },
+    {
+      "from_file": "tests/test_llm_api.py",
+      "from_func": "test_query_openai",
+      "to_file": "tools/llm_api.py",
+      "to_func": "query_llm"
+    },
+    {
+      "from_file": "tools/plan_exec_llm.py",
+      "from_func": "main",
+      "to_file": "tools/plan_exec_llm.py",
+      "to_func": "load_environment"
+    },
+    {
+      "from_file": "tests/test_llm_api_live.py",
+      "from_func": "test_deepseek_live",
+      "to_file": "tools/llm_api.py",
+      "to_func": "query_llm"
+    },
+    {
+      "from_file": "tests/test_screenshot_verification.py",
+      "from_func": "mock_context",
+      "to_file": "tests/test_screenshot_verification.py",
+      "to_func": "mock_page"
+    },
+    {
+      "from_file": "tests/test_llm_api.py",
+      "from_func": "setUp",
+      "to_file": "tools/token_tracker.py",
+      "to_func": "TokenUsage"
+    },
+    {
+      "from_file": "tests/test_llm_api.py",
+      "from_func": "test_create_gemini_client",
+      "to_file": "tools/llm_api.py",
+      "to_func": "create_llm_client"
+    },
+    {
+      "from_file": "tests/test_screenshot_verification.py",
+      "from_func": "mock_playwright",
+      "to_file": "tests/test_screenshot_verification.py",
+      "to_func": "mock_playwright"
+    },
+    {
+      "from_file": "tools/web_scraper.py",
+      "from_func": "process_element",
+      "to_file": "tools/web_scraper.py",
+      "to_func": "should_skip_element"
+    },
+    {
+      "from_file": "tests/test_token_tracker.py",
+      "from_func": "test_global_token_tracker",
+      "to_file": "tools/token_tracker.py",
+      "to_func": "get_token_tracker"
+    },
+    {
+      "from_file": "tests/test_token_tracker.py",
+      "from_func": "setUp",
+      "to_file": "tools/token_tracker.py",
+      "to_func": "APIResponse"
+    },
+    {
+      "from_file": "tools/llm_api.py",
+      "from_func": "query_llm",
+      "to_file": "tools/llm_api.py",
+      "to_func": "create_llm_client"
+    },
+    {
+      "from_file": "tests/test_token_tracker.py",
+      "from_func": "test_session_summary_calculation",
+      "to_file": "tools/token_tracker.py",
+      "to_func": "APIResponse"
+    },
+    {
+      "from_file": "tests/test_llm_api.py",
+      "from_func": "test_environment_loading_no_files",
+      "to_file": "tools/llm_api.py",
+      "to_func": "load_environment"
+    },
+    {
+      "from_file": "tests/test_llm_api_live.py",
+      "from_func": "test_anthropic_live",
+      "to_file": "tools/llm_api.py",
+      "to_func": "query_llm"
+    },
+    {
+      "from_file": "tests/test_llm_api.py",
+      "from_func": "test_create_azure_client",
+      "to_file": "tools/llm_api.py",
+      "to_func": "create_llm_client"
+    },
+    {
+      "from_file": "tests/test_llm_api.py",
+      "from_func": "test_query_gemini",
+      "to_file": "tools/llm_api.py",
+      "to_func": "query_llm"
+    },
+    {
+      "from_file": "tools/web_scraper.py",
+      "from_func": "process_urls",
+      "to_file": "tools/web_scraper.py",
+      "to_func": "fetch_page"
+    },
+    {
+      "from_file": "tools/search_engine.py",
+      "from_func": "main",
+      "to_file": "tools/search_engine.py",
+      "to_func": "search"
+    },
+    {
+      "from_file": "tools/token_tracker.py",
+      "from_func": "main",
+      "to_file": "tools/token_tracker.py",
+      "to_func": "load_session"
+    },
+    {
+      "from_file": "tools/llm_api.py",
+      "from_func": "query_llm",
+      "to_file": "tools/token_tracker.py",
+      "to_func": "APIResponse"
+    },
+    {
+      "from_file": "tools/plan_exec_llm.py",
+      "from_func": "main",
+      "to_file": "tools/plan_exec_llm.py",
+      "to_func": "read_file_content"
+    },
+    {
+      "from_file": "tests/test_screenshot_verification.py",
+      "from_func": "test_llm_verification_openai",
+      "to_file": "tools/llm_api.py",
+      "to_func": "query_llm"
+    },
+    {
+      "from_file": "tools/token_tracker.py",
+      "from_func": "list_sessions",
+      "to_file": "tools/token_tracker.py",
+      "to_func": "session_file"
+    },
+    {
+      "from_file": "tools/token_tracker.py",
+      "from_func": "main",
+      "to_file": "tools/token_tracker.py",
+      "to_func": "display_session_summary"
+    },
+    {
+      "from_file": "tools/web_scraper.py",
+      "from_func": "main",
+      "to_file": "tools/web_scraper.py",
+      "to_func": "validate_url"
+    },
+    {
+      "from_file": "tools/llm_api.py",
+      "from_func": "query_llm",
+      "to_file": "tools/token_tracker.py",
+      "to_func": "TokenUsage"
+    },
+    {
+      "from_file": "tests/test_llm_api.py",
+      "from_func": "test_environment_loading_precedence",
+      "to_file": "tools/llm_api.py",
+      "to_func": "load_environment"
+    },
+    {
+      "from_file": "tests/test_plan_exec_llm.py",
+      "from_func": "test_create_llm_client",
+      "to_file": "tools/plan_exec_llm.py",
+      "to_func": "create_llm_client"
+    },
+    {
+      "from_file": "tests/test_screenshot_verification.py",
+      "from_func": "test_screenshot_capture",
+      "to_file": "tools/screenshot_utils.py",
+      "to_func": "take_screenshot_sync"
+    },
+    {
+      "from_file": "tests/test_plan_exec_llm.py",
+      "from_func": "test_query_llm",
+      "to_file": "tools/plan_exec_llm.py",
+      "to_func": "query_llm"
+    },
+    {
+      "from_file": "tests/test_screenshot_verification.py",
+      "from_func": "test_llm_verification_anthropic",
+      "to_file": "tools/llm_api.py",
+      "to_func": "query_llm"
+    },
+    {
+      "from_file": "tests/test_token_tracker.py",
+      "from_func": "setUp",
+      "to_file": "tools/token_tracker.py",
+      "to_func": "TokenTracker"
+    },
+    {
+      "from_file": "tools/plan_exec_llm.py",
+      "from_func": "main",
+      "to_file": "tools/plan_exec_llm.py",
+      "to_func": "query_llm"
+    },
+    {
+      "from_file": "tests/test_web_scraper.py",
+      "from_func": "test_validate_url",
+      "to_file": "tools/web_scraper.py",
+      "to_func": "validate_url"
+    },
+    {
+      "from_file": "tests/test_screenshot_verification.py",
+      "from_func": "mock_playwright",
+      "to_file": "tests/test_screenshot_verification.py",
+      "to_func": "mock_browser"
+    },
+    {
+      "from_file": "tests/test_llm_api.py",
+      "from_func": "test_query_with_existing_client",
+      "to_file": "tools/llm_api.py",
+      "to_func": "query_llm"
+    },
+    {
+      "from_file": "tools/token_tracker.py",
+      "from_func": "get_token_tracker",
+      "to_file": "tools/token_tracker.py",
+      "to_func": "TokenTracker"
+    },
+    {
+      "from_file": "tests/test_llm_api_live.py",
+      "from_func": "test_azure_live",
+      "to_file": "tools/llm_api.py",
+      "to_func": "query_llm"
+    },
+    {
+      "from_file": "tools/web_scraper.py",
+      "from_func": "<module>",
+      "to_file": "tools/web_scraper.py",
+      "to_func": "main"
+    },
+    {
+      "from_file": "tests/test_plan_exec_llm.py",
+      "from_func": "test_load_environment",
+      "to_file": "tools/plan_exec_llm.py",
+      "to_func": "load_environment"
+    },
+    {
+      "from_file": "tools/token_tracker.py",
+      "from_func": "load_session",
+      "to_file": "tools/token_tracker.py",
+      "to_func": "session_file"
+    },
+    {
+      "from_file": "tools/plan_exec_llm.py",
+      "from_func": "main",
+      "to_file": "tools/plan_exec_llm.py",
+      "to_func": "read_plan_status"
+    },
+    {
+      "from_file": "tools/web_scraper.py",
+      "from_func": "process_element",
+      "to_file": "tools/web_scraper.py",
+      "to_func": "process_element"
+    },
+    {
+      "from_file": "tests/test_llm_api.py",
+      "from_func": "test_environment_loading_precedence",
+      "to_file": "tests/test_llm_api.py",
+      "to_func": "load_dotenv_side_effect"
+    },
+    {
+      "from_file": "tests/test_screenshot_verification.py",
+      "from_func": "mock_context",
+      "to_file": "tests/test_screenshot_verification.py",
+      "to_func": "mock_context"
+    },
+    {
+      "from_file": "tools/llm_api.py",
+      "from_func": "<module>",
+      "to_file": "tools/llm_api.py",
+      "to_func": "main"
+    },
+    {
+      "from_file": "tests/test_search_engine.py",
+      "from_func": "test_search_error",
+      "to_file": "tools/search_engine.py",
+      "to_func": "search"
+    },
+    {
+      "from_file": "tests/test_token_tracker.py",
+      "from_func": "test_token_usage_creation",
+      "to_file": "tools/token_tracker.py",
+      "to_func": "TokenUsage"
+    },
+    {
+      "from_file": "tools/plan_exec_llm.py",
+      "from_func": "<module>",
+      "to_file": "tools/plan_exec_llm.py",
+      "to_func": "main"
+    },
+    {
+      "from_file": "tests/test_token_tracker.py",
+      "from_func": "setUp",
+      "to_file": "tools/token_tracker.py",
+      "to_func": "TokenUsage"
+    },
+    {
+      "from_file": "tools/plan_exec_llm.py",
+      "from_func": "query_llm",
+      "to_file": "tools/token_tracker.py",
+      "to_func": "APIResponse"
+    },
+    {
+      "from_file": "tests/test_token_tracker.py",
+      "from_func": "test_session_summary_calculation",
+      "to_file": "tools/token_tracker.py",
+      "to_func": "TokenUsage"
+    },
+    {
+      "from_file": "tools/search_engine.py",
+      "from_func": "<module>",
+      "to_file": "tools/search_engine.py",
+      "to_func": "main"
+    },
+    {
+      "from_file": "tests/test_llm_api.py",
+      "from_func": "test_query_deepseek",
+      "to_file": "tools/llm_api.py",
+      "to_func": "query_llm"
+    },
+    {
+      "from_file": "tests/test_token_tracker.py",
+      "from_func": "test_api_response_creation",
+      "to_file": "tools/token_tracker.py",
+      "to_func": "APIResponse"
+    },
+    {
+      "from_file": "tests/test_screenshot_verification.py",
+      "from_func": "test_screenshot_capture",
+      "to_file": "tests/test_screenshot_verification.py",
+      "to_func": "mock_playwright"
+    },
+    {
+      "from_file": "tests/test_plan_exec_llm.py",
+      "from_func": "test_read_file_content",
+      "to_file": "tools/plan_exec_llm.py",
+      "to_func": "read_file_content"
+    },
+    {
+      "from_file": "tests/test_search_engine.py",
+      "from_func": "test_no_results",
+      "to_file": "tools/search_engine.py",
+      "to_func": "search"
+    },
+    {
+      "from_file": "tools/plan_exec_llm.py",
+      "from_func": "query_llm",
+      "to_file": "tools/plan_exec_llm.py",
+      "to_func": "create_llm_client"
+    },
+    {
+      "from_file": "tools/web_scraper.py",
+      "from_func": "process_urls",
+      "to_file": "tools/web_scraper.py",
+      "to_func": "parse_html"
+    },
+    {
+      "from_file": "tests/test_llm_api.py",
+      "from_func": "test_query_azure",
+      "to_file": "tools/llm_api.py",
+      "to_func": "query_llm"
+    },
+    {
+      "from_file": "tests/test_plan_exec_llm.py",
+      "from_func": "test_read_plan_status",
+      "to_file": "tools/plan_exec_llm.py",
+      "to_func": "read_plan_status"
+    },
+    {
+      "from_file": "tools/search_engine.py",
+      "from_func": "search",
+      "to_file": "tools/search_engine.py",
+      "to_func": "format_results"
+    },
+    {
+      "from_file": "tools/token_tracker.py",
+      "from_func": "list_sessions",
+      "to_file": "tools/token_tracker.py",
+      "to_func": "format_cost"
+    },
+    {
+      "from_file": "tests/test_utils.py",
+      "from_func": "<module>",
+      "to_file": "tools/llm_api.py",
+      "to_func": "load_environment"
+    },
+    {
+      "from_file": "tests/test_llm_api_live.py",
+      "from_func": "test_gemini_live",
+      "to_file": "tools/llm_api.py",
+      "to_func": "query_llm"
+    },
+    {
+      "from_file": "tests/test_screenshot_verification.py",
+      "from_func": "mock_browser",
+      "to_file": "tests/test_screenshot_verification.py",
+      "to_func": "mock_page"
+    },
+    {
+      "from_file": "tools/token_tracker.py",
+      "from_func": "display_session_summary",
+      "to_file": "tools/token_tracker.py",
+      "to_func": "format_cost"
+    },
+    {
+      "from_file": "tools/token_tracker.py",
+      "from_func": "logs_dir",
+      "to_file": "tools/token_tracker.py",
+      "to_func": "logs_dir"
+    },
+    {
+      "from_file": "tests/test_web_scraper.py",
+      "from_func": "test_process_urls",
+      "to_file": "tools/web_scraper.py",
+      "to_func": "process_urls"
+    },
+    {
+      "from_file": "tests/test_web_scraper.py",
+      "from_func": "test_parse_html",
+      "to_file": "tools/web_scraper.py",
+      "to_func": "parse_html"
+    },
+    {
+      "from_file": "tools/llm_api.py",
+      "from_func": "<module>",
+      "to_file": "tools/llm_api.py",
+      "to_func": "load_environment"
+    },
+    {
+      "from_file": "tools/token_tracker.py",
+      "from_func": "<module>",
+      "to_file": "tools/token_tracker.py",
+      "to_func": "main"
+    },
+    {
+      "from_file": "tools/token_tracker.py",
+      "from_func": "main",
+      "to_file": "tools/token_tracker.py",
+      "to_func": "session_file"
+    },
+    {
+      "from_file": "tests/test_web_scraper.py",
+      "from_func": "test_fetch_page",
+      "to_file": "tests/test_web_scraper.py",
+      "to_func": "mock_session"
+    },
+    {
+      "from_file": "tools/screenshot_utils.py",
+      "from_func": "take_screenshot_sync",
+      "to_file": "tools/screenshot_utils.py",
+      "to_func": "take_screenshot"
+    }
+  ],
+  "languages": [
+    "python"
+  ],
+  "timestamp": 1768362036.5323372
+}
